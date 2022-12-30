@@ -13,7 +13,8 @@
 #define CONVERT_H
 #include "analyze.hpp"
 #include "hashmap.hpp"
-typedef tree scheme_tree;
+#include "tree.hpp"
+//typedef tree scheme_tree;
 class url;
 class object;
 

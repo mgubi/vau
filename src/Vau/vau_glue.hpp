@@ -82,6 +82,18 @@ declare_glue (const char *_name) {
   return tm_new<tm_glue<T0, fn> > (_name);
 }
 
-#define DECLARE_GLUE(FUNC) glue_function glue_decl_##FUNC (declare_glue<decltype(FUNC), FUNC> (#FUNC))
+// to implement unique labels for static variables in DECLARE_GLUE_NAME_TYPE
+#define DECLARE_GLUE_CONCAT(a, b) DECLARE_GLUE_CONCAT_INNER(a, b)
+#define DECLARE_GLUE_CONCAT_INNER(a, b) a ## b
+
+// declarations macros
+#define DECLARE_GLUE_NAME_TYPE(FUNC, NAME, TYPE) \
+  glue_function DECLARE_GLUE_CONCAT(glue_decl_##FUNC,__COUNTER__) (declare_glue<TYPE, FUNC> (NAME));
+#define DECLARE_GLUE_NAME(FUNC, NAME) DECLARE_GLUE_NAME_TYPE(FUNC, NAME, decltype(FUNC))
+#define DECLARE_GLUE(FUNC) DECLARE_GLUE_NAME(FUNC, #FUNC)
+
+// old stuff
+// glue_function glue_decl_##FUNC (declare_glue<decltype(FUNC), FUNC> (NAME));
+// static glue_function glue_decl_##FUNC (declare_glue<decltype(FUNC), FUNC> (#FUNC));
 
 #endif /* VAU_GLUE_H */
