@@ -13,6 +13,7 @@
 #include "analyze.hpp"
 #include "drd_std.hpp"
 #include "path.hpp"
+#include "tree.hpp"
 
 /******************************************************************************
 * Handling escape characters

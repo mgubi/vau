@@ -14,7 +14,7 @@
 #include "analyze.hpp"
 #include "hashmap.hpp"
 #include "tree.hpp"
-//typedef tree scheme_tree;
+typedef tree scheme_tree;
 class url;
 class object;
 

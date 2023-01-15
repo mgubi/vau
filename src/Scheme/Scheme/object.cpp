@@ -130,7 +130,7 @@ bool is_path (object obj) { return tmscm_is_path (object_to_tmscm (obj)); }
 bool is_url (object obj) { return tmscm_is_url (object_to_tmscm (obj)); }
 bool is_array_double (object obj) {
   return tmscm_is_array_double (object_to_tmscm (obj)); }
-bool is_widget (object obj) { return tmscm_is_widget (object_to_tmscm (obj)); }
+//bool is_widget (object obj) { return tmscm_is_widget (object_to_tmscm (obj)); }
 bool is_patch (object obj) { return tmscm_is_patch (object_to_tmscm (obj)); }
 bool is_modification (object obj) {
   return tmscm_is_modification (object_to_tmscm (obj)); }
@@ -274,12 +274,14 @@ as_patch (object obj) {
   return tmscm_to_patch (p);
 }
 
+#if 0
 widget
 as_widget (object obj) {
   tmscm w= object_to_tmscm (obj);
   if (!tmscm_is_widget (w)) return widget ();
   return tmscm_to_widget (w);
 }
+#endif
 
 object
 tree_to_stree (scheme_tree t) {
@@ -353,7 +355,7 @@ as_command (object obj) {
   return tm_new<object_command_rep> (obj);
 }
 
-#if 1 //FIXME:
+#if 0 //FIXME:
 class object_promise_widget_rep: public promise_rep<widget> {
   object obj;
 public:

@@ -279,7 +279,6 @@
 		9C620D162959149C0041CFA3 /* scalable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE22958F7EF00877D79 /* scalable.cpp */; };
 		9C620D1A29591BCC0041CFA3 /* vau_stuff.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620D1829591BCC0041CFA3 /* vau_stuff.cpp */; };
 		9C620D1B29591C540041CFA3 /* tm_timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C60295901C90041CFA3 /* tm_timer.cpp */; };
-		9C620D1C29591D330041CFA3 /* glue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5EF92958F7EF00877D79 /* glue.cpp */; };
 		9C620D1D29591DC80041CFA3 /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C96295901C90041CFA3 /* file.cpp */; };
 		9C620D1E295920E00041CFA3 /* tm_ostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C92295901C90041CFA3 /* tm_ostream.cpp */; };
 		9C620D1F295921090041CFA3 /* picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FDD2958F7EF00877D79 /* picture.cpp */; };
@@ -711,6 +710,7 @@
 		9C1D62162958FA3600877D79 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9C2D13352959A129007EE3CA /* vau_editor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_editor.cpp; sourceTree = "<group>"; };
 		9C2D13362959A129007EE3CA /* vau_editor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_editor.hpp; sourceTree = "<group>"; };
+		9C2DE588296341B700B88E9A /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../resources; sourceTree = "<group>"; };
 		9C620C48295900D30041CFA3 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9C620C4B295901C90041CFA3 /* sys_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sys_utils.cpp; sourceTree = "<group>"; };
 		9C620C4C295901C90041CFA3 /* fast_alloc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fast_alloc.hpp; sourceTree = "<group>"; };
@@ -1724,6 +1724,7 @@
 		9C4956E32958F4A100F7BDA9 = {
 			isa = PBXGroup;
 			children = (
+				9C2DE588296341B700B88E9A /* resources */,
 				9C1D5CFE2958F79F00877D79 /* platform */,
 				9C1D5EF52958F7EF00877D79 /* src */,
 				9C1D553E2958F52800877D79 /* Products */,
@@ -2034,7 +2035,6 @@
 				9C1D615B2958F7EF00877D79 /* boxes.cpp in Sources */,
 				9C1D618D2958F7EF00877D79 /* transformed.cpp in Sources */,
 				9C1D61C62958F7EF00877D79 /* patch.cpp in Sources */,
-				9C620D1C29591D330041CFA3 /* glue.cpp in Sources */,
 				9C1D61332958F7EF00877D79 /* bridge_eval.cpp in Sources */,
 				9C1D61902958F7EF00877D79 /* poor_extended.cpp in Sources */,
 				9C1D61302958F7EF00877D79 /* bridge_locus.cpp in Sources */,

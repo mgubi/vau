@@ -10,11 +10,15 @@
 #include "vau_buffer.hpp"
 #include "vau_editor.hpp"
 
+static void
+set_env_path (string which, url val) {
+  cout << which << " := " << val << "\n";
+  if ((!is_none (val)) && (val->t != ""))
+    set_env (which, as_string (val));
+}
 
 void
 TeXmacs_main (int argc, char** argv) {
-  
-  set_env ("TEXMACS_PATH", "/Users/mgubi/t/svn-src/TeXmacs");
   
   initialize_scheme ();
   
@@ -32,6 +36,10 @@ TeXmacs_main (int argc, char** argv) {
 
 int
 main(int argc, char **argv) {
+  set_env ("TEXMACS_PATH", "/Users/mgubi/t/vau/resources");
+  set_env ("TEXMACS_HOME_PATH", "/Users/mgubi/.Vau");
+  set_env_path ("GUILE_LOAD_PATH", "$TEXMACS_PATH/progs:$GUILE_LOAD_PATH");
+
   the_et     = tuple ();
   the_et->obs= ip_observer (path ());
   //cache_initialize ();
