@@ -17,6 +17,8 @@
 #include "widget.hpp"
 #include "file.hpp"
 
+#include <unistd.h>
+#include <sys/stat.h>
 
 /******************************************************************************
 * Stuff to implement
@@ -248,10 +250,45 @@ void qt_clean_picture_cache () {
   
 }
 
+/******************************************************************************
+* Directory for temporary files
+******************************************************************************/
+
+static string main_tmp_dir= "$TEXMACS_HOME_PATH/system/tmp";
+
+void
+make_dir (url which) {
+  if (is_none(which))
+    return ;
+  if (!is_directory (which)) {
+    make_dir (head (which));
+    mkdir (which);
+  }
+}
+
+static url
+url_temp_dir_sub () {
+#ifdef OS_MINGW
+  static url tmp_dir=
+    url_system (main_tmp_dir) * url_system (as_string (time (NULL)));
+#else
+  static url tmp_dir=
+    url_system (main_tmp_dir) * url_system (as_string ((int) getpid ()));
+#endif
+  return (tmp_dir);
+}
+
 url
 url_temp_dir () {
-  return url ();
+  static url u;
+  if (u == url_none()) {
+    u= url_temp_dir_sub ();
+    make_dir (u);
+  }
+  return u;
 }
+
+/******************************************************************************/
 
 url
 get_texmacs_path () {
@@ -266,7 +303,7 @@ url
 get_texmacs_home_path () {
   url path= get_env ("TEXMACS_HOME_PATH");
   if (path == "")
-    path= url_system ("$HOME/.TeXmacs");
+    path= url_system ("$HOME/.Vau");
   return path;
 }
 

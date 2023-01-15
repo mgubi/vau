@@ -42,6 +42,14 @@ TMSCM_CONVERSION(object)
 //#include "Sqlite3/sqlite3.hpp"
 //#include "Updater/tm_updater.hpp"
 
+class scheme_tree_t {
+  scheme_tree t;
+public:
+  template <typename T> scheme_tree_t (T a) : t (a) {}
+//  scheme_tree_t (string s) : t (s) {}
+  operator tree () { return t; }
+};
+
 tmscm
 blackboxP (tmscm t) {
   bool b= tmscm_is_blackbox (t);
@@ -309,7 +317,7 @@ tree_remove_node (tree r, int pos) {
 
 tmscm
 scheme_tree_to_tmscm (scheme_tree t) {
-//  scheme_tree t= tw.t;
+//  scheme_tree_t t= tw.t;
   if (is_atomic (t)) {
     string s= t->label;
     if (s == "#t") return tmscm_true ();
@@ -331,6 +339,11 @@ scheme_tree_to_tmscm (scheme_tree t) {
   }
 }
 
+tmscm
+scheme_tree_t_to_tmscm (scheme_tree_t t) {
+  return scheme_tree_to_tmscm ((tree)t);
+}
+
 scheme_tree
 tmscm_to_scheme_tree (tmscm p) {
   if (tmscm_is_list (p)) {
@@ -349,6 +362,13 @@ tmscm_to_scheme_tree (tmscm p) {
   if (tmscm_is_tree (p)) return tree_to_scheme_tree (tmscm_to_tree (p));
   return "?";
 }
+
+scheme_tree_t tmscm_to_scheme_tree_t (tmscm obj) {
+  return tree (tmscm_to_scheme_tree (obj));
+}
+
+template<> tmscm tmscm_from<scheme_tree_t> (scheme_tree_t p) { return scheme_tree_t_to_tmscm (p); }
+template<> scheme_tree_t tmscm_to<scheme_tree_t> (tmscm p) { return tmscm_to_scheme_tree_t (p); }
 
 
 
@@ -1234,7 +1254,7 @@ DECLARE_GLUE_NAME_TYPE(supports_ghostscript,"supports-ghostscript?", bool ())
 DECLARE_GLUE_NAME_TYPE(scheme_dialect,"scheme-dialect", string ())
 DECLARE_GLUE_NAME_TYPE(get_texmacs_path,"get-texmacs-path", url ())
 DECLARE_GLUE_NAME_TYPE(get_texmacs_home_path,"get-texmacs-home-path", url ())
-//DECLARE_GLUE_NAME_TYPE(plugin_list,"plugin-list", scheme_tree ())
+//DECLARE_GLUE_NAME_TYPE(plugin_list,"plugin-list", scheme_tree_t ())
 DECLARE_GLUE_NAME_TYPE(set_fast_environments,"set-fast-environments", void (bool))
 DECLARE_GLUE_NAME_TYPE(tt_font_exists,"font-exists-in-tt?", bool (string))
 DECLARE_GLUE_NAME_BASE(eval_system,"eval-system", string (string))
@@ -1311,7 +1331,7 @@ DECLARE_GLUE_NAME_TYPE(players_set_speed,"players-set-speed", void (tree, double
 DECLARE_GLUE_NAME_TYPE(apply_effect,"apply-effect", void (content, array_url, url, int, int))
 DECLARE_GLUE_NAME_TYPE(tt_font_exists,"tt-exists?", bool (string))
 DECLARE_GLUE_NAME_TYPE(tt_dump,"tt-dump", void (url))
-DECLARE_GLUE_NAME_TYPE(tt_font_name,"tt-font-name", scheme_tree (url))
+DECLARE_GLUE_NAME_TYPE(tt_font_name,"tt-font-name", scheme_tree_t (url))
 DECLARE_GLUE_NAME_TYPE(tt_analyze,"tt-analyze", array_string (string))
 DECLARE_GLUE_NAME_TYPE(font_database_build,"font-database-build", void (url))
 DECLARE_GLUE_NAME_TYPE(font_database_build_local,"font-database-build-local", void ())
@@ -1328,7 +1348,7 @@ DECLARE_GLUE_NAME_TYPE(font_database_delta_families,"font-database-delta-familie
 DECLARE_GLUE_NAME_TYPE(font_database_styles,"font-database-styles", array_string (string))
 DECLARE_GLUE_NAME_BASE(font_database_search,"font-database-search", array_string (string, string))
 DECLARE_GLUE_NAME_TYPE(font_database_characteristics,"font-database-characteristics", array_string (string, string))
-DECLARE_GLUE_NAME_TYPE(font_database_substitutions,"font-database-substitutions", scheme_tree (string))
+DECLARE_GLUE_NAME_TYPE(font_database_substitutions,"font-database-substitutions", scheme_tree_t (string))
 DECLARE_GLUE_NAME_TYPE(family_to_master,"font-family->master", string (string))
 DECLARE_GLUE_NAME_TYPE(master_to_families,"font-master->families", array_string (string))
 DECLARE_GLUE_NAME_TYPE(master_features,"font-master-features", array_string (string))
@@ -1359,9 +1379,9 @@ DECLARE_GLUE_NAME_TYPE(apply_substitutions,"logical-font-substitute", array_stri
 DECLARE_GLUE_NAME_TYPE(main_family,"font-family-main", string (string))
 //DECLARE_GLUE_NAME_TYPE(image_to_psdoc,"image->psdoc", string (url))
 DECLARE_GLUE_NAME_TYPE(get_control_times,"anim-control-times", array_double (content))
-DECLARE_GLUE_NAME_TYPE(tree_to_scheme_tree,"tree->stree", scheme_tree (tree))
-tree scheme_tree_to_tree_wrap (scheme_tree t) { return scheme_tree_to_tree (t); };
-DECLARE_GLUE_NAME_TYPE(scheme_tree_to_tree_wrap,"stree->tree", tree (scheme_tree))
+DECLARE_GLUE_NAME_TYPE(tree_to_scheme_tree,"tree->stree", scheme_tree_t (tree))
+tree scheme_tree_to_tree_wrap (scheme_tree_t t) { return scheme_tree_to_tree (t); };
+DECLARE_GLUE_NAME_TYPE(scheme_tree_to_tree_wrap,"stree->tree", tree (scheme_tree_t))
 DECLARE_GLUE_NAME_TYPE(coerce_tree_string,"tree->string", string (tree))
 DECLARE_GLUE_NAME_TYPE(coerce_string_tree,"string->tree", tree (string))
 tree tm_to_tree (content t) { return tree (t); }
@@ -1471,10 +1491,10 @@ DECLARE_GLUE_NAME_TYPE(next_word,"path-next-word", path (content, path))
 DECLARE_GLUE_NAME_TYPE(previous_word,"path-previous-word", path (content, path))
 DECLARE_GLUE_NAME_TYPE(next_node,"path-next-node", path (content, path))
 DECLARE_GLUE_NAME_TYPE(previous_node,"path-previous-node", path (content, path))
-DECLARE_GLUE_NAME_TYPE(next_tag,"path-next-tag", path (content, path, scheme_tree))
-DECLARE_GLUE_NAME_TYPE(previous_tag,"path-previous-tag", path (content, path, scheme_tree))
-DECLARE_GLUE_NAME_TYPE(next_tag_same_argument,"path-next-tag-same-argument", path (content, path, scheme_tree))
-DECLARE_GLUE_NAME_TYPE(previous_tag_same_argument,"path-previous-tag-same-argument", path (content, path, scheme_tree))
+DECLARE_GLUE_NAME_TYPE(next_tag,"path-next-tag", path (content, path, scheme_tree_t))
+DECLARE_GLUE_NAME_TYPE(previous_tag,"path-previous-tag", path (content, path, scheme_tree_t))
+DECLARE_GLUE_NAME_TYPE(next_tag_same_argument,"path-next-tag-same-argument", path (content, path, scheme_tree_t))
+DECLARE_GLUE_NAME_TYPE(previous_tag_same_argument,"path-previous-tag-same-argument", path (content, path, scheme_tree_t))
 DECLARE_GLUE_NAME_TYPE(next_argument,"path-next-argument", path (content, path))
 DECLARE_GLUE_NAME_TYPE(previous_argument,"path-previous-argument", path (content, path))
 DECLARE_GLUE_NAME_TYPE(previous_section,"path-previous-section", path (content, path))
@@ -1665,13 +1685,13 @@ DECLARE_GLUE_NAME_TYPE(uni_before,"tmstring-before?", bool (string, string))
 //DECLARE_GLUE_NAME_TYPE(get_line_number,"get-line-number", int (string, int))
 //DECLARE_GLUE_NAME_TYPE(get_column_number,"get-column-number", int (string, int))
 //DECLARE_GLUE_NAME_TYPE(try_latex_export,"try-latex-export", tree (content, object, url, url))
-//DECLARE_GLUE_NAME_TYPE(parse_xml,"parse-xml", scheme_tree (string))
-//DECLARE_GLUE_NAME_TYPE(parse_html,"parse-html", scheme_tree (string))
+//DECLARE_GLUE_NAME_TYPE(parse_xml,"parse-xml", scheme_tree_t (string))
+//DECLARE_GLUE_NAME_TYPE(parse_html,"parse-html", scheme_tree_t (string))
 //DECLARE_GLUE_NAME_TYPE(parse_bib,"parse-bib", tree (string))
 //DECLARE_GLUE_NAME_TYPE(conservative_bib_import,"conservative-bib-import", tree (string, content, string))
 //DECLARE_GLUE_NAME_TYPE(conservative_bib_export,"conservative-bib-export", string (content, string, content))
 //DECLARE_GLUE_NAME_TYPE(clean_html,"clean-html", tree (content))
-//DECLARE_GLUE_NAME_TYPE(tmml_upgrade,"upgrade-tmml", tree (scheme_tree))
+//DECLARE_GLUE_NAME_TYPE(tmml_upgrade,"upgrade-tmml", tree (scheme_tree_t))
 //DECLARE_GLUE_NAME_TYPE(upgrade_mathml,"upgrade-mathml", tree (content))
 //DECLARE_GLUE_NAME_TYPE(retrieve_mathjax,"retrieve-mathjax", tree (int))
 //DECLARE_GLUE_NAME_TYPE(vernac_to_tree,"vernac->texmacs", tree (string))
@@ -1679,9 +1699,9 @@ DECLARE_GLUE_NAME_TYPE(uni_before,"tmstring-before?", bool (string, string))
 //DECLARE_GLUE_NAME_BASE(compute_keys,"compute-keys-string", array_string (string, string))
 //DECLARE_GLUE_NAME_BASE(compute_keys,"compute-keys-tree", array_string (content, string))
 //DECLARE_GLUE_NAME_BASE(compute_keys,"compute-keys-url", array_string (url))
-//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-string", scheme_tree (string, string))
-//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-tree", scheme_tree (content, string))
-//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-url", scheme_tree (url))
+//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-string", scheme_tree_t (string, string))
+//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-tree", scheme_tree_t (content, string))
+//DECLARE_GLUE_NAME_BASE(compute_index,"compute-index-url", scheme_tree_t (url))
 url url_wrap (url u) { return url(u); }
 url url_wrap (string s) { return url(s); }
 url url_wrap (string s, string s2) { return url(s, s2); }
@@ -1690,7 +1710,7 @@ DECLARE_GLUE_NAME_TYPE(url_root,"root->url", url (string))
 DECLARE_GLUE_NAME_BASE(url_wrap,"string->url", url (string))
 string as_string_wrap (url u) { return as_string(u); }
 DECLARE_GLUE_NAME_TYPE(as_string_wrap,"url->string", string (url))
-DECLARE_GLUE_NAME_BASE(as_tree,"url->stree", scheme_tree (url))
+DECLARE_GLUE_NAME_TYPE_BASE(as_tree,"url->stree", scheme_tree_t (url), scheme_tree (url))
 DECLARE_GLUE_NAME_BASE(url_system,"system->url", url (string))
 DECLARE_GLUE_NAME_TYPE(as_system_string,"url->system", string (url))
 DECLARE_GLUE_NAME_BASE(url_unix,"unix->url", url (string))
@@ -1781,15 +1801,15 @@ DECLARE_GLUE_NAME_TYPE(file_size,"url-size", int (url))
 //DECLARE_GLUE_NAME_BASE(get_field,"tmdb-get-field", array_string (url, string, string, double))
 //DECLARE_GLUE_NAME_BASE(remove_field,"tmdb-remove-field", void (url, string, string, double))
 //DECLARE_GLUE_NAME_TYPE(get_attributes,"tmdb-get-attributes", array_string (url, string, double))
-//DECLARE_GLUE_NAME_TYPE(set_entry,"tmdb-set-entry", void (url, string, scheme_tree, double))
-//DECLARE_GLUE_NAME_TYPE(get_entry,"tmdb-get-entry", scheme_tree (url, string, double))
+//DECLARE_GLUE_NAME_TYPE(set_entry,"tmdb-set-entry", void (url, string, scheme_tree_t, double))
+//DECLARE_GLUE_NAME_TYPE(get_entry,"tmdb-get-entry", scheme_tree_t (url, string, double))
 //DECLARE_GLUE_NAME_TYPE(remove_entry,"tmdb-remove-entry", void (url, string, double))
-//DECLARE_GLUE_NAME_TYPE(query,"tmdb-query", array_string (url, scheme_tree, double, int))
+//DECLARE_GLUE_NAME_TYPE(query,"tmdb-query", array_string (url, scheme_tree_t, double, int))
 //DECLARE_GLUE_NAME_TYPE(inspect_history,"tmdb-inspect-history", void (url, string))
 //DECLARE_GLUE_NAME_TYPE(get_completions,"tmdb-get-completions", array_string (url, string))
 //DECLARE_GLUE_NAME_TYPE(get_name_completions,"tmdb-get-name-completions", array_string (url, string))
 //DECLARE_GLUE_NAME_TYPE(sqlite3_present,"supports-sql?", bool ())
-//DECLARE_GLUE_NAME_TYPE(sql_exec,"sql-exec", scheme_tree (url, string))
+//DECLARE_GLUE_NAME_TYPE(sql_exec,"sql-exec", scheme_tree_t (url, string))
 //DECLARE_GLUE_NAME_TYPE(sql_quote,"sql-quote", string (string))
 //DECLARE_GLUE_NAME_TYPE(server_start,"server-start", void ())
 //DECLARE_GLUE_NAME_TYPE(server_stop,"server-stop", void ())
@@ -1833,7 +1853,7 @@ DECLARE_GLUE_NAME_TYPE(file_size,"url-size", int (url))
 //DECLARE_GLUE_NAME_TYPE(choice_widget,"widget-filtered-choice", widget (command, array_string, string, string))
 //DECLARE_GLUE_NAME_TYPE(tree_view_widget,"widget-tree-view", widget (command, tree, tree))
 //DECLARE_GLUE_NAME_TYPE(xpm_widget,"widget-xpm", widget (url))
-//DECLARE_GLUE_NAME_TYPE(box_widget,"widget-box", widget (scheme_tree, string, int, bool, bool))
+//DECLARE_GLUE_NAME_TYPE(box_widget,"widget-box", widget (scheme_tree_t, string, int, bool, bool))
 //DECLARE_GLUE_NAME_TYPE(glue_widget,"widget-glue", widget (bool, bool, int, int))
 //DECLARE_GLUE_NAME_TYPE(glue_widget,"widget-color", widget (content, bool, bool, int, int))
 //DECLARE_GLUE_NAME_TYPE(horizontal_list,"widget-hlist", widget (array_widget))
@@ -1938,26 +1958,26 @@ DECLARE_GLUE_NAME_TYPE(file_size,"url-size", int (url))
 //DECLARE_GLUE_NAME_TYPE(window_delete,"alt-window-delete", void (int))
 //DECLARE_GLUE_NAME_TYPE(window_show,"alt-window-show", void (int))
 //DECLARE_GLUE_NAME_TYPE(window_hide,"alt-window-hide", void (int))
-//DECLARE_GLUE_NAME_TYPE(window_get_size,"alt-window-get-size", scheme_tree (int))
+//DECLARE_GLUE_NAME_TYPE(window_get_size,"alt-window-get-size", scheme_tree_t (int))
 //DECLARE_GLUE_NAME_TYPE(window_set_size,"alt-window-set-size", void (int, int, int))
-//DECLARE_GLUE_NAME_TYPE(window_get_position,"alt-window-get-position", scheme_tree (int))
+//DECLARE_GLUE_NAME_TYPE(window_get_position,"alt-window-get-position", scheme_tree_t (int))
 //DECLARE_GLUE_NAME_TYPE(window_set_position,"alt-window-set-position", void (int, int, int))
 //DECLARE_GLUE_NAME_TYPE(window_search,"alt-window-search", path (url))
 //DECLARE_GLUE_NAME_TYPE(bibtex_present,"supports-bibtex?", bool ())
 //DECLARE_GLUE_NAME_TYPE(bibtex_run,"bibtex-run", tree (string, string, url, array_string))
-//DECLARE_GLUE_NAME_TYPE(bib_add_period,"bib-add-period", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_locase_first,"bib-locase-first", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_upcase_first,"bib-upcase-first", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_locase,"bib-locase", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_upcase,"bib-upcase", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_default_preserve_case,"bib-default-preserve-case", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_default_upcase_first,"bib-default-upcase-first", scheme_tree (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_purify,"bib-purify", string (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_text_length,"bib-text-length", int (scheme_tree))
-//DECLARE_GLUE_NAME_TYPE(bib_prefix,"bib-prefix", string (scheme_tree, int))
-//DECLARE_GLUE_NAME_TYPE(bib_empty,"bib-empty?", bool (scheme_tree, string))
-//DECLARE_GLUE_NAME_TYPE(bib_field,"bib-field", scheme_tree (scheme_tree, string))
-//DECLARE_GLUE_NAME_TYPE(bib_abbreviate,"bib-abbreviate", scheme_tree (scheme_tree, scheme_tree, scheme_tree))
+//DECLARE_GLUE_NAME_TYPE(bib_add_period,"bib-add-period", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_locase_first,"bib-locase-first", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_upcase_first,"bib-upcase-first", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_locase,"bib-locase", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_upcase,"bib-upcase", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_default_preserve_case,"bib-default-preserve-case", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_default_upcase_first,"bib-default-upcase-first", scheme_tree_t (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_purify,"bib-purify", string (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_text_length,"bib-text-length", int (scheme_tree_t))
+//DECLARE_GLUE_NAME_TYPE(bib_prefix,"bib-prefix", string (scheme_tree_t, int))
+//DECLARE_GLUE_NAME_TYPE(bib_empty,"bib-empty?", bool (scheme_tree_t, string))
+//DECLARE_GLUE_NAME_TYPE(bib_field,"bib-field", scheme_tree_t (scheme_tree_t, string))
+//DECLARE_GLUE_NAME_TYPE(bib_abbreviate,"bib-abbreviate", scheme_tree_t (scheme_tree_t, scheme_tree_t, scheme_tree_t))
 
 
 void

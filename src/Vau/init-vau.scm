@@ -92,7 +92,6 @@
 
 (display "Booting Vau kernel functionality\n")
 (load (url-concretize "$TEXMACS_PATH/progs/kernel/boot/boot.scm"))
-(display (url-concretize "$TEXMACS_PATH/progs/kernel/boot/boot.scm"))
 (inherit-modules (kernel boot compat) (kernel boot abbrevs)
                  (kernel boot debug) (kernel boot srfi)
                  (kernel boot ahash-table) (kernel boot prologue))
@@ -121,8 +120,9 @@
 ;(display* "time: " (- (texmacs-time) boot-start) "\n")
 ;(display* "memory: " (texmacs-memory) " bytes\n")
 
-(display "XXXXXXXX\n")
 (define (notify-debug-message channel)
   (noop))
   
 (define (standard-paper-size s) s)
+
+(display "****** End booting init-vau.scm\n")
