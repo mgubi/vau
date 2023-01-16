@@ -120,9 +120,44 @@
 ;(display* "time: " (- (texmacs-time) boot-start) "\n")
 ;(display* "memory: " (texmacs-memory) " bytes\n")
 
+(display "Booting converters\n")
+(lazy-format (convert rewrite init-rewrite) texmacs verbatim)
+(lazy-format (convert tmml init-tmml) tmml)
+;(lazy-format (convert latex init-latex) latex)
+;(lazy-format (convert html init-html) html)
+;(lazy-format (convert bibtex init-bibtex) bibtex)
+;(lazy-format (convert images init-images)
+;             postscript pdf xfig xmgrace svg xpm jpeg ppm gif png pnm)
+;(lazy-define (convert images tmimage)
+;             export-selection-as-graphics clipboard-copy-image)
+;(lazy-define (convert rewrite init-rewrite) texmacs->code texmacs->verbatim)
+;(lazy-define (convert html tmhtml) ext-tmhtml-eqnarray*)
+;(define-secure-symbols ext-tmhtml-eqnarray*)
+;(lazy-define (convert html tmhtml-expand) tmhtml-env-patch)
+;(lazy-define (convert latex latex-drd) latex-arity latex-type)
+;(lazy-define (convert latex tmtex) tmtex-env-patch)
+;(lazy-define (convert latex latex-tools) latex-set-virtual-packages
+;             latex-has-style? latex-has-package?
+;             latex-has-texmacs-style? latex-has-texmacs-package?)
+;(lazy-menu (convert latex tmtex-widgets) tmtex-menu)
+;(display* "time: " (- (texmacs-time) boot-start) "\n")
+;(display* "memory: " (texmacs-memory) " bytes\n")
+
+(display "Booting partial document facilities\n")
+(lazy-define (part part-shared) buffer-initialize buffer-notify)
+;(lazy-menu (part part-menu) document-master-menu)
+(lazy-tmfs-handler (part part-tmfs) part)
+;(display* "time: " (- (texmacs-time) boot-start) "\n")
+;(display* "memory: " (texmacs-memory) " bytes\n")
+
+(set-new-fonts #t)
+
 (define (notify-debug-message channel)
   (noop))
   
 (define (standard-paper-size s) s)
+(define (gui-version) "none")
+(define (image->psdoc a) "")
+
 
 (display "****** End booting init-vau.scm\n")

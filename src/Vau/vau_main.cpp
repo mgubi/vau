@@ -15,6 +15,10 @@
 #include "convert.hpp"
 #include "boot.hpp"
 
+
+extern void setup_tex (); // from Plugins/Metafont/tex_init.cpp
+extern void init_tex  (); // from Plugins/Metafont/tex_init.cpp
+
 /******************************************************************************
 * Subroutines for paths
 ******************************************************************************/
@@ -196,6 +200,8 @@ TeXmacs_main (int argc, char** argv) {
   load_user_preferences ();
   //cout << "Initialize -- Environment variables\n";
   init_env_vars ();
+
+  init_tex (); // for paths 
 
   initialize_scheme ();
   
