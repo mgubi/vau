@@ -364,6 +364,7 @@ import_tree (url u, string fm) {
 bool
 buffer_import (url name, url src, string fm) {
   tree t= import_tree (src, fm);
+  //cout << t << "\n";
   if (t == "error") return true;
   set_buffer_tree (name, t);
   return false;

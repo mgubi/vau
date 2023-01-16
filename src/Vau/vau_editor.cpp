@@ -209,6 +209,15 @@ editor_rep::clear_local_info () {
   buf->data->aux= hashmap<string,tree> ();
 }
 
+void
+editor_rep::init_style (string name) {
+  if ((name == "none") || (name == "") || (name == "style")) the_style= TUPLE;
+  else if (arity (the_style) == 0) the_style= tree (TUPLE, name);
+  else the_style= tree (TUPLE, name) * the_style (1, N(the_style));
+  //FIXME: require_save ();
+  notify_change (THE_ENVIRONMENT);
+}
+
 /******************************************************************************
 * Processing preamble
 ******************************************************************************/

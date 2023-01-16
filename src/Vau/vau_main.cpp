@@ -214,6 +214,11 @@ TeXmacs_main (int argc, char** argv) {
   string output ("/Users/mgubi/vau-test.ps");
   tm_buffer buf= concrete_buffer_insist (name);
   editor ed (buf);
+  
+//  string tm_init_buffer= "/Users/mgubi/t/vau/src/Vau/init-buffer.scm";
+//  if (exists (tm_init_buffer)) exec_file (tm_init_buffer);
+  ed->init_style("generic");
+
   ed->print_to_file (output);
 }
 
