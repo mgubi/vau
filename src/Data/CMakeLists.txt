@@ -1,0 +1,8 @@
+add_subdirectory(Document)
+add_subdirectory(Drd)
+add_subdirectory(History)
+add_subdirectory(Observers)
+add_subdirectory(Parser)
+add_subdirectory(String)
+add_subdirectory(Tree)
+add_subdirectory(Convert)

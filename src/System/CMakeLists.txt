@@ -1,0 +1,6 @@
+add_subdirectory(Boot)
+add_subdirectory(Classes)
+add_subdirectory(Files)
+add_subdirectory(Language)
+add_subdirectory(Link)
+add_subdirectory(Misc)

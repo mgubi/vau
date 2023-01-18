@@ -1,0 +1,6 @@
+add_subdirectory(Generic)
+add_subdirectory(Texmacs)
+add_subdirectory(Scheme)
+add_subdirectory(Xml)
+add_subdirectory(Verbatim)
+add_subdirectory(Tex)
