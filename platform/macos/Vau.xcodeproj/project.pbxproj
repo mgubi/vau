@@ -825,7 +825,6 @@
 		9C620D1929591BCC0041CFA3 /* vau_stuff.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_stuff.hpp; sourceTree = "<group>"; };
 		9CDB09BD295B04400033CF82 /* vau_main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_main.cpp; sourceTree = "<group>"; };
 		9CDB09BE295B04400033CF82 /* vau_main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_main.hpp; sourceTree = "<group>"; };
-		9CDB09C1295B21E50033CF82 /* init-vau.scm */ = {isa = PBXFileReference; lastKnownFileType = text; path = "init-vau.scm"; sourceTree = "<group>"; };
 		9CDB09C2295B22FC0033CF82 /* vau-init-unused.scm */ = {isa = PBXFileReference; lastKnownFileType = text; path = "vau-init-unused.scm"; sourceTree = "<group>"; };
 		9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_buffer.cpp; sourceTree = "<group>"; };
 		9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_buffer.hpp; sourceTree = "<group>"; };
@@ -954,7 +953,6 @@
 				9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */,
 				9CDB09BD295B04400033CF82 /* vau_main.cpp */,
 				9CDB09BE295B04400033CF82 /* vau_main.hpp */,
-				9CDB09C1295B21E50033CF82 /* init-vau.scm */,
 				9CDB09C2295B22FC0033CF82 /* vau-init-unused.scm */,
 				9C01CB91295CA62700C00445 /* vau_glue.cpp */,
 				9C01CB92295CA62700C00445 /* vau_glue.hpp */,
@@ -2354,7 +2352,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -2439,7 +2437,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
