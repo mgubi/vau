@@ -1,2 +1,5 @@
 platform/macos/Vau.xcodeproj/project.xcworkspace/xcuserdata/**
 platform/macos/Vau.xcodeproj/xcuserdata/**
+.idea
+cmake-build-debug
+build
