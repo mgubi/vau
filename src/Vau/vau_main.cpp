@@ -213,7 +213,7 @@ TeXmacs_main (int argc, char** argv) {
   bench_cumul ("initialize scheme");
 
   string name ("$TEXMACS_PATH/examples/texts/accent-test.tm");
-  string output ("$HOME/vau-test.ps");
+  string output ("$HOME/vau-test.pdf");
   tm_buffer buf= concrete_buffer_insist (name);
   editor ed (buf);
   
@@ -223,6 +223,10 @@ TeXmacs_main (int argc, char** argv) {
 
   ed->print_to_file (output);
 }
+
+
+bool use_pdf () { return true; }
+bool use_ps () { return true; }
 
 int
 main(int argc, char **argv) {

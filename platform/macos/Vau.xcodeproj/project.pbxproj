@@ -288,6 +288,154 @@
 		9C620D242959253E0041CFA3 /* preferences.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C58295901C90041CFA3 /* preferences.cpp */; };
 		9C620D2729592CEB0041CFA3 /* make_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C90295901C90041CFA3 /* make_file.cpp */; };
 		9C620D2829592E7B0041CFA3 /* widget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60042958F7EF00877D79 /* widget.cpp */; };
+		9CCA984E297B119F00CAA085 /* aeskey.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96F5297B119F00CAA085 /* aeskey.c */; };
+		9CCA984F297B119F00CAA085 /* aescrypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96F7297B119F00CAA085 /* aescrypt.c */; };
+		9CCA9850297B119F00CAA085 /* aes_modes.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96FB297B119F00CAA085 /* aes_modes.c */; };
+		9CCA9851297B119F00CAA085 /* aes_ni.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96FC297B119F00CAA085 /* aes_ni.c */; };
+		9CCA9852297B119F00CAA085 /* aestab.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9700297B119F00CAA085 /* aestab.c */; };
+		9CCA9853297B119F00CAA085 /* Type1Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9702297B119F00CAA085 /* Type1Input.cpp */; };
+		9CCA9854297B119F00CAA085 /* AbstractContentContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9703297B119F00CAA085 /* AbstractContentContext.cpp */; };
+		9CCA9855297B119F00CAA085 /* PDFFormXObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9705297B119F00CAA085 /* PDFFormXObject.cpp */; };
+		9CCA9856297B119F00CAA085 /* UnicodeString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9707297B119F00CAA085 /* UnicodeString.cpp */; };
+		9CCA9857297B119F00CAA085 /* PDFDocumentCopyingContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9708297B119F00CAA085 /* PDFDocumentCopyingContext.cpp */; };
+		9CCA9858297B119F00CAA085 /* CFFANSIFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9709297B119F00CAA085 /* CFFANSIFontWriter.cpp */; };
+		9CCA9859297B119F00CAA085 /* OpenTypeFileInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA970A297B119F00CAA085 /* OpenTypeFileInput.cpp */; };
+		9CCA985A297B119F00CAA085 /* InputStringStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA970D297B119F00CAA085 /* InputStringStream.cpp */; };
+		9CCA985B297B119F00CAA085 /* InputAsciiHexDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA970E297B119F00CAA085 /* InputAsciiHexDecodeStream.cpp */; };
+		9CCA985C297B119F00CAA085 /* PDFStreamInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9713297B119F00CAA085 /* PDFStreamInput.cpp */; };
+		9CCA985D297B119F00CAA085 /* PDFModifiedPage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9716297B119F00CAA085 /* PDFModifiedPage.cpp */; };
+		9CCA985E297B119F00CAA085 /* WinAnsiEncoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9718297B119F00CAA085 /* WinAnsiEncoding.cpp */; };
+		9CCA985F297B119F00CAA085 /* OutputFlateDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA971A297B119F00CAA085 /* OutputFlateDecodeStream.cpp */; };
+		9CCA9860297B119F00CAA085 /* OpenTypePrimitiveReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA971C297B119F00CAA085 /* OpenTypePrimitiveReader.cpp */; };
+		9CCA9861297B119F00CAA085 /* Log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA971D297B119F00CAA085 /* Log.cpp */; };
+		9CCA9862297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA971E297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp */; };
+		9CCA9863297B119F00CAA085 /* InputPFBDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA971F297B119F00CAA085 /* InputPFBDecodeStream.cpp */; };
+		9CCA9864297B119F00CAA085 /* PDFCosDict.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9722297B119F00CAA085 /* PDFCosDict.cpp */; };
+		9CCA9865297B119F00CAA085 /* FontDescriptorWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9723297B119F00CAA085 /* FontDescriptorWriter.cpp */; };
+		9CCA9866297B119F00CAA085 /* PDFTextString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9726297B119F00CAA085 /* PDFTextString.cpp */; };
+		9CCA9867297B119F00CAA085 /* InputBufferedStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA972E297B119F00CAA085 /* InputBufferedStream.cpp */; };
+		9CCA9868297B119F00CAA085 /* OutputFileStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9731297B119F00CAA085 /* OutputFileStream.cpp */; };
+		9CCA9869297B119F00CAA085 /* TrueTypeANSIFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9735297B119F00CAA085 /* TrueTypeANSIFontWriter.cpp */; };
+		9CCA986A297B119F00CAA085 /* InputStreamSkipperStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9738297B119F00CAA085 /* InputStreamSkipperStream.cpp */; };
+		9CCA986B297B119F00CAA085 /* OutputStreamTraits.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA973A297B119F00CAA085 /* OutputStreamTraits.cpp */; };
+		9CCA986C297B119F00CAA085 /* CharStringType2Tracer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA973B297B119F00CAA085 /* CharStringType2Tracer.cpp */; };
+		9CCA986D297B119F00CAA085 /* Ascii7Encoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA973C297B119F00CAA085 /* Ascii7Encoding.cpp */; };
+		9CCA986E297B119F00CAA085 /* PDFDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA973F297B119F00CAA085 /* PDFDictionary.cpp */; };
+		9CCA986F297B119F00CAA085 /* PDFDate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9740297B119F00CAA085 /* PDFDate.cpp */; };
+		9CCA9870297B119F00CAA085 /* PDFObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9741297B119F00CAA085 /* PDFObject.cpp */; };
+		9CCA9871297B119F00CAA085 /* PDFRectangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9742297B119F00CAA085 /* PDFRectangle.cpp */; };
+		9CCA9872297B119F00CAA085 /* GraphicState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9743297B119F00CAA085 /* GraphicState.cpp */; };
+		9CCA9873297B119F00CAA085 /* CFFPrimitiveReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9745297B119F00CAA085 /* CFFPrimitiveReader.cpp */; };
+		9CCA9874297B119F00CAA085 /* ParsedPrimitiveHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9748297B119F00CAA085 /* ParsedPrimitiveHelper.cpp */; };
+		9CCA9875297B119F00CAA085 /* PDFNull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA974D297B119F00CAA085 /* PDFNull.cpp */; };
+		9CCA9876297B119F00CAA085 /* Type2CharStringWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA974E297B119F00CAA085 /* Type2CharStringWriter.cpp */; };
+		9CCA9877297B119F00CAA085 /* CharStringType2Flattener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9750297B119F00CAA085 /* CharStringType2Flattener.cpp */; };
+		9CCA9878297B119F00CAA085 /* PDFArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9752297B119F00CAA085 /* PDFArray.cpp */; };
+		9CCA9879297B119F00CAA085 /* OutputStringBufferStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9755297B119F00CAA085 /* OutputStringBufferStream.cpp */; };
+		9CCA987A297B119F00CAA085 /* ResourcesDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9758297B119F00CAA085 /* ResourcesDictionary.cpp */; };
+		9CCA987B297B119F00CAA085 /* FreeTypeType1Wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9759297B119F00CAA085 /* FreeTypeType1Wrapper.cpp */; };
+		9CCA987C297B119F00CAA085 /* CIDFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA975A297B119F00CAA085 /* CIDFontWriter.cpp */; };
+		9CCA987D297B119F00CAA085 /* DictionaryContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA975C297B119F00CAA085 /* DictionaryContext.cpp */; };
+		9CCA987E297B119F00CAA085 /* EncryptionOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA975F297B119F00CAA085 /* EncryptionOptions.cpp */; };
+		9CCA987F297B119F00CAA085 /* TrueTypePrimitiveWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9764297B119F00CAA085 /* TrueTypePrimitiveWriter.cpp */; };
+		9CCA9880297B119F00CAA085 /* PDFUsedFont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9767297B119F00CAA085 /* PDFUsedFont.cpp */; };
+		9CCA9881297B119F00CAA085 /* Timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA976C297B119F00CAA085 /* Timer.cpp */; };
+		9CCA9882297B119F00CAA085 /* InputDCTDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA976E297B119F00CAA085 /* InputDCTDecodeStream.cpp */; };
+		9CCA9883297B119F00CAA085 /* InputFileStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA976F297B119F00CAA085 /* InputFileStream.cpp */; };
+		9CCA9884297B119F00CAA085 /* RC4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9770297B119F00CAA085 /* RC4.cpp */; };
+		9CCA9885297B119F00CAA085 /* XObjectContentContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9771297B119F00CAA085 /* XObjectContentContext.cpp */; };
+		9CCA9886297B119F00CAA085 /* RefCountObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9772297B119F00CAA085 /* RefCountObject.cpp */; };
+		9CCA9887297B119F00CAA085 /* PDFTiledPattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9773297B119F00CAA085 /* PDFTiledPattern.cpp */; };
+		9CCA9888297B119F00CAA085 /* Trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9774297B119F00CAA085 /* Trace.cpp */; };
+		9CCA9889297B119F00CAA085 /* InputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9775297B119F00CAA085 /* InputFile.cpp */; };
+		9CCA988A297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9778297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp */; };
+		9CCA988B297B119F00CAA085 /* TrailerInformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA977D297B119F00CAA085 /* TrailerInformation.cpp */; };
+		9CCA988C297B119F00CAA085 /* OutputBufferedStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9780297B119F00CAA085 /* OutputBufferedStream.cpp */; };
+		9CCA988D297B119F00CAA085 /* CFFPrimitiveWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9782297B119F00CAA085 /* CFFPrimitiveWriter.cpp */; };
+		9CCA988E297B119F00CAA085 /* DocumentContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9784297B119F00CAA085 /* DocumentContext.cpp */; };
+		9CCA988F297B119F00CAA085 /* PDFPage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9785297B119F00CAA085 /* PDFPage.cpp */; };
+		9CCA9890297B119F00CAA085 /* PrimitiveObjectsWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA978C297B119F00CAA085 /* PrimitiveObjectsWriter.cpp */; };
+		9CCA9891297B119F00CAA085 /* InputAscii85DecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA978E297B119F00CAA085 /* InputAscii85DecodeStream.cpp */; };
+		9CCA9892297B119F00CAA085 /* TimersRegistry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9791297B119F00CAA085 /* TimersRegistry.cpp */; };
+		9CCA9893297B119F00CAA085 /* PDFSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9793297B119F00CAA085 /* PDFSymbol.cpp */; };
+		9CCA9894297B119F00CAA085 /* PageTree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9795297B119F00CAA085 /* PageTree.cpp */; };
+		9CCA9895297B119F00CAA085 /* PDFName.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9797297B119F00CAA085 /* PDFName.cpp */; };
+		9CCA9896297B119F00CAA085 /* JPEGImageParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA979A297B119F00CAA085 /* JPEGImageParser.cpp */; };
+		9CCA9897297B119F00CAA085 /* WrittenFontTrueType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA979B297B119F00CAA085 /* WrittenFontTrueType.cpp */; };
+		9CCA9898297B119F00CAA085 /* FreeTypeOpenTypeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA979F297B119F00CAA085 /* FreeTypeOpenTypeWrapper.cpp */; };
+		9CCA9899297B119F00CAA085 /* TiffUsageParameters.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97A1297B119F00CAA085 /* TiffUsageParameters.cpp */; };
+		9CCA989A297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97A2297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp */; };
+		9CCA989B297B119F00CAA085 /* ObjectsContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97A4297B119F00CAA085 /* ObjectsContext.cpp */; };
+		9CCA989C297B119F00CAA085 /* FreeTypeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97A9297B119F00CAA085 /* FreeTypeWrapper.cpp */; };
+		9CCA989D297B119F00CAA085 /* PDFParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97B2297B119F00CAA085 /* PDFParser.cpp */; };
+		9CCA989E297B119F00CAA085 /* InputByteArrayStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97B6297B119F00CAA085 /* InputByteArrayStream.cpp */; };
+		9CCA989F297B119F00CAA085 /* InputCharStringDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97B8297B119F00CAA085 /* InputCharStringDecodeStream.cpp */; };
+		9CCA98A0297B119F00CAA085 /* PDFCosArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97B9297B119F00CAA085 /* PDFCosArray.cpp */; };
+		9CCA98A1297B119F00CAA085 /* StateWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97BA297B119F00CAA085 /* StateWriter.cpp */; };
+		9CCA98A2297B119F00CAA085 /* EncryptionHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97C1297B119F00CAA085 /* EncryptionHelper.cpp */; };
+		9CCA98A3297B119F00CAA085 /* PDFWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97C2297B119F00CAA085 /* PDFWriter.cpp */; };
+		9CCA98A4297B119F00CAA085 /* PDFPageMergingHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97C5297B119F00CAA085 /* PDFPageMergingHelper.cpp */; };
+		9CCA98A5297B119F00CAA085 /* OutputRC4XcodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97C6297B119F00CAA085 /* OutputRC4XcodeStream.cpp */; };
+		9CCA98A6297B119F00CAA085 /* Type1ToType2Converter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97CC297B119F00CAA085 /* Type1ToType2Converter.cpp */; };
+		9CCA98A7297B119F00CAA085 /* DescendentFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97D0297B119F00CAA085 /* DescendentFontWriter.cpp */; };
+		9CCA98A8297B119F00CAA085 /* PDFDocEncoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97D2297B119F00CAA085 /* PDFDocEncoding.cpp */; };
+		9CCA98A9297B119F00CAA085 /* AbstractWrittenFont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97D3297B119F00CAA085 /* AbstractWrittenFont.cpp */; };
+		9CCA98AA297B119F00CAA085 /* PageContentContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97D5297B119F00CAA085 /* PageContentContext.cpp */; };
+		9CCA98AB297B119F00CAA085 /* ANSIFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97D6297B119F00CAA085 /* ANSIFontWriter.cpp */; };
+		9CCA98AC297B119F00CAA085 /* UppercaseSequance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97DA297B119F00CAA085 /* UppercaseSequance.cpp */; };
+		9CCA98AD297B119F00CAA085 /* GraphicStateStack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97DC297B119F00CAA085 /* GraphicStateStack.cpp */; };
+		9CCA98AE297B119F00CAA085 /* PDFDictionaryIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97E1297B119F00CAA085 /* PDFDictionaryIterator.cpp */; };
+		9CCA98AF297B119F00CAA085 /* PDFParserTokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97E2297B119F00CAA085 /* PDFParserTokenizer.cpp */; };
+		9CCA98B0297B119F00CAA085 /* CharStringType1Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97E5297B119F00CAA085 /* CharStringType1Interpreter.cpp */; };
+		9CCA98B1297B119F00CAA085 /* PFMFileReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97E7297B119F00CAA085 /* PFMFileReader.cpp */; };
+		9CCA98B2297B119F00CAA085 /* CatalogInformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97E9297B119F00CAA085 /* CatalogInformation.cpp */; };
+		9CCA98B3297B119F00CAA085 /* JPEGImageInformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97EC297B119F00CAA085 /* JPEGImageInformation.cpp */; };
+		9CCA98B4297B119F00CAA085 /* OutputFlateEncodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97ED297B119F00CAA085 /* OutputFlateEncodeStream.cpp */; };
+		9CCA98B5297B119F00CAA085 /* UsedFontsRepository.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97EE297B119F00CAA085 /* UsedFontsRepository.cpp */; };
+		9CCA98B6297B119F00CAA085 /* PDFIndirectObjectReference.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97F2297B119F00CAA085 /* PDFIndirectObjectReference.cpp */; };
+		9CCA98B7297B119F00CAA085 /* PDFObjectParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97F6297B119F00CAA085 /* PDFObjectParser.cpp */; };
+		9CCA98B8297B119F00CAA085 /* PDFStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97F7297B119F00CAA085 /* PDFStream.cpp */; };
+		9CCA98B9297B119F00CAA085 /* StateReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97FC297B119F00CAA085 /* StateReader.cpp */; };
+		9CCA98BA297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA97FD297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp */; };
+		9CCA98BB297B119F00CAA085 /* DecryptionHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9802297B119F00CAA085 /* DecryptionHelper.cpp */; };
+		9CCA98BC297B119F00CAA085 /* CFFDescendentFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9803297B119F00CAA085 /* CFFDescendentFontWriter.cpp */; };
+		9CCA98BD297B119F00CAA085 /* InputPredictorPNGOptimumStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9809297B119F00CAA085 /* InputPredictorPNGOptimumStream.cpp */; };
+		9CCA98BE297B119F00CAA085 /* PDFParsingOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9810297B119F00CAA085 /* PDFParsingOptions.cpp */; };
+		9CCA98BF297B119F00CAA085 /* TiledPatternContentContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9812297B119F00CAA085 /* TiledPatternContentContext.cpp */; };
+		9CCA98C0297B119F00CAA085 /* PDFImageXObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9814297B119F00CAA085 /* PDFImageXObject.cpp */; };
+		9CCA98C1297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9816297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.cpp */; };
+		9CCA98C2297B119F00CAA085 /* PDFPageInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9817297B119F00CAA085 /* PDFPageInput.cpp */; };
+		9CCA98C3297B119F00CAA085 /* InputStringBufferStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9818297B119F00CAA085 /* InputStringBufferStream.cpp */; };
+		9CCA98C4297B119F00CAA085 /* PDFLiteralString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA981A297B119F00CAA085 /* PDFLiteralString.cpp */; };
+		9CCA98C5297B119F00CAA085 /* WrittenFontCFF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA981B297B119F00CAA085 /* WrittenFontCFF.cpp */; };
+		9CCA98C6297B119F00CAA085 /* StandardEncoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA981D297B119F00CAA085 /* StandardEncoding.cpp */; };
+		9CCA98C7297B119F00CAA085 /* InputAESDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA981E297B119F00CAA085 /* InputAESDecodeStream.cpp */; };
+		9CCA98C8297B119F00CAA085 /* InputLimitedStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9820297B119F00CAA085 /* InputLimitedStream.cpp */; };
+		9CCA98C9297B119F00CAA085 /* InputRC4XcodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9824297B119F00CAA085 /* InputRC4XcodeStream.cpp */; };
+		9CCA98CA297B119F00CAA085 /* PSBool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9827297B119F00CAA085 /* PSBool.cpp */; };
+		9CCA98CB297B119F00CAA085 /* CFFFileInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9828297B119F00CAA085 /* CFFFileInput.cpp */; };
+		9CCA98CC297B119F00CAA085 /* CFFEmbeddedFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9829297B119F00CAA085 /* CFFEmbeddedFontWriter.cpp */; };
+		9CCA98CD297B119F00CAA085 /* FreeTypeFaceWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA982A297B119F00CAA085 /* FreeTypeFaceWrapper.cpp */; };
+		9CCA98CE297B119F00CAA085 /* InputFlateDecodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA982B297B119F00CAA085 /* InputFlateDecodeStream.cpp */; };
+		9CCA98CF297B119F00CAA085 /* PDFBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA982E297B119F00CAA085 /* PDFBoolean.cpp */; };
+		9CCA98D0297B119F00CAA085 /* PDFHexString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA982F297B119F00CAA085 /* PDFHexString.cpp */; };
+		9CCA98D1297B119F00CAA085 /* InfoDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9830297B119F00CAA085 /* InfoDictionary.cpp */; };
+		9CCA98D2297B119F00CAA085 /* PDFArrayIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9832297B119F00CAA085 /* PDFArrayIterator.cpp */; };
+		9CCA98D3297B119F00CAA085 /* JPEGImageHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9838297B119F00CAA085 /* JPEGImageHandler.cpp */; };
+		9CCA98D4297B119F00CAA085 /* TrueTypeDescendentFontWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9839297B119F00CAA085 /* TrueTypeDescendentFontWriter.cpp */; };
+		9CCA98D5297B119F00CAA085 /* XCryptionCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA983A297B119F00CAA085 /* XCryptionCommon.cpp */; };
+		9CCA98D6297B119F00CAA085 /* PDFInteger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA983B297B119F00CAA085 /* PDFInteger.cpp */; };
+		9CCA98D7297B119F00CAA085 /* CharStringType2Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA983F297B119F00CAA085 /* CharStringType2Interpreter.cpp */; };
+		9CCA98D8297B119F00CAA085 /* MD5Generator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9840297B119F00CAA085 /* MD5Generator.cpp */; };
+		9CCA98D9297B119F00CAA085 /* OutputAESEncodeStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9841297B119F00CAA085 /* OutputAESEncodeStream.cpp */; };
+		9CCA98DA297B119F00CAA085 /* OutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9843297B119F00CAA085 /* OutputFile.cpp */; };
+		9CCA98DB297B119F00CAA085 /* PNGImageHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9846297B119F00CAA085 /* PNGImageHandler.cpp */; };
+		9CCA98DC297B119F00CAA085 /* SimpleStringTokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9847297B119F00CAA085 /* SimpleStringTokenizer.cpp */; };
+		9CCA98DD297B119F00CAA085 /* PDFDocumentHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA9848297B119F00CAA085 /* PDFDocumentHandler.cpp */; };
+		9CCA98DE297B119F00CAA085 /* CMYKRGBColor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA984A297B119F00CAA085 /* CMYKRGBColor.cpp */; };
+		9CCA98DF297B119F00CAA085 /* CharStringType1Tracer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA984B297B119F00CAA085 /* CharStringType1Tracer.cpp */; };
+		9CCA98E0297B119F00CAA085 /* PDFReal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA984C297B119F00CAA085 /* PDFReal.cpp */; };
+		9CCA98E1297B119F00CAA085 /* pdf_hummus_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA984D297B119F00CAA085 /* pdf_hummus_renderer.cpp */; };
 		9CDB09BF295B04400033CF82 /* vau_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CDB09BD295B04400033CF82 /* vau_main.cpp */; };
 		9CF282CA295A09840064D7F2 /* printer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FB92958F7EF00877D79 /* printer.cpp */; };
 		9CF282CE295A14BB0064D7F2 /* vau_buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */; };
@@ -823,6 +971,352 @@
 		9C620CFA29590C540041CFA3 /* load_tex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = load_tex.cpp; sourceTree = "<group>"; };
 		9C620D1829591BCC0041CFA3 /* vau_stuff.cpp */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = vau_stuff.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		9C620D1929591BCC0041CFA3 /* vau_stuff.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_stuff.hpp; sourceTree = "<group>"; };
+		9CCA96F2297B119F00CAA085 /* pdf_hummus_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pdf_hummus_renderer.hpp; sourceTree = "<group>"; };
+		9CCA96F4297B119F00CAA085 /* aes_ni.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_ni.h; sourceTree = "<group>"; };
+		9CCA96F5297B119F00CAA085 /* aeskey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aeskey.c; sourceTree = "<group>"; };
+		9CCA96F6297B119F00CAA085 /* aestab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aestab.h; sourceTree = "<group>"; };
+		9CCA96F7297B119F00CAA085 /* aescrypt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aescrypt.c; sourceTree = "<group>"; };
+		9CCA96F8297B119F00CAA085 /* aesopt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aesopt.h; sourceTree = "<group>"; };
+		9CCA96F9297B119F00CAA085 /* aes_via_ace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_via_ace.h; sourceTree = "<group>"; };
+		9CCA96FA297B119F00CAA085 /* brg_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brg_types.h; sourceTree = "<group>"; };
+		9CCA96FB297B119F00CAA085 /* aes_modes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_modes.c; sourceTree = "<group>"; };
+		9CCA96FC297B119F00CAA085 /* aes_ni.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_ni.c; sourceTree = "<group>"; };
+		9CCA96FD297B119F00CAA085 /* brg_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brg_endian.h; sourceTree = "<group>"; };
+		9CCA96FE297B119F00CAA085 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
+		9CCA96FF297B119F00CAA085 /* aescpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aescpp.h; sourceTree = "<group>"; };
+		9CCA9700297B119F00CAA085 /* aestab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aestab.c; sourceTree = "<group>"; };
+		9CCA9702297B119F00CAA085 /* Type1Input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Type1Input.cpp; sourceTree = "<group>"; };
+		9CCA9703297B119F00CAA085 /* AbstractContentContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AbstractContentContext.cpp; sourceTree = "<group>"; };
+		9CCA9704297B119F00CAA085 /* ProcsetResourcesConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcsetResourcesConstants.h; sourceTree = "<group>"; };
+		9CCA9705297B119F00CAA085 /* PDFFormXObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFFormXObject.cpp; sourceTree = "<group>"; };
+		9CCA9706297B119F00CAA085 /* PDFCosDict.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFCosDict.h; sourceTree = "<group>"; };
+		9CCA9707297B119F00CAA085 /* UnicodeString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnicodeString.cpp; sourceTree = "<group>"; };
+		9CCA9708297B119F00CAA085 /* PDFDocumentCopyingContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDocumentCopyingContext.cpp; sourceTree = "<group>"; };
+		9CCA9709297B119F00CAA085 /* CFFANSIFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFANSIFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA970A297B119F00CAA085 /* OpenTypeFileInput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OpenTypeFileInput.cpp; sourceTree = "<group>"; };
+		9CCA970B297B119F00CAA085 /* SingleValueContainerIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SingleValueContainerIterator.h; sourceTree = "<group>"; };
+		9CCA970C297B119F00CAA085 /* PDFCosArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFCosArray.h; sourceTree = "<group>"; };
+		9CCA970D297B119F00CAA085 /* InputStringStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputStringStream.cpp; sourceTree = "<group>"; };
+		9CCA970E297B119F00CAA085 /* InputAsciiHexDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputAsciiHexDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA970F297B119F00CAA085 /* UsedFontsRepository.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UsedFontsRepository.h; sourceTree = "<group>"; };
+		9CCA9710297B119F00CAA085 /* PDFUsedFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFUsedFont.h; sourceTree = "<group>"; };
+		9CCA9711297B119F00CAA085 /* InputStringBufferStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputStringBufferStream.h; sourceTree = "<group>"; };
+		9CCA9712297B119F00CAA085 /* ContainerIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContainerIterator.h; sourceTree = "<group>"; };
+		9CCA9713297B119F00CAA085 /* PDFStreamInput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFStreamInput.cpp; sourceTree = "<group>"; };
+		9CCA9714297B119F00CAA085 /* EncryptionOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EncryptionOptions.h; sourceTree = "<group>"; };
+		9CCA9715297B119F00CAA085 /* InputFileStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputFileStream.h; sourceTree = "<group>"; };
+		9CCA9716297B119F00CAA085 /* PDFModifiedPage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFModifiedPage.cpp; sourceTree = "<group>"; };
+		9CCA9717297B119F00CAA085 /* FreeTypeOpenTypeWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FreeTypeOpenTypeWrapper.h; sourceTree = "<group>"; };
+		9CCA9718297B119F00CAA085 /* WinAnsiEncoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WinAnsiEncoding.cpp; sourceTree = "<group>"; };
+		9CCA9719297B119F00CAA085 /* OutputStringBufferStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputStringBufferStream.h; sourceTree = "<group>"; };
+		9CCA971A297B119F00CAA085 /* OutputFlateDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputFlateDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA971B297B119F00CAA085 /* IByteReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IByteReader.h; sourceTree = "<group>"; };
+		9CCA971C297B119F00CAA085 /* OpenTypePrimitiveReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OpenTypePrimitiveReader.cpp; sourceTree = "<group>"; };
+		9CCA971D297B119F00CAA085 /* Log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Log.cpp; sourceTree = "<group>"; };
+		9CCA971E297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ArrayOfInputStreamsStream.cpp; sourceTree = "<group>"; };
+		9CCA971F297B119F00CAA085 /* InputPFBDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputPFBDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA9720297B119F00CAA085 /* CharStringDefinitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringDefinitions.h; sourceTree = "<group>"; };
+		9CCA9721297B119F00CAA085 /* CharStringType1Tracer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringType1Tracer.h; sourceTree = "<group>"; };
+		9CCA9722297B119F00CAA085 /* PDFCosDict.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFCosDict.cpp; sourceTree = "<group>"; };
+		9CCA9723297B119F00CAA085 /* FontDescriptorWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FontDescriptorWriter.cpp; sourceTree = "<group>"; };
+		9CCA9724297B119F00CAA085 /* PDFStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFStream.h; sourceTree = "<group>"; };
+		9CCA9725297B119F00CAA085 /* DecryptionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DecryptionHelper.h; sourceTree = "<group>"; };
+		9CCA9726297B119F00CAA085 /* PDFTextString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFTextString.cpp; sourceTree = "<group>"; };
+		9CCA9727297B119F00CAA085 /* StateReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StateReader.h; sourceTree = "<group>"; };
+		9CCA9728297B119F00CAA085 /* PDFPageInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFPageInput.h; sourceTree = "<group>"; };
+		9CCA9729297B119F00CAA085 /* CFFANSIFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFANSIFontWriter.h; sourceTree = "<group>"; };
+		9CCA972A297B119F00CAA085 /* IFreeTypeFaceExtender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IFreeTypeFaceExtender.h; sourceTree = "<group>"; };
+		9CCA972B297B119F00CAA085 /* InputAESDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAESDecodeStream.h; sourceTree = "<group>"; };
+		9CCA972C297B119F00CAA085 /* FSType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSType.h; sourceTree = "<group>"; };
+		9CCA972D297B119F00CAA085 /* ParsedPrimitiveHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParsedPrimitiveHelper.h; sourceTree = "<group>"; };
+		9CCA972E297B119F00CAA085 /* InputBufferedStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputBufferedStream.cpp; sourceTree = "<group>"; };
+		9CCA972F297B119F00CAA085 /* EPDFVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EPDFVersion.h; sourceTree = "<group>"; };
+		9CCA9730297B119F00CAA085 /* InputBufferedStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputBufferedStream.h; sourceTree = "<group>"; };
+		9CCA9731297B119F00CAA085 /* OutputFileStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputFileStream.cpp; sourceTree = "<group>"; };
+		9CCA9732297B119F00CAA085 /* EStatusCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EStatusCode.h; sourceTree = "<group>"; };
+		9CCA9733297B119F00CAA085 /* MD5Generator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MD5Generator.h; sourceTree = "<group>"; };
+		9CCA9734297B119F00CAA085 /* PDFInteger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFInteger.h; sourceTree = "<group>"; };
+		9CCA9735297B119F00CAA085 /* TrueTypeANSIFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrueTypeANSIFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA9736297B119F00CAA085 /* WrittenFontTrueType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WrittenFontTrueType.h; sourceTree = "<group>"; };
+		9CCA9737297B119F00CAA085 /* OutputBufferedStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputBufferedStream.h; sourceTree = "<group>"; };
+		9CCA9738297B119F00CAA085 /* InputStreamSkipperStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputStreamSkipperStream.cpp; sourceTree = "<group>"; };
+		9CCA9739297B119F00CAA085 /* FreeTypeFaceWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FreeTypeFaceWrapper.h; sourceTree = "<group>"; };
+		9CCA973A297B119F00CAA085 /* OutputStreamTraits.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputStreamTraits.cpp; sourceTree = "<group>"; };
+		9CCA973B297B119F00CAA085 /* CharStringType2Tracer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CharStringType2Tracer.cpp; sourceTree = "<group>"; };
+		9CCA973C297B119F00CAA085 /* Ascii7Encoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Ascii7Encoding.cpp; sourceTree = "<group>"; };
+		9CCA973D297B119F00CAA085 /* PFMFileReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PFMFileReader.h; sourceTree = "<group>"; };
+		9CCA973E297B119F00CAA085 /* PDFDictionaryIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDictionaryIterator.h; sourceTree = "<group>"; };
+		9CCA973F297B119F00CAA085 /* PDFDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDictionary.cpp; sourceTree = "<group>"; };
+		9CCA9740297B119F00CAA085 /* PDFDate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDate.cpp; sourceTree = "<group>"; };
+		9CCA9741297B119F00CAA085 /* PDFObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFObject.cpp; sourceTree = "<group>"; };
+		9CCA9742297B119F00CAA085 /* PDFRectangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFRectangle.cpp; sourceTree = "<group>"; };
+		9CCA9743297B119F00CAA085 /* GraphicState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GraphicState.cpp; sourceTree = "<group>"; };
+		9CCA9744297B119F00CAA085 /* PDFParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFParser.h; sourceTree = "<group>"; };
+		9CCA9745297B119F00CAA085 /* CFFPrimitiveReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFPrimitiveReader.cpp; sourceTree = "<group>"; };
+		9CCA9746297B119F00CAA085 /* PDFFormXObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFFormXObject.h; sourceTree = "<group>"; };
+		9CCA9747297B119F00CAA085 /* TiffUsageParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TiffUsageParameters.h; sourceTree = "<group>"; };
+		9CCA9748297B119F00CAA085 /* ParsedPrimitiveHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParsedPrimitiveHelper.cpp; sourceTree = "<group>"; };
+		9CCA9749297B119F00CAA085 /* IDescendentFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IDescendentFontWriter.h; sourceTree = "<group>"; };
+		9CCA974A297B119F00CAA085 /* ObjectsContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectsContext.h; sourceTree = "<group>"; };
+		9CCA974B297B119F00CAA085 /* Singleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Singleton.h; sourceTree = "<group>"; };
+		9CCA974C297B119F00CAA085 /* AdapterIByteReaderWithPositionToIReadPositionProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdapterIByteReaderWithPositionToIReadPositionProvider.h; sourceTree = "<group>"; };
+		9CCA974D297B119F00CAA085 /* PDFNull.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFNull.cpp; sourceTree = "<group>"; };
+		9CCA974E297B119F00CAA085 /* Type2CharStringWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Type2CharStringWriter.cpp; sourceTree = "<group>"; };
+		9CCA974F297B119F00CAA085 /* OutputFlateEncodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputFlateEncodeStream.h; sourceTree = "<group>"; };
+		9CCA9750297B119F00CAA085 /* CharStringType2Flattener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CharStringType2Flattener.cpp; sourceTree = "<group>"; };
+		9CCA9751297B119F00CAA085 /* InputStreamSkipperStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputStreamSkipperStream.h; sourceTree = "<group>"; };
+		9CCA9752297B119F00CAA085 /* PDFArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFArray.cpp; sourceTree = "<group>"; };
+		9CCA9753297B119F00CAA085 /* UppercaseSequance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UppercaseSequance.h; sourceTree = "<group>"; };
+		9CCA9754297B119F00CAA085 /* PageContentContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PageContentContext.h; sourceTree = "<group>"; };
+		9CCA9755297B119F00CAA085 /* OutputStringBufferStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputStringBufferStream.cpp; sourceTree = "<group>"; };
+		9CCA9756297B119F00CAA085 /* PDFSymbol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFSymbol.h; sourceTree = "<group>"; };
+		9CCA9757297B119F00CAA085 /* PDFDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDictionary.h; sourceTree = "<group>"; };
+		9CCA9758297B119F00CAA085 /* ResourcesDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResourcesDictionary.cpp; sourceTree = "<group>"; };
+		9CCA9759297B119F00CAA085 /* FreeTypeType1Wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FreeTypeType1Wrapper.cpp; sourceTree = "<group>"; };
+		9CCA975A297B119F00CAA085 /* CIDFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CIDFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA975B297B119F00CAA085 /* PDFStreamInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFStreamInput.h; sourceTree = "<group>"; };
+		9CCA975C297B119F00CAA085 /* DictionaryContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DictionaryContext.cpp; sourceTree = "<group>"; };
+		9CCA975D297B119F00CAA085 /* InputFlateDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputFlateDecodeStream.h; sourceTree = "<group>"; };
+		9CCA975E297B119F00CAA085 /* SimpleStringTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SimpleStringTokenizer.h; sourceTree = "<group>"; };
+		9CCA975F297B119F00CAA085 /* EncryptionOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EncryptionOptions.cpp; sourceTree = "<group>"; };
+		9CCA9760297B119F00CAA085 /* CharStringType2Tracer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringType2Tracer.h; sourceTree = "<group>"; };
+		9CCA9761297B119F00CAA085 /* GraphicState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphicState.h; sourceTree = "<group>"; };
+		9CCA9762297B119F00CAA085 /* OutputFileStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputFileStream.h; sourceTree = "<group>"; };
+		9CCA9763297B119F00CAA085 /* PDFBoolean.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFBoolean.h; sourceTree = "<group>"; };
+		9CCA9764297B119F00CAA085 /* TrueTypePrimitiveWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrueTypePrimitiveWriter.cpp; sourceTree = "<group>"; };
+		9CCA9765297B119F00CAA085 /* CharStringType1Interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringType1Interpreter.h; sourceTree = "<group>"; };
+		9CCA9766297B119F00CAA085 /* InfoDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InfoDictionary.h; sourceTree = "<group>"; };
+		9CCA9767297B119F00CAA085 /* PDFUsedFont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFUsedFont.cpp; sourceTree = "<group>"; };
+		9CCA9768297B119F00CAA085 /* DictionaryContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DictionaryContext.h; sourceTree = "<group>"; };
+		9CCA9769297B119F00CAA085 /* TiledPatternContentContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TiledPatternContentContext.h; sourceTree = "<group>"; };
+		9CCA976A297B119F00CAA085 /* IByteReaderWithPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IByteReaderWithPosition.h; sourceTree = "<group>"; };
+		9CCA976B297B119F00CAA085 /* PDFDocumentCopyingContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDocumentCopyingContext.h; sourceTree = "<group>"; };
+		9CCA976C297B119F00CAA085 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Timer.cpp; sourceTree = "<group>"; };
+		9CCA976D297B119F00CAA085 /* PrimitiveObjectsWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PrimitiveObjectsWriter.h; sourceTree = "<group>"; };
+		9CCA976E297B119F00CAA085 /* InputDCTDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputDCTDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA976F297B119F00CAA085 /* InputFileStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputFileStream.cpp; sourceTree = "<group>"; };
+		9CCA9770297B119F00CAA085 /* RC4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RC4.cpp; sourceTree = "<group>"; };
+		9CCA9771297B119F00CAA085 /* XObjectContentContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = XObjectContentContext.cpp; sourceTree = "<group>"; };
+		9CCA9772297B119F00CAA085 /* RefCountObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RefCountObject.cpp; sourceTree = "<group>"; };
+		9CCA9773297B119F00CAA085 /* PDFTiledPattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFTiledPattern.cpp; sourceTree = "<group>"; };
+		9CCA9774297B119F00CAA085 /* Trace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Trace.cpp; sourceTree = "<group>"; };
+		9CCA9775297B119F00CAA085 /* InputFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputFile.cpp; sourceTree = "<group>"; };
+		9CCA9776297B119F00CAA085 /* PDFLiteralString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFLiteralString.h; sourceTree = "<group>"; };
+		9CCA9777297B119F00CAA085 /* AbstractWrittenFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AbstractWrittenFont.h; sourceTree = "<group>"; };
+		9CCA9778297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IndirectObjectsReferenceRegistry.cpp; sourceTree = "<group>"; };
+		9CCA9779297B119F00CAA085 /* TrueTypePrimitiveWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrueTypePrimitiveWriter.h; sourceTree = "<group>"; };
+		9CCA977A297B119F00CAA085 /* CatalogInformation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CatalogInformation.h; sourceTree = "<group>"; };
+		9CCA977B297B119F00CAA085 /* InputPredictorTIFFSubStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputPredictorTIFFSubStream.h; sourceTree = "<group>"; };
+		9CCA977C297B119F00CAA085 /* CFFPrimitiveReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFPrimitiveReader.h; sourceTree = "<group>"; };
+		9CCA977D297B119F00CAA085 /* TrailerInformation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrailerInformation.cpp; sourceTree = "<group>"; };
+		9CCA977E297B119F00CAA085 /* WrittenFontRepresentation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WrittenFontRepresentation.h; sourceTree = "<group>"; };
+		9CCA977F297B119F00CAA085 /* PSBool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSBool.h; sourceTree = "<group>"; };
+		9CCA9780297B119F00CAA085 /* OutputBufferedStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputBufferedStream.cpp; sourceTree = "<group>"; };
+		9CCA9781297B119F00CAA085 /* IndirectObjectsReferenceRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IndirectObjectsReferenceRegistry.h; sourceTree = "<group>"; };
+		9CCA9782297B119F00CAA085 /* CFFPrimitiveWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFPrimitiveWriter.cpp; sourceTree = "<group>"; };
+		9CCA9783297B119F00CAA085 /* EHummusImageType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EHummusImageType.h; sourceTree = "<group>"; };
+		9CCA9784297B119F00CAA085 /* DocumentContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DocumentContext.cpp; sourceTree = "<group>"; };
+		9CCA9785297B119F00CAA085 /* PDFPage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFPage.cpp; sourceTree = "<group>"; };
+		9CCA9786297B119F00CAA085 /* InputStringStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputStringStream.h; sourceTree = "<group>"; };
+		9CCA9787297B119F00CAA085 /* XCryptionCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XCryptionCommon.h; sourceTree = "<group>"; };
+		9CCA9788297B119F00CAA085 /* IContentContextListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IContentContextListener.h; sourceTree = "<group>"; };
+		9CCA9789297B119F00CAA085 /* OutputFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputFile.h; sourceTree = "<group>"; };
+		9CCA978A297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Type1ToCFFEmbeddedFontWriter.h; sourceTree = "<group>"; };
+		9CCA978B297B119F00CAA085 /* IType1InterpreterImplementation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IType1InterpreterImplementation.h; sourceTree = "<group>"; };
+		9CCA978C297B119F00CAA085 /* PrimitiveObjectsWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PrimitiveObjectsWriter.cpp; sourceTree = "<group>"; };
+		9CCA978D297B119F00CAA085 /* IWrittenFont.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IWrittenFont.h; sourceTree = "<group>"; };
+		9CCA978E297B119F00CAA085 /* InputAscii85DecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputAscii85DecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA978F297B119F00CAA085 /* FreeTypeWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FreeTypeWrapper.h; sourceTree = "<group>"; };
+		9CCA9790297B119F00CAA085 /* WinAnsiEncoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WinAnsiEncoding.h; sourceTree = "<group>"; };
+		9CCA9791297B119F00CAA085 /* TimersRegistry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimersRegistry.cpp; sourceTree = "<group>"; };
+		9CCA9792297B119F00CAA085 /* CFFEmbeddedFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFEmbeddedFontWriter.h; sourceTree = "<group>"; };
+		9CCA9793297B119F00CAA085 /* PDFSymbol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFSymbol.cpp; sourceTree = "<group>"; };
+		9CCA9794297B119F00CAA085 /* Ascii7Encoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Ascii7Encoding.h; sourceTree = "<group>"; };
+		9CCA9795297B119F00CAA085 /* PageTree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PageTree.cpp; sourceTree = "<group>"; };
+		9CCA9796297B119F00CAA085 /* InputPredictorPNGOptimumStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputPredictorPNGOptimumStream.h; sourceTree = "<group>"; };
+		9CCA9797297B119F00CAA085 /* PDFName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFName.cpp; sourceTree = "<group>"; };
+		9CCA9798297B119F00CAA085 /* IOBasicTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOBasicTypes.h; sourceTree = "<group>"; };
+		9CCA9799297B119F00CAA085 /* PDFDocEncoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDocEncoding.h; sourceTree = "<group>"; };
+		9CCA979A297B119F00CAA085 /* JPEGImageParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JPEGImageParser.cpp; sourceTree = "<group>"; };
+		9CCA979B297B119F00CAA085 /* WrittenFontTrueType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WrittenFontTrueType.cpp; sourceTree = "<group>"; };
+		9CCA979C297B119F00CAA085 /* ITiledPatternEndWritingTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITiledPatternEndWritingTask.h; sourceTree = "<group>"; };
+		9CCA979D297B119F00CAA085 /* PDFEmbedParameterTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFEmbedParameterTypes.h; sourceTree = "<group>"; };
+		9CCA979E297B119F00CAA085 /* InputAscii85DecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAscii85DecodeStream.h; sourceTree = "<group>"; };
+		9CCA979F297B119F00CAA085 /* FreeTypeOpenTypeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FreeTypeOpenTypeWrapper.cpp; sourceTree = "<group>"; };
+		9CCA97A0297B119F00CAA085 /* PNGImageHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PNGImageHandler.h; sourceTree = "<group>"; };
+		9CCA97A1297B119F00CAA085 /* TiffUsageParameters.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TiffUsageParameters.cpp; sourceTree = "<group>"; };
+		9CCA97A2297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Type1ToCFFEmbeddedFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA97A3297B119F00CAA085 /* OpenTypeFileInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenTypeFileInput.h; sourceTree = "<group>"; };
+		9CCA97A4297B119F00CAA085 /* ObjectsContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectsContext.cpp; sourceTree = "<group>"; };
+		9CCA97A5297B119F00CAA085 /* OutputStreamTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputStreamTraits.h; sourceTree = "<group>"; };
+		9CCA97A6297B119F00CAA085 /* InputByteArrayStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputByteArrayStream.h; sourceTree = "<group>"; };
+		9CCA97A7297B119F00CAA085 /* PDFDate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDate.h; sourceTree = "<group>"; };
+		9CCA97A8297B119F00CAA085 /* PDFArrayIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFArrayIterator.h; sourceTree = "<group>"; };
+		9CCA97A9297B119F00CAA085 /* FreeTypeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FreeTypeWrapper.cpp; sourceTree = "<group>"; };
+		9CCA97AA297B119F00CAA085 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
+		9CCA97AB297B119F00CAA085 /* JPEGImageParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPEGImageParser.h; sourceTree = "<group>"; };
+		9CCA97AC297B119F00CAA085 /* PDFDocumentHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFDocumentHandler.h; sourceTree = "<group>"; };
+		9CCA97AD297B119F00CAA085 /* CIDFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CIDFontWriter.h; sourceTree = "<group>"; };
+		9CCA97AE297B119F00CAA085 /* IPDFParserExtender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IPDFParserExtender.h; sourceTree = "<group>"; };
+		9CCA97AF297B119F00CAA085 /* CFFFileInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFFileInput.h; sourceTree = "<group>"; };
+		9CCA97B0297B119F00CAA085 /* FontDescriptorWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FontDescriptorWriter.h; sourceTree = "<group>"; };
+		9CCA97B1297B119F00CAA085 /* DictOperand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DictOperand.h; sourceTree = "<group>"; };
+		9CCA97B2297B119F00CAA085 /* PDFParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFParser.cpp; sourceTree = "<group>"; };
+		9CCA97B3297B119F00CAA085 /* JPEGImageHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPEGImageHandler.h; sourceTree = "<group>"; };
+		9CCA97B4297B119F00CAA085 /* OutputRC4XcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputRC4XcodeStream.h; sourceTree = "<group>"; };
+		9CCA97B5297B119F00CAA085 /* ArrayOfInputStreamsStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrayOfInputStreamsStream.h; sourceTree = "<group>"; };
+		9CCA97B6297B119F00CAA085 /* InputByteArrayStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputByteArrayStream.cpp; sourceTree = "<group>"; };
+		9CCA97B7297B119F00CAA085 /* UnicodeString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnicodeString.h; sourceTree = "<group>"; };
+		9CCA97B8297B119F00CAA085 /* InputCharStringDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputCharStringDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA97B9297B119F00CAA085 /* PDFCosArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFCosArray.cpp; sourceTree = "<group>"; };
+		9CCA97BA297B119F00CAA085 /* StateWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StateWriter.cpp; sourceTree = "<group>"; };
+		9CCA97BB297B119F00CAA085 /* CFFDescendentFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFDescendentFontWriter.h; sourceTree = "<group>"; };
+		9CCA97BC297B119F00CAA085 /* PDFNull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFNull.h; sourceTree = "<group>"; };
+		9CCA97BD297B119F00CAA085 /* TimersRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimersRegistry.h; sourceTree = "<group>"; };
+		9CCA97BE297B119F00CAA085 /* XObjectContentContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XObjectContentContext.h; sourceTree = "<group>"; };
+		9CCA97BF297B119F00CAA085 /* IFormEndWritingTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IFormEndWritingTask.h; sourceTree = "<group>"; };
+		9CCA97C0297B119F00CAA085 /* Trace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trace.h; sourceTree = "<group>"; };
+		9CCA97C1297B119F00CAA085 /* EncryptionHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EncryptionHelper.cpp; sourceTree = "<group>"; };
+		9CCA97C2297B119F00CAA085 /* PDFWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFWriter.cpp; sourceTree = "<group>"; };
+		9CCA97C3297B119F00CAA085 /* PDFImageXObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFImageXObject.h; sourceTree = "<group>"; };
+		9CCA97C4297B119F00CAA085 /* BetweenIncluding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BetweenIncluding.h; sourceTree = "<group>"; };
+		9CCA97C5297B119F00CAA085 /* PDFPageMergingHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFPageMergingHelper.cpp; sourceTree = "<group>"; };
+		9CCA97C6297B119F00CAA085 /* OutputRC4XcodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputRC4XcodeStream.cpp; sourceTree = "<group>"; };
+		9CCA97C7297B119F00CAA085 /* InputRC4XcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputRC4XcodeStream.h; sourceTree = "<group>"; };
+		9CCA97C8297B119F00CAA085 /* AbstractContentContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AbstractContentContext.h; sourceTree = "<group>"; };
+		9CCA97C9297B119F00CAA085 /* CharStringType2Interpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringType2Interpreter.h; sourceTree = "<group>"; };
+		9CCA97CA297B119F00CAA085 /* Log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Log.h; sourceTree = "<group>"; };
+		9CCA97CB297B119F00CAA085 /* OutputAESEncodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputAESEncodeStream.h; sourceTree = "<group>"; };
+		9CCA97CC297B119F00CAA085 /* Type1ToType2Converter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Type1ToType2Converter.cpp; sourceTree = "<group>"; };
+		9CCA97CD297B119F00CAA085 /* InputFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputFile.h; sourceTree = "<group>"; };
+		9CCA97CE297B119F00CAA085 /* TrueTypeANSIFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrueTypeANSIFontWriter.h; sourceTree = "<group>"; };
+		9CCA97CF297B119F00CAA085 /* PDFIndirectObjectReference.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFIndirectObjectReference.h; sourceTree = "<group>"; };
+		9CCA97D0297B119F00CAA085 /* DescendentFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DescendentFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA97D1297B119F00CAA085 /* RefCountObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RefCountObject.h; sourceTree = "<group>"; };
+		9CCA97D2297B119F00CAA085 /* PDFDocEncoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDocEncoding.cpp; sourceTree = "<group>"; };
+		9CCA97D3297B119F00CAA085 /* AbstractWrittenFont.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AbstractWrittenFont.cpp; sourceTree = "<group>"; };
+		9CCA97D4297B119F00CAA085 /* RC4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RC4.h; sourceTree = "<group>"; };
+		9CCA97D5297B119F00CAA085 /* PageContentContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PageContentContext.cpp; sourceTree = "<group>"; };
+		9CCA97D6297B119F00CAA085 /* ANSIFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ANSIFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA97D7297B119F00CAA085 /* GlyphUnicodeMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlyphUnicodeMapping.h; sourceTree = "<group>"; };
+		9CCA97D8297B119F00CAA085 /* ObjectsContextExtenderAdapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectsContextExtenderAdapter.h; sourceTree = "<group>"; };
+		9CCA97D9297B119F00CAA085 /* IResourceWritingTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IResourceWritingTask.h; sourceTree = "<group>"; };
+		9CCA97DA297B119F00CAA085 /* UppercaseSequance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UppercaseSequance.cpp; sourceTree = "<group>"; };
+		9CCA97DB297B119F00CAA085 /* GraphicStateStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphicStateStack.h; sourceTree = "<group>"; };
+		9CCA97DC297B119F00CAA085 /* GraphicStateStack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GraphicStateStack.cpp; sourceTree = "<group>"; };
+		9CCA97DD297B119F00CAA085 /* TrueTypeDescendentFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrueTypeDescendentFontWriter.h; sourceTree = "<group>"; };
+		9CCA97DE297B119F00CAA085 /* PDFPageMergingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFPageMergingHelper.h; sourceTree = "<group>"; };
+		9CCA97DF297B119F00CAA085 /* DocumentContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentContext.h; sourceTree = "<group>"; };
+		9CCA97E0297B119F00CAA085 /* MapIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MapIterator.h; sourceTree = "<group>"; };
+		9CCA97E1297B119F00CAA085 /* PDFDictionaryIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDictionaryIterator.cpp; sourceTree = "<group>"; };
+		9CCA97E2297B119F00CAA085 /* PDFParserTokenizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFParserTokenizer.cpp; sourceTree = "<group>"; };
+		9CCA97E3297B119F00CAA085 /* IPageEndWritingTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IPageEndWritingTask.h; sourceTree = "<group>"; };
+		9CCA97E4297B119F00CAA085 /* PDFTiledPattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFTiledPattern.h; sourceTree = "<group>"; };
+		9CCA97E5297B119F00CAA085 /* CharStringType1Interpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CharStringType1Interpreter.cpp; sourceTree = "<group>"; };
+		9CCA97E6297B119F00CAA085 /* BoxingBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BoxingBase.h; sourceTree = "<group>"; };
+		9CCA97E7297B119F00CAA085 /* PFMFileReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PFMFileReader.cpp; sourceTree = "<group>"; };
+		9CCA97E8297B119F00CAA085 /* StateWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StateWriter.h; sourceTree = "<group>"; };
+		9CCA97E9297B119F00CAA085 /* CatalogInformation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CatalogInformation.cpp; sourceTree = "<group>"; };
+		9CCA97EA297B119F00CAA085 /* IDocumentContextExtender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IDocumentContextExtender.h; sourceTree = "<group>"; };
+		9CCA97EB297B119F00CAA085 /* PDFReal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFReal.h; sourceTree = "<group>"; };
+		9CCA97EC297B119F00CAA085 /* JPEGImageInformation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JPEGImageInformation.cpp; sourceTree = "<group>"; };
+		9CCA97ED297B119F00CAA085 /* OutputFlateEncodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputFlateEncodeStream.cpp; sourceTree = "<group>"; };
+		9CCA97EE297B119F00CAA085 /* UsedFontsRepository.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UsedFontsRepository.cpp; sourceTree = "<group>"; };
+		9CCA97EF297B119F00CAA085 /* PDFParserTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFParserTokenizer.h; sourceTree = "<group>"; };
+		9CCA97F0297B119F00CAA085 /* RefCountPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RefCountPtr.h; sourceTree = "<group>"; };
+		9CCA97F1297B119F00CAA085 /* IByteWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IByteWriter.h; sourceTree = "<group>"; };
+		9CCA97F2297B119F00CAA085 /* PDFIndirectObjectReference.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFIndirectObjectReference.cpp; sourceTree = "<group>"; };
+		9CCA97F3297B119F00CAA085 /* SafeBufferMacrosDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SafeBufferMacrosDefs.h; sourceTree = "<group>"; };
+		9CCA97F4297B119F00CAA085 /* StandardEncoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StandardEncoding.h; sourceTree = "<group>"; };
+		9CCA97F5297B119F00CAA085 /* OutputFlateDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputFlateDecodeStream.h; sourceTree = "<group>"; };
+		9CCA97F6297B119F00CAA085 /* PDFObjectParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFObjectParser.cpp; sourceTree = "<group>"; };
+		9CCA97F7297B119F00CAA085 /* PDFStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFStream.cpp; sourceTree = "<group>"; };
+		9CCA97F8297B119F00CAA085 /* PDFParsingOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFParsingOptions.h; sourceTree = "<group>"; };
+		9CCA97F9297B119F00CAA085 /* MyStringBuf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyStringBuf.h; sourceTree = "<group>"; };
+		9CCA97FA297B119F00CAA085 /* InputDCTDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputDCTDecodeStream.h; sourceTree = "<group>"; };
+		9CCA97FB297B119F00CAA085 /* Type2CharStringWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Type2CharStringWriter.h; sourceTree = "<group>"; };
+		9CCA97FC297B119F00CAA085 /* StateReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StateReader.cpp; sourceTree = "<group>"; };
+		9CCA97FD297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputPredictorTIFFSubStream.cpp; sourceTree = "<group>"; };
+		9CCA97FE297B119F00CAA085 /* JPEGImageInformation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPEGImageInformation.h; sourceTree = "<group>"; };
+		9CCA97FF297B119F00CAA085 /* ANSIFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ANSIFontWriter.h; sourceTree = "<group>"; };
+		9CCA9800297B119F00CAA085 /* FreeTypeType1Wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FreeTypeType1Wrapper.h; sourceTree = "<group>"; };
+		9CCA9801297B119F00CAA085 /* PDFPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFPage.h; sourceTree = "<group>"; };
+		9CCA9802297B119F00CAA085 /* DecryptionHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DecryptionHelper.cpp; sourceTree = "<group>"; };
+		9CCA9803297B119F00CAA085 /* CFFDescendentFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFDescendentFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA9804297B119F00CAA085 /* ResourcesDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResourcesDictionary.h; sourceTree = "<group>"; };
+		9CCA9805297B119F00CAA085 /* ObjectsBasicTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectsBasicTypes.h; sourceTree = "<group>"; };
+		9CCA9806297B119F00CAA085 /* IType2InterpreterImplementation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IType2InterpreterImplementation.h; sourceTree = "<group>"; };
+		9CCA9807297B119F00CAA085 /* PDFObjectCast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFObjectCast.h; sourceTree = "<group>"; };
+		9CCA9808297B119F00CAA085 /* PDFObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFObject.h; sourceTree = "<group>"; };
+		9CCA9809297B119F00CAA085 /* InputPredictorPNGOptimumStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputPredictorPNGOptimumStream.cpp; sourceTree = "<group>"; };
+		9CCA980A297B119F00CAA085 /* PDFArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFArray.h; sourceTree = "<group>"; };
+		9CCA980B297B119F00CAA085 /* EFontStretch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EFontStretch.h; sourceTree = "<group>"; };
+		9CCA980C297B119F00CAA085 /* CMYKRGBColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CMYKRGBColor.h; sourceTree = "<group>"; };
+		9CCA980D297B119F00CAA085 /* PDFWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFWriter.h; sourceTree = "<group>"; };
+		9CCA980E297B119F00CAA085 /* PDFModifiedPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFModifiedPage.h; sourceTree = "<group>"; };
+		9CCA980F297B119F00CAA085 /* WrittenFontCFF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WrittenFontCFF.h; sourceTree = "<group>"; };
+		9CCA9810297B119F00CAA085 /* PDFParsingOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFParsingOptions.cpp; sourceTree = "<group>"; };
+		9CCA9811297B119F00CAA085 /* PDFObjectParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFObjectParser.h; sourceTree = "<group>"; };
+		9CCA9812297B119F00CAA085 /* TiledPatternContentContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TiledPatternContentContext.cpp; sourceTree = "<group>"; };
+		9CCA9813297B119F00CAA085 /* IANSIFontWriterHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IANSIFontWriterHelper.h; sourceTree = "<group>"; };
+		9CCA9814297B119F00CAA085 /* PDFImageXObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFImageXObject.cpp; sourceTree = "<group>"; };
+		9CCA9815297B119F00CAA085 /* PDFHexString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFHexString.h; sourceTree = "<group>"; };
+		9CCA9816297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrueTypeEmbeddedFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA9817297B119F00CAA085 /* PDFPageInput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFPageInput.cpp; sourceTree = "<group>"; };
+		9CCA9818297B119F00CAA085 /* InputStringBufferStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputStringBufferStream.cpp; sourceTree = "<group>"; };
+		9CCA9819297B119F00CAA085 /* EncryptionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EncryptionHelper.h; sourceTree = "<group>"; };
+		9CCA981A297B119F00CAA085 /* PDFLiteralString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFLiteralString.cpp; sourceTree = "<group>"; };
+		9CCA981B297B119F00CAA085 /* WrittenFontCFF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WrittenFontCFF.cpp; sourceTree = "<group>"; };
+		9CCA981C297B119F00CAA085 /* IByteWriterWithPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IByteWriterWithPosition.h; sourceTree = "<group>"; };
+		9CCA981D297B119F00CAA085 /* StandardEncoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StandardEncoding.cpp; sourceTree = "<group>"; };
+		9CCA981E297B119F00CAA085 /* InputAESDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputAESDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA981F297B119F00CAA085 /* InputPFBDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputPFBDecodeStream.h; sourceTree = "<group>"; };
+		9CCA9820297B119F00CAA085 /* InputLimitedStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputLimitedStream.cpp; sourceTree = "<group>"; };
+		9CCA9821297B119F00CAA085 /* Type1ToType2Converter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Type1ToType2Converter.h; sourceTree = "<group>"; };
+		9CCA9822297B119F00CAA085 /* DescendentFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DescendentFontWriter.h; sourceTree = "<group>"; };
+		9CCA9823297B119F00CAA085 /* Type1Input.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Type1Input.h; sourceTree = "<group>"; };
+		9CCA9824297B119F00CAA085 /* InputRC4XcodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputRC4XcodeStream.cpp; sourceTree = "<group>"; };
+		9CCA9825297B119F00CAA085 /* PDFTextString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFTextString.h; sourceTree = "<group>"; };
+		9CCA9826297B119F00CAA085 /* InputAsciiHexDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputAsciiHexDecodeStream.h; sourceTree = "<group>"; };
+		9CCA9827297B119F00CAA085 /* PSBool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PSBool.cpp; sourceTree = "<group>"; };
+		9CCA9828297B119F00CAA085 /* CFFFileInput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFFileInput.cpp; sourceTree = "<group>"; };
+		9CCA9829297B119F00CAA085 /* CFFEmbeddedFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFFEmbeddedFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA982A297B119F00CAA085 /* FreeTypeFaceWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FreeTypeFaceWrapper.cpp; sourceTree = "<group>"; };
+		9CCA982B297B119F00CAA085 /* InputFlateDecodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InputFlateDecodeStream.cpp; sourceTree = "<group>"; };
+		9CCA982C297B119F00CAA085 /* PageTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PageTree.h; sourceTree = "<group>"; };
+		9CCA982D297B119F00CAA085 /* PDFRectangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFRectangle.h; sourceTree = "<group>"; };
+		9CCA982E297B119F00CAA085 /* PDFBoolean.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFBoolean.cpp; sourceTree = "<group>"; };
+		9CCA982F297B119F00CAA085 /* PDFHexString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFHexString.cpp; sourceTree = "<group>"; };
+		9CCA9830297B119F00CAA085 /* InfoDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InfoDictionary.cpp; sourceTree = "<group>"; };
+		9CCA9831297B119F00CAA085 /* OpenTypePrimitiveReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenTypePrimitiveReader.h; sourceTree = "<group>"; };
+		9CCA9832297B119F00CAA085 /* PDFArrayIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFArrayIterator.cpp; sourceTree = "<group>"; };
+		9CCA9833297B119F00CAA085 /* InputLimitedStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputLimitedStream.h; sourceTree = "<group>"; };
+		9CCA9834297B119F00CAA085 /* IReadPositionProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IReadPositionProvider.h; sourceTree = "<group>"; };
+		9CCA9835297B119F00CAA085 /* TrailerInformation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrailerInformation.h; sourceTree = "<group>"; };
+		9CCA9836297B119F00CAA085 /* InputCharStringDecodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InputCharStringDecodeStream.h; sourceTree = "<group>"; };
+		9CCA9837297B119F00CAA085 /* CharStringType2Flattener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharStringType2Flattener.h; sourceTree = "<group>"; };
+		9CCA9838297B119F00CAA085 /* JPEGImageHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JPEGImageHandler.cpp; sourceTree = "<group>"; };
+		9CCA9839297B119F00CAA085 /* TrueTypeDescendentFontWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrueTypeDescendentFontWriter.cpp; sourceTree = "<group>"; };
+		9CCA983A297B119F00CAA085 /* XCryptionCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = XCryptionCommon.cpp; sourceTree = "<group>"; };
+		9CCA983B297B119F00CAA085 /* PDFInteger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFInteger.cpp; sourceTree = "<group>"; };
+		9CCA983C297B119F00CAA085 /* ETokenSeparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ETokenSeparator.h; sourceTree = "<group>"; };
+		9CCA983D297B119F00CAA085 /* CFFPrimitiveWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFFPrimitiveWriter.h; sourceTree = "<group>"; };
+		9CCA983E297B119F00CAA085 /* IObjectsContextExtender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IObjectsContextExtender.h; sourceTree = "<group>"; };
+		9CCA983F297B119F00CAA085 /* CharStringType2Interpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CharStringType2Interpreter.cpp; sourceTree = "<group>"; };
+		9CCA9840297B119F00CAA085 /* MD5Generator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MD5Generator.cpp; sourceTree = "<group>"; };
+		9CCA9841297B119F00CAA085 /* OutputAESEncodeStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputAESEncodeStream.cpp; sourceTree = "<group>"; };
+		9CCA9842297B119F00CAA085 /* DocumentContextExtenderAdapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentContextExtenderAdapter.h; sourceTree = "<group>"; };
+		9CCA9843297B119F00CAA085 /* OutputFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OutputFile.cpp; sourceTree = "<group>"; };
+		9CCA9844297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrueTypeEmbeddedFontWriter.h; sourceTree = "<group>"; };
+		9CCA9845297B119F00CAA085 /* IFontDescriptorHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IFontDescriptorHelper.h; sourceTree = "<group>"; };
+		9CCA9846297B119F00CAA085 /* PNGImageHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PNGImageHandler.cpp; sourceTree = "<group>"; };
+		9CCA9847297B119F00CAA085 /* SimpleStringTokenizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SimpleStringTokenizer.cpp; sourceTree = "<group>"; };
+		9CCA9848297B119F00CAA085 /* PDFDocumentHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFDocumentHandler.cpp; sourceTree = "<group>"; };
+		9CCA9849297B119F00CAA085 /* PDFName.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PDFName.h; sourceTree = "<group>"; };
+		9CCA984A297B119F00CAA085 /* CMYKRGBColor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CMYKRGBColor.cpp; sourceTree = "<group>"; };
+		9CCA984B297B119F00CAA085 /* CharStringType1Tracer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CharStringType1Tracer.cpp; sourceTree = "<group>"; };
+		9CCA984C297B119F00CAA085 /* PDFReal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PDFReal.cpp; sourceTree = "<group>"; };
+		9CCA984D297B119F00CAA085 /* pdf_hummus_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pdf_hummus_renderer.cpp; sourceTree = "<group>"; };
 		9CDB09BD295B04400033CF82 /* vau_main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_main.cpp; sourceTree = "<group>"; };
 		9CDB09BE295B04400033CF82 /* vau_main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_main.hpp; sourceTree = "<group>"; };
 		9CDB09C2295B22FC0033CF82 /* vau-init-unused.scm */ = {isa = PBXFileReference; lastKnownFileType = text; path = "vau-init-unused.scm"; sourceTree = "<group>"; };
@@ -1861,6 +2355,7 @@
 		9C620CD529590C540041CFA3 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
+				9CCA96F1297B119F00CAA085 /* Pdf */,
 				9C620CD629590C540041CFA3 /* Freetype */,
 				9C620CEE29590C540041CFA3 /* Metafont */,
 			);
@@ -1914,6 +2409,375 @@
 				9C620CFA29590C540041CFA3 /* load_tex.cpp */,
 			);
 			path = Metafont;
+			sourceTree = "<group>";
+		};
+		9CCA96F1297B119F00CAA085 /* Pdf */ = {
+			isa = PBXGroup;
+			children = (
+				9CCA96F2297B119F00CAA085 /* pdf_hummus_renderer.hpp */,
+				9CCA96F3297B119F00CAA085 /* LibAesgm */,
+				9CCA9701297B119F00CAA085 /* PDFWriter */,
+				9CCA984D297B119F00CAA085 /* pdf_hummus_renderer.cpp */,
+			);
+			path = Pdf;
+			sourceTree = "<group>";
+		};
+		9CCA96F3297B119F00CAA085 /* LibAesgm */ = {
+			isa = PBXGroup;
+			children = (
+				9CCA96F4297B119F00CAA085 /* aes_ni.h */,
+				9CCA96F5297B119F00CAA085 /* aeskey.c */,
+				9CCA96F6297B119F00CAA085 /* aestab.h */,
+				9CCA96F7297B119F00CAA085 /* aescrypt.c */,
+				9CCA96F8297B119F00CAA085 /* aesopt.h */,
+				9CCA96F9297B119F00CAA085 /* aes_via_ace.h */,
+				9CCA96FA297B119F00CAA085 /* brg_types.h */,
+				9CCA96FB297B119F00CAA085 /* aes_modes.c */,
+				9CCA96FC297B119F00CAA085 /* aes_ni.c */,
+				9CCA96FD297B119F00CAA085 /* brg_endian.h */,
+				9CCA96FE297B119F00CAA085 /* aes.h */,
+				9CCA96FF297B119F00CAA085 /* aescpp.h */,
+				9CCA9700297B119F00CAA085 /* aestab.c */,
+			);
+			path = LibAesgm;
+			sourceTree = "<group>";
+		};
+		9CCA9701297B119F00CAA085 /* PDFWriter */ = {
+			isa = PBXGroup;
+			children = (
+				9CCA9702297B119F00CAA085 /* Type1Input.cpp */,
+				9CCA9703297B119F00CAA085 /* AbstractContentContext.cpp */,
+				9CCA9704297B119F00CAA085 /* ProcsetResourcesConstants.h */,
+				9CCA9705297B119F00CAA085 /* PDFFormXObject.cpp */,
+				9CCA9706297B119F00CAA085 /* PDFCosDict.h */,
+				9CCA9707297B119F00CAA085 /* UnicodeString.cpp */,
+				9CCA9708297B119F00CAA085 /* PDFDocumentCopyingContext.cpp */,
+				9CCA9709297B119F00CAA085 /* CFFANSIFontWriter.cpp */,
+				9CCA970A297B119F00CAA085 /* OpenTypeFileInput.cpp */,
+				9CCA970B297B119F00CAA085 /* SingleValueContainerIterator.h */,
+				9CCA970C297B119F00CAA085 /* PDFCosArray.h */,
+				9CCA970D297B119F00CAA085 /* InputStringStream.cpp */,
+				9CCA970E297B119F00CAA085 /* InputAsciiHexDecodeStream.cpp */,
+				9CCA970F297B119F00CAA085 /* UsedFontsRepository.h */,
+				9CCA9710297B119F00CAA085 /* PDFUsedFont.h */,
+				9CCA9711297B119F00CAA085 /* InputStringBufferStream.h */,
+				9CCA9712297B119F00CAA085 /* ContainerIterator.h */,
+				9CCA9713297B119F00CAA085 /* PDFStreamInput.cpp */,
+				9CCA9714297B119F00CAA085 /* EncryptionOptions.h */,
+				9CCA9715297B119F00CAA085 /* InputFileStream.h */,
+				9CCA9716297B119F00CAA085 /* PDFModifiedPage.cpp */,
+				9CCA9717297B119F00CAA085 /* FreeTypeOpenTypeWrapper.h */,
+				9CCA9718297B119F00CAA085 /* WinAnsiEncoding.cpp */,
+				9CCA9719297B119F00CAA085 /* OutputStringBufferStream.h */,
+				9CCA971A297B119F00CAA085 /* OutputFlateDecodeStream.cpp */,
+				9CCA971B297B119F00CAA085 /* IByteReader.h */,
+				9CCA971C297B119F00CAA085 /* OpenTypePrimitiveReader.cpp */,
+				9CCA971D297B119F00CAA085 /* Log.cpp */,
+				9CCA971E297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp */,
+				9CCA971F297B119F00CAA085 /* InputPFBDecodeStream.cpp */,
+				9CCA9720297B119F00CAA085 /* CharStringDefinitions.h */,
+				9CCA9721297B119F00CAA085 /* CharStringType1Tracer.h */,
+				9CCA9722297B119F00CAA085 /* PDFCosDict.cpp */,
+				9CCA9723297B119F00CAA085 /* FontDescriptorWriter.cpp */,
+				9CCA9724297B119F00CAA085 /* PDFStream.h */,
+				9CCA9725297B119F00CAA085 /* DecryptionHelper.h */,
+				9CCA9726297B119F00CAA085 /* PDFTextString.cpp */,
+				9CCA9727297B119F00CAA085 /* StateReader.h */,
+				9CCA9728297B119F00CAA085 /* PDFPageInput.h */,
+				9CCA9729297B119F00CAA085 /* CFFANSIFontWriter.h */,
+				9CCA972A297B119F00CAA085 /* IFreeTypeFaceExtender.h */,
+				9CCA972B297B119F00CAA085 /* InputAESDecodeStream.h */,
+				9CCA972C297B119F00CAA085 /* FSType.h */,
+				9CCA972D297B119F00CAA085 /* ParsedPrimitiveHelper.h */,
+				9CCA972E297B119F00CAA085 /* InputBufferedStream.cpp */,
+				9CCA972F297B119F00CAA085 /* EPDFVersion.h */,
+				9CCA9730297B119F00CAA085 /* InputBufferedStream.h */,
+				9CCA9731297B119F00CAA085 /* OutputFileStream.cpp */,
+				9CCA9732297B119F00CAA085 /* EStatusCode.h */,
+				9CCA9733297B119F00CAA085 /* MD5Generator.h */,
+				9CCA9734297B119F00CAA085 /* PDFInteger.h */,
+				9CCA9735297B119F00CAA085 /* TrueTypeANSIFontWriter.cpp */,
+				9CCA9736297B119F00CAA085 /* WrittenFontTrueType.h */,
+				9CCA9737297B119F00CAA085 /* OutputBufferedStream.h */,
+				9CCA9738297B119F00CAA085 /* InputStreamSkipperStream.cpp */,
+				9CCA9739297B119F00CAA085 /* FreeTypeFaceWrapper.h */,
+				9CCA973A297B119F00CAA085 /* OutputStreamTraits.cpp */,
+				9CCA973B297B119F00CAA085 /* CharStringType2Tracer.cpp */,
+				9CCA973C297B119F00CAA085 /* Ascii7Encoding.cpp */,
+				9CCA973D297B119F00CAA085 /* PFMFileReader.h */,
+				9CCA973E297B119F00CAA085 /* PDFDictionaryIterator.h */,
+				9CCA973F297B119F00CAA085 /* PDFDictionary.cpp */,
+				9CCA9740297B119F00CAA085 /* PDFDate.cpp */,
+				9CCA9741297B119F00CAA085 /* PDFObject.cpp */,
+				9CCA9742297B119F00CAA085 /* PDFRectangle.cpp */,
+				9CCA9743297B119F00CAA085 /* GraphicState.cpp */,
+				9CCA9744297B119F00CAA085 /* PDFParser.h */,
+				9CCA9745297B119F00CAA085 /* CFFPrimitiveReader.cpp */,
+				9CCA9746297B119F00CAA085 /* PDFFormXObject.h */,
+				9CCA9747297B119F00CAA085 /* TiffUsageParameters.h */,
+				9CCA9748297B119F00CAA085 /* ParsedPrimitiveHelper.cpp */,
+				9CCA9749297B119F00CAA085 /* IDescendentFontWriter.h */,
+				9CCA974A297B119F00CAA085 /* ObjectsContext.h */,
+				9CCA974B297B119F00CAA085 /* Singleton.h */,
+				9CCA974C297B119F00CAA085 /* AdapterIByteReaderWithPositionToIReadPositionProvider.h */,
+				9CCA974D297B119F00CAA085 /* PDFNull.cpp */,
+				9CCA974E297B119F00CAA085 /* Type2CharStringWriter.cpp */,
+				9CCA974F297B119F00CAA085 /* OutputFlateEncodeStream.h */,
+				9CCA9750297B119F00CAA085 /* CharStringType2Flattener.cpp */,
+				9CCA9751297B119F00CAA085 /* InputStreamSkipperStream.h */,
+				9CCA9752297B119F00CAA085 /* PDFArray.cpp */,
+				9CCA9753297B119F00CAA085 /* UppercaseSequance.h */,
+				9CCA9754297B119F00CAA085 /* PageContentContext.h */,
+				9CCA9755297B119F00CAA085 /* OutputStringBufferStream.cpp */,
+				9CCA9756297B119F00CAA085 /* PDFSymbol.h */,
+				9CCA9757297B119F00CAA085 /* PDFDictionary.h */,
+				9CCA9758297B119F00CAA085 /* ResourcesDictionary.cpp */,
+				9CCA9759297B119F00CAA085 /* FreeTypeType1Wrapper.cpp */,
+				9CCA975A297B119F00CAA085 /* CIDFontWriter.cpp */,
+				9CCA975B297B119F00CAA085 /* PDFStreamInput.h */,
+				9CCA975C297B119F00CAA085 /* DictionaryContext.cpp */,
+				9CCA975D297B119F00CAA085 /* InputFlateDecodeStream.h */,
+				9CCA975E297B119F00CAA085 /* SimpleStringTokenizer.h */,
+				9CCA975F297B119F00CAA085 /* EncryptionOptions.cpp */,
+				9CCA9760297B119F00CAA085 /* CharStringType2Tracer.h */,
+				9CCA9761297B119F00CAA085 /* GraphicState.h */,
+				9CCA9762297B119F00CAA085 /* OutputFileStream.h */,
+				9CCA9763297B119F00CAA085 /* PDFBoolean.h */,
+				9CCA9764297B119F00CAA085 /* TrueTypePrimitiveWriter.cpp */,
+				9CCA9765297B119F00CAA085 /* CharStringType1Interpreter.h */,
+				9CCA9766297B119F00CAA085 /* InfoDictionary.h */,
+				9CCA9767297B119F00CAA085 /* PDFUsedFont.cpp */,
+				9CCA9768297B119F00CAA085 /* DictionaryContext.h */,
+				9CCA9769297B119F00CAA085 /* TiledPatternContentContext.h */,
+				9CCA976A297B119F00CAA085 /* IByteReaderWithPosition.h */,
+				9CCA976B297B119F00CAA085 /* PDFDocumentCopyingContext.h */,
+				9CCA976C297B119F00CAA085 /* Timer.cpp */,
+				9CCA976D297B119F00CAA085 /* PrimitiveObjectsWriter.h */,
+				9CCA976E297B119F00CAA085 /* InputDCTDecodeStream.cpp */,
+				9CCA976F297B119F00CAA085 /* InputFileStream.cpp */,
+				9CCA9770297B119F00CAA085 /* RC4.cpp */,
+				9CCA9771297B119F00CAA085 /* XObjectContentContext.cpp */,
+				9CCA9772297B119F00CAA085 /* RefCountObject.cpp */,
+				9CCA9773297B119F00CAA085 /* PDFTiledPattern.cpp */,
+				9CCA9774297B119F00CAA085 /* Trace.cpp */,
+				9CCA9775297B119F00CAA085 /* InputFile.cpp */,
+				9CCA9776297B119F00CAA085 /* PDFLiteralString.h */,
+				9CCA9777297B119F00CAA085 /* AbstractWrittenFont.h */,
+				9CCA9778297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp */,
+				9CCA9779297B119F00CAA085 /* TrueTypePrimitiveWriter.h */,
+				9CCA977A297B119F00CAA085 /* CatalogInformation.h */,
+				9CCA977B297B119F00CAA085 /* InputPredictorTIFFSubStream.h */,
+				9CCA977C297B119F00CAA085 /* CFFPrimitiveReader.h */,
+				9CCA977D297B119F00CAA085 /* TrailerInformation.cpp */,
+				9CCA977E297B119F00CAA085 /* WrittenFontRepresentation.h */,
+				9CCA977F297B119F00CAA085 /* PSBool.h */,
+				9CCA9780297B119F00CAA085 /* OutputBufferedStream.cpp */,
+				9CCA9781297B119F00CAA085 /* IndirectObjectsReferenceRegistry.h */,
+				9CCA9782297B119F00CAA085 /* CFFPrimitiveWriter.cpp */,
+				9CCA9783297B119F00CAA085 /* EHummusImageType.h */,
+				9CCA9784297B119F00CAA085 /* DocumentContext.cpp */,
+				9CCA9785297B119F00CAA085 /* PDFPage.cpp */,
+				9CCA9786297B119F00CAA085 /* InputStringStream.h */,
+				9CCA9787297B119F00CAA085 /* XCryptionCommon.h */,
+				9CCA9788297B119F00CAA085 /* IContentContextListener.h */,
+				9CCA9789297B119F00CAA085 /* OutputFile.h */,
+				9CCA978A297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.h */,
+				9CCA978B297B119F00CAA085 /* IType1InterpreterImplementation.h */,
+				9CCA978C297B119F00CAA085 /* PrimitiveObjectsWriter.cpp */,
+				9CCA978D297B119F00CAA085 /* IWrittenFont.h */,
+				9CCA978E297B119F00CAA085 /* InputAscii85DecodeStream.cpp */,
+				9CCA978F297B119F00CAA085 /* FreeTypeWrapper.h */,
+				9CCA9790297B119F00CAA085 /* WinAnsiEncoding.h */,
+				9CCA9791297B119F00CAA085 /* TimersRegistry.cpp */,
+				9CCA9792297B119F00CAA085 /* CFFEmbeddedFontWriter.h */,
+				9CCA9793297B119F00CAA085 /* PDFSymbol.cpp */,
+				9CCA9794297B119F00CAA085 /* Ascii7Encoding.h */,
+				9CCA9795297B119F00CAA085 /* PageTree.cpp */,
+				9CCA9796297B119F00CAA085 /* InputPredictorPNGOptimumStream.h */,
+				9CCA9797297B119F00CAA085 /* PDFName.cpp */,
+				9CCA9798297B119F00CAA085 /* IOBasicTypes.h */,
+				9CCA9799297B119F00CAA085 /* PDFDocEncoding.h */,
+				9CCA979A297B119F00CAA085 /* JPEGImageParser.cpp */,
+				9CCA979B297B119F00CAA085 /* WrittenFontTrueType.cpp */,
+				9CCA979C297B119F00CAA085 /* ITiledPatternEndWritingTask.h */,
+				9CCA979D297B119F00CAA085 /* PDFEmbedParameterTypes.h */,
+				9CCA979E297B119F00CAA085 /* InputAscii85DecodeStream.h */,
+				9CCA979F297B119F00CAA085 /* FreeTypeOpenTypeWrapper.cpp */,
+				9CCA97A0297B119F00CAA085 /* PNGImageHandler.h */,
+				9CCA97A1297B119F00CAA085 /* TiffUsageParameters.cpp */,
+				9CCA97A2297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp */,
+				9CCA97A3297B119F00CAA085 /* OpenTypeFileInput.h */,
+				9CCA97A4297B119F00CAA085 /* ObjectsContext.cpp */,
+				9CCA97A5297B119F00CAA085 /* OutputStreamTraits.h */,
+				9CCA97A6297B119F00CAA085 /* InputByteArrayStream.h */,
+				9CCA97A7297B119F00CAA085 /* PDFDate.h */,
+				9CCA97A8297B119F00CAA085 /* PDFArrayIterator.h */,
+				9CCA97A9297B119F00CAA085 /* FreeTypeWrapper.cpp */,
+				9CCA97AA297B119F00CAA085 /* Timer.h */,
+				9CCA97AB297B119F00CAA085 /* JPEGImageParser.h */,
+				9CCA97AC297B119F00CAA085 /* PDFDocumentHandler.h */,
+				9CCA97AD297B119F00CAA085 /* CIDFontWriter.h */,
+				9CCA97AE297B119F00CAA085 /* IPDFParserExtender.h */,
+				9CCA97AF297B119F00CAA085 /* CFFFileInput.h */,
+				9CCA97B0297B119F00CAA085 /* FontDescriptorWriter.h */,
+				9CCA97B1297B119F00CAA085 /* DictOperand.h */,
+				9CCA97B2297B119F00CAA085 /* PDFParser.cpp */,
+				9CCA97B3297B119F00CAA085 /* JPEGImageHandler.h */,
+				9CCA97B4297B119F00CAA085 /* OutputRC4XcodeStream.h */,
+				9CCA97B5297B119F00CAA085 /* ArrayOfInputStreamsStream.h */,
+				9CCA97B6297B119F00CAA085 /* InputByteArrayStream.cpp */,
+				9CCA97B7297B119F00CAA085 /* UnicodeString.h */,
+				9CCA97B8297B119F00CAA085 /* InputCharStringDecodeStream.cpp */,
+				9CCA97B9297B119F00CAA085 /* PDFCosArray.cpp */,
+				9CCA97BA297B119F00CAA085 /* StateWriter.cpp */,
+				9CCA97BB297B119F00CAA085 /* CFFDescendentFontWriter.h */,
+				9CCA97BC297B119F00CAA085 /* PDFNull.h */,
+				9CCA97BD297B119F00CAA085 /* TimersRegistry.h */,
+				9CCA97BE297B119F00CAA085 /* XObjectContentContext.h */,
+				9CCA97BF297B119F00CAA085 /* IFormEndWritingTask.h */,
+				9CCA97C0297B119F00CAA085 /* Trace.h */,
+				9CCA97C1297B119F00CAA085 /* EncryptionHelper.cpp */,
+				9CCA97C2297B119F00CAA085 /* PDFWriter.cpp */,
+				9CCA97C3297B119F00CAA085 /* PDFImageXObject.h */,
+				9CCA97C4297B119F00CAA085 /* BetweenIncluding.h */,
+				9CCA97C5297B119F00CAA085 /* PDFPageMergingHelper.cpp */,
+				9CCA97C6297B119F00CAA085 /* OutputRC4XcodeStream.cpp */,
+				9CCA97C7297B119F00CAA085 /* InputRC4XcodeStream.h */,
+				9CCA97C8297B119F00CAA085 /* AbstractContentContext.h */,
+				9CCA97C9297B119F00CAA085 /* CharStringType2Interpreter.h */,
+				9CCA97CA297B119F00CAA085 /* Log.h */,
+				9CCA97CB297B119F00CAA085 /* OutputAESEncodeStream.h */,
+				9CCA97CC297B119F00CAA085 /* Type1ToType2Converter.cpp */,
+				9CCA97CD297B119F00CAA085 /* InputFile.h */,
+				9CCA97CE297B119F00CAA085 /* TrueTypeANSIFontWriter.h */,
+				9CCA97CF297B119F00CAA085 /* PDFIndirectObjectReference.h */,
+				9CCA97D0297B119F00CAA085 /* DescendentFontWriter.cpp */,
+				9CCA97D1297B119F00CAA085 /* RefCountObject.h */,
+				9CCA97D2297B119F00CAA085 /* PDFDocEncoding.cpp */,
+				9CCA97D3297B119F00CAA085 /* AbstractWrittenFont.cpp */,
+				9CCA97D4297B119F00CAA085 /* RC4.h */,
+				9CCA97D5297B119F00CAA085 /* PageContentContext.cpp */,
+				9CCA97D6297B119F00CAA085 /* ANSIFontWriter.cpp */,
+				9CCA97D7297B119F00CAA085 /* GlyphUnicodeMapping.h */,
+				9CCA97D8297B119F00CAA085 /* ObjectsContextExtenderAdapter.h */,
+				9CCA97D9297B119F00CAA085 /* IResourceWritingTask.h */,
+				9CCA97DA297B119F00CAA085 /* UppercaseSequance.cpp */,
+				9CCA97DB297B119F00CAA085 /* GraphicStateStack.h */,
+				9CCA97DC297B119F00CAA085 /* GraphicStateStack.cpp */,
+				9CCA97DD297B119F00CAA085 /* TrueTypeDescendentFontWriter.h */,
+				9CCA97DE297B119F00CAA085 /* PDFPageMergingHelper.h */,
+				9CCA97DF297B119F00CAA085 /* DocumentContext.h */,
+				9CCA97E0297B119F00CAA085 /* MapIterator.h */,
+				9CCA97E1297B119F00CAA085 /* PDFDictionaryIterator.cpp */,
+				9CCA97E2297B119F00CAA085 /* PDFParserTokenizer.cpp */,
+				9CCA97E3297B119F00CAA085 /* IPageEndWritingTask.h */,
+				9CCA97E4297B119F00CAA085 /* PDFTiledPattern.h */,
+				9CCA97E5297B119F00CAA085 /* CharStringType1Interpreter.cpp */,
+				9CCA97E6297B119F00CAA085 /* BoxingBase.h */,
+				9CCA97E7297B119F00CAA085 /* PFMFileReader.cpp */,
+				9CCA97E8297B119F00CAA085 /* StateWriter.h */,
+				9CCA97E9297B119F00CAA085 /* CatalogInformation.cpp */,
+				9CCA97EA297B119F00CAA085 /* IDocumentContextExtender.h */,
+				9CCA97EB297B119F00CAA085 /* PDFReal.h */,
+				9CCA97EC297B119F00CAA085 /* JPEGImageInformation.cpp */,
+				9CCA97ED297B119F00CAA085 /* OutputFlateEncodeStream.cpp */,
+				9CCA97EE297B119F00CAA085 /* UsedFontsRepository.cpp */,
+				9CCA97EF297B119F00CAA085 /* PDFParserTokenizer.h */,
+				9CCA97F0297B119F00CAA085 /* RefCountPtr.h */,
+				9CCA97F1297B119F00CAA085 /* IByteWriter.h */,
+				9CCA97F2297B119F00CAA085 /* PDFIndirectObjectReference.cpp */,
+				9CCA97F3297B119F00CAA085 /* SafeBufferMacrosDefs.h */,
+				9CCA97F4297B119F00CAA085 /* StandardEncoding.h */,
+				9CCA97F5297B119F00CAA085 /* OutputFlateDecodeStream.h */,
+				9CCA97F6297B119F00CAA085 /* PDFObjectParser.cpp */,
+				9CCA97F7297B119F00CAA085 /* PDFStream.cpp */,
+				9CCA97F8297B119F00CAA085 /* PDFParsingOptions.h */,
+				9CCA97F9297B119F00CAA085 /* MyStringBuf.h */,
+				9CCA97FA297B119F00CAA085 /* InputDCTDecodeStream.h */,
+				9CCA97FB297B119F00CAA085 /* Type2CharStringWriter.h */,
+				9CCA97FC297B119F00CAA085 /* StateReader.cpp */,
+				9CCA97FD297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp */,
+				9CCA97FE297B119F00CAA085 /* JPEGImageInformation.h */,
+				9CCA97FF297B119F00CAA085 /* ANSIFontWriter.h */,
+				9CCA9800297B119F00CAA085 /* FreeTypeType1Wrapper.h */,
+				9CCA9801297B119F00CAA085 /* PDFPage.h */,
+				9CCA9802297B119F00CAA085 /* DecryptionHelper.cpp */,
+				9CCA9803297B119F00CAA085 /* CFFDescendentFontWriter.cpp */,
+				9CCA9804297B119F00CAA085 /* ResourcesDictionary.h */,
+				9CCA9805297B119F00CAA085 /* ObjectsBasicTypes.h */,
+				9CCA9806297B119F00CAA085 /* IType2InterpreterImplementation.h */,
+				9CCA9807297B119F00CAA085 /* PDFObjectCast.h */,
+				9CCA9808297B119F00CAA085 /* PDFObject.h */,
+				9CCA9809297B119F00CAA085 /* InputPredictorPNGOptimumStream.cpp */,
+				9CCA980A297B119F00CAA085 /* PDFArray.h */,
+				9CCA980B297B119F00CAA085 /* EFontStretch.h */,
+				9CCA980C297B119F00CAA085 /* CMYKRGBColor.h */,
+				9CCA980D297B119F00CAA085 /* PDFWriter.h */,
+				9CCA980E297B119F00CAA085 /* PDFModifiedPage.h */,
+				9CCA980F297B119F00CAA085 /* WrittenFontCFF.h */,
+				9CCA9810297B119F00CAA085 /* PDFParsingOptions.cpp */,
+				9CCA9811297B119F00CAA085 /* PDFObjectParser.h */,
+				9CCA9812297B119F00CAA085 /* TiledPatternContentContext.cpp */,
+				9CCA9813297B119F00CAA085 /* IANSIFontWriterHelper.h */,
+				9CCA9814297B119F00CAA085 /* PDFImageXObject.cpp */,
+				9CCA9815297B119F00CAA085 /* PDFHexString.h */,
+				9CCA9816297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.cpp */,
+				9CCA9817297B119F00CAA085 /* PDFPageInput.cpp */,
+				9CCA9818297B119F00CAA085 /* InputStringBufferStream.cpp */,
+				9CCA9819297B119F00CAA085 /* EncryptionHelper.h */,
+				9CCA981A297B119F00CAA085 /* PDFLiteralString.cpp */,
+				9CCA981B297B119F00CAA085 /* WrittenFontCFF.cpp */,
+				9CCA981C297B119F00CAA085 /* IByteWriterWithPosition.h */,
+				9CCA981D297B119F00CAA085 /* StandardEncoding.cpp */,
+				9CCA981E297B119F00CAA085 /* InputAESDecodeStream.cpp */,
+				9CCA981F297B119F00CAA085 /* InputPFBDecodeStream.h */,
+				9CCA9820297B119F00CAA085 /* InputLimitedStream.cpp */,
+				9CCA9821297B119F00CAA085 /* Type1ToType2Converter.h */,
+				9CCA9822297B119F00CAA085 /* DescendentFontWriter.h */,
+				9CCA9823297B119F00CAA085 /* Type1Input.h */,
+				9CCA9824297B119F00CAA085 /* InputRC4XcodeStream.cpp */,
+				9CCA9825297B119F00CAA085 /* PDFTextString.h */,
+				9CCA9826297B119F00CAA085 /* InputAsciiHexDecodeStream.h */,
+				9CCA9827297B119F00CAA085 /* PSBool.cpp */,
+				9CCA9828297B119F00CAA085 /* CFFFileInput.cpp */,
+				9CCA9829297B119F00CAA085 /* CFFEmbeddedFontWriter.cpp */,
+				9CCA982A297B119F00CAA085 /* FreeTypeFaceWrapper.cpp */,
+				9CCA982B297B119F00CAA085 /* InputFlateDecodeStream.cpp */,
+				9CCA982C297B119F00CAA085 /* PageTree.h */,
+				9CCA982D297B119F00CAA085 /* PDFRectangle.h */,
+				9CCA982E297B119F00CAA085 /* PDFBoolean.cpp */,
+				9CCA982F297B119F00CAA085 /* PDFHexString.cpp */,
+				9CCA9830297B119F00CAA085 /* InfoDictionary.cpp */,
+				9CCA9831297B119F00CAA085 /* OpenTypePrimitiveReader.h */,
+				9CCA9832297B119F00CAA085 /* PDFArrayIterator.cpp */,
+				9CCA9833297B119F00CAA085 /* InputLimitedStream.h */,
+				9CCA9834297B119F00CAA085 /* IReadPositionProvider.h */,
+				9CCA9835297B119F00CAA085 /* TrailerInformation.h */,
+				9CCA9836297B119F00CAA085 /* InputCharStringDecodeStream.h */,
+				9CCA9837297B119F00CAA085 /* CharStringType2Flattener.h */,
+				9CCA9838297B119F00CAA085 /* JPEGImageHandler.cpp */,
+				9CCA9839297B119F00CAA085 /* TrueTypeDescendentFontWriter.cpp */,
+				9CCA983A297B119F00CAA085 /* XCryptionCommon.cpp */,
+				9CCA983B297B119F00CAA085 /* PDFInteger.cpp */,
+				9CCA983C297B119F00CAA085 /* ETokenSeparator.h */,
+				9CCA983D297B119F00CAA085 /* CFFPrimitiveWriter.h */,
+				9CCA983E297B119F00CAA085 /* IObjectsContextExtender.h */,
+				9CCA983F297B119F00CAA085 /* CharStringType2Interpreter.cpp */,
+				9CCA9840297B119F00CAA085 /* MD5Generator.cpp */,
+				9CCA9841297B119F00CAA085 /* OutputAESEncodeStream.cpp */,
+				9CCA9842297B119F00CAA085 /* DocumentContextExtenderAdapter.h */,
+				9CCA9843297B119F00CAA085 /* OutputFile.cpp */,
+				9CCA9844297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.h */,
+				9CCA9845297B119F00CAA085 /* IFontDescriptorHelper.h */,
+				9CCA9846297B119F00CAA085 /* PNGImageHandler.cpp */,
+				9CCA9847297B119F00CAA085 /* SimpleStringTokenizer.cpp */,
+				9CCA9848297B119F00CAA085 /* PDFDocumentHandler.cpp */,
+				9CCA9849297B119F00CAA085 /* PDFName.h */,
+				9CCA984A297B119F00CAA085 /* CMYKRGBColor.cpp */,
+				9CCA984B297B119F00CAA085 /* CharStringType1Tracer.cpp */,
+				9CCA984C297B119F00CAA085 /* PDFReal.cpp */,
+			);
+			path = PDFWriter;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1995,50 +2859,79 @@
 			buildActionMask = 2147483647;
 			files = (
 				9C1D616B2958F7EF00877D79 /* page_type.cpp in Sources */,
+				9CCA988C297B119F00CAA085 /* OutputBufferedStream.cpp in Sources */,
 				9C1D61682958F7EF00877D79 /* pencil.cpp in Sources */,
 				9C620D1D29591DC80041CFA3 /* file.cpp in Sources */,
 				9C1D61FA2958F7EF00877D79 /* post_convert.cpp in Sources */,
+				9CCA98C0297B119F00CAA085 /* PDFImageXObject.cpp in Sources */,
 				9C620CAE295901C90041CFA3 /* packrat_parser.cpp in Sources */,
 				9C1D614A2958F7EF00877D79 /* line_breaker.cpp in Sources */,
+				9CCA986E297B119F00CAA085 /* PDFDictionary.cpp in Sources */,
 				9C1D61932958F7EF00877D79 /* charmap.cpp in Sources */,
 				9C620D1129590C550041CFA3 /* load_tfm.cpp in Sources */,
+				9CCA98C1297B119F00CAA085 /* TrueTypeEmbeddedFontWriter.cpp in Sources */,
 				9C1D61472958F7EF00877D79 /* lazy_paragraph.cpp in Sources */,
 				9C1D61622958F7EF00877D79 /* decoration_boxes.cpp in Sources */,
 				9C1D61592958F7EF00877D79 /* basic_boxes.cpp in Sources */,
 				9C1D61B32958F7EF00877D79 /* tree_traverse.cpp in Sources */,
 				9C1D61602958F7EF00877D79 /* superpose_boxes.cpp in Sources */,
 				9C1D620D2958F7EF00877D79 /* iterator.cpp in Sources */,
+				9CCA9856297B119F00CAA085 /* UnicodeString.cpp in Sources */,
+				9CCA987C297B119F00CAA085 /* CIDFontWriter.cpp in Sources */,
 				9C620D1229590C550041CFA3 /* adjust_cmr.cpp in Sources */,
+				9CCA9860297B119F00CAA085 /* OpenTypePrimitiveReader.cpp in Sources */,
+				9CCA98C7297B119F00CAA085 /* InputAESDecodeStream.cpp in Sources */,
 				9C1D61B62958F7EF00877D79 /* vars.cpp in Sources */,
 				9C1D61C52958F7EF00877D79 /* commute.cpp in Sources */,
 				9C1D620B2958F7EF00877D79 /* hashmap_extra.cpp in Sources */,
 				9C1D61452958F7EF00877D79 /* env_default.cpp in Sources */,
 				9C620D0429590C540041CFA3 /* rubber_unicode_font.cpp in Sources */,
 				9C1D618B2958F7EF00877D79 /* enlightened.cpp in Sources */,
+				9CCA98B6297B119F00CAA085 /* PDFIndirectObjectReference.cpp in Sources */,
 				9C620D1529590C550041CFA3 /* load_tex.cpp in Sources */,
+				9CCA98E0297B119F00CAA085 /* PDFReal.cpp in Sources */,
 				9C1D61FF2958F7EF00877D79 /* string.cpp in Sources */,
+				9CCA986F297B119F00CAA085 /* PDFDate.cpp in Sources */,
+				9CCA987A297B119F00CAA085 /* ResourcesDictionary.cpp in Sources */,
 				9C1D61422958F7EF00877D79 /* env_exec.cpp in Sources */,
+				9CCA984E297B119F00CAA085 /* aeskey.c in Sources */,
 				9C620CFE29590C540041CFA3 /* adjust_libertine.cpp in Sources */,
 				9C620CB0295901C90041CFA3 /* scheme_language.cpp in Sources */,
 				9C1D61372958F7EF00877D79 /* bridge_hidden.cpp in Sources */,
 				9C1D61272958F7EF00877D79 /* skeleton.cpp in Sources */,
 				9C1D61322958F7EF00877D79 /* bridge_formatting.cpp in Sources */,
+				9CCA9862297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp in Sources */,
+				9CCA9879297B119F00CAA085 /* OutputStringBufferStream.cpp in Sources */,
+				9CCA988A297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp in Sources */,
 				9C1D61C22958F7EF00877D79 /* escaped_char_parser.cpp in Sources */,
 				9C1D62112958F7EF00877D79 /* array.cpp in Sources */,
+				9CCA9899297B119F00CAA085 /* TiffUsageParameters.cpp in Sources */,
+				9CCA9877297B119F00CAA085 /* CharStringType2Flattener.cpp in Sources */,
 				9C620D232959249E0041CFA3 /* upgradetm.cpp in Sources */,
+				9CCA988E297B119F00CAA085 /* DocumentContext.cpp in Sources */,
+				9CCA988D297B119F00CAA085 /* CFFPrimitiveWriter.cpp in Sources */,
 				9C1D616C2958F7EF00877D79 /* brush.cpp in Sources */,
 				9C620CFB29590C540041CFA3 /* rubber_stix_font.cpp in Sources */,
 				9C1D61502958F7EF00877D79 /* line_item.cpp in Sources */,
+				9CCA98D9297B119F00CAA085 /* OutputAESEncodeStream.cpp in Sources */,
 				9C2D133329599944007EE3CA /* link.cpp in Sources */,
 				9C1D615B2958F7EF00877D79 /* boxes.cpp in Sources */,
+				9CCA98C4297B119F00CAA085 /* PDFLiteralString.cpp in Sources */,
+				9CCA98D8297B119F00CAA085 /* MD5Generator.cpp in Sources */,
 				9C1D618D2958F7EF00877D79 /* transformed.cpp in Sources */,
+				9CCA98BB297B119F00CAA085 /* DecryptionHelper.cpp in Sources */,
+				9CCA98AE297B119F00CAA085 /* PDFDictionaryIterator.cpp in Sources */,
+				9CCA9866297B119F00CAA085 /* PDFTextString.cpp in Sources */,
+				9CCA988F297B119F00CAA085 /* PDFPage.cpp in Sources */,
 				9C1D61C62958F7EF00877D79 /* patch.cpp in Sources */,
+				9CCA9895297B119F00CAA085 /* PDFName.cpp in Sources */,
 				9C1D61332958F7EF00877D79 /* bridge_eval.cpp in Sources */,
 				9C1D61902958F7EF00877D79 /* poor_extended.cpp in Sources */,
 				9C1D61302958F7EF00877D79 /* bridge_locus.cpp in Sources */,
 				9C1D61D22958F7EF00877D79 /* ip_observer.cpp in Sources */,
 				9C1D61CD2958F7EF00877D79 /* analyze.cpp in Sources */,
 				9C1D61A42958F7EF00877D79 /* font_database.cpp in Sources */,
+				9CCA9884297B119F00CAA085 /* RC4.cpp in Sources */,
 				9C620CB6295901C90041CFA3 /* dictionary.cpp in Sources */,
 				9C620D0829590C540041CFA3 /* tt_file.cpp in Sources */,
 				9C620CB4295901C90041CFA3 /* prog_language.cpp in Sources */,
@@ -2050,22 +2943,34 @@
 				9C1D61BE2958F7EF00877D79 /* number_parser.cpp in Sources */,
 				9C1D61832958F7EF00877D79 /* smoothen.cpp in Sources */,
 				9C1D61462958F7EF00877D79 /* env_inactive.cpp in Sources */,
+				9CCA986A297B119F00CAA085 /* InputStreamSkipperStream.cpp in Sources */,
 				9C620CA4295901C90041CFA3 /* url.cpp in Sources */,
+				9CCA98BC297B119F00CAA085 /* CFFDescendentFontWriter.cpp in Sources */,
 				9C1D614B2958F7EF00877D79 /* lazy_gui.cpp in Sources */,
+				9CCA98D6297B119F00CAA085 /* PDFInteger.cpp in Sources */,
 				9C1D62062958F7EF00877D79 /* modification.cpp in Sources */,
 				9C1D612F2958F7EF00877D79 /* bridge_with.cpp in Sources */,
+				9CCA98BA297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp in Sources */,
+				9CCA98B7297B119F00CAA085 /* PDFObjectParser.cpp in Sources */,
 				9C1D617C2958F7EF00877D79 /* glyph_ops.cpp in Sources */,
 				9C620CAD295901C90041CFA3 /* scilab_language.cpp in Sources */,
+				9CCA989B297B119F00CAA085 /* ObjectsContext.cpp in Sources */,
+				9CCA9888297B119F00CAA085 /* Trace.cpp in Sources */,
 				9C620CB3295901C90041CFA3 /* impl_language.cpp in Sources */,
+				9CCA9887297B119F00CAA085 /* PDFTiledPattern.cpp in Sources */,
 				9C620D0029590C540041CFA3 /* tt_font.cpp in Sources */,
 				9C620D0129590C540041CFA3 /* tt_analyze.cpp in Sources */,
 				9C1D61922958F7EF00877D79 /* poor_rubber.cpp in Sources */,
 				9C1D615F2958F7EF00877D79 /* stack_boxes.cpp in Sources */,
+				9CCA98CB297B119F00CAA085 /* CFFFileInput.cpp in Sources */,
 				9C1D61362958F7EF00877D79 /* bridge_auto.cpp in Sources */,
 				9C1D611E2958F7EF00877D79 /* concat_post.cpp in Sources */,
 				9C1D619F2958F7EF00877D79 /* poor_stretched.cpp in Sources */,
 				9C1D619D2958F7EF00877D79 /* superposed_font.cpp in Sources */,
+				9CCA98A1297B119F00CAA085 /* StateWriter.cpp in Sources */,
+				9CCA985C297B119F00CAA085 /* PDFStreamInput.cpp in Sources */,
 				9C1D61662958F7EF00877D79 /* graphics_boxes.cpp in Sources */,
+				9CCA98BD297B119F00CAA085 /* InputPredictorPNGOptimumStream.cpp in Sources */,
 				9C1D61252958F7EF00877D79 /* concat_text.cpp in Sources */,
 				9C1D615A2958F7EF00877D79 /* rubber_boxes.cpp in Sources */,
 				9C1D61382958F7EF00877D79 /* bridge.cpp in Sources */,
@@ -2075,20 +2980,29 @@
 				9C620CB5295901C90041CFA3 /* packrat_grammar.cpp in Sources */,
 				9C620D0F29590C550041CFA3 /* tex_files.cpp in Sources */,
 				9C1D615D2958F7EF00877D79 /* concat_boxes.cpp in Sources */,
+				9CCA98B8297B119F00CAA085 /* PDFStream.cpp in Sources */,
 				9C1D61532958F7EF00877D79 /* animate_boxes.cpp in Sources */,
 				9C1D61A82958F7EF00877D79 /* font_translate.cpp in Sources */,
 				9C1D61292958F7EF00877D79 /* columns_breaker.cpp in Sources */,
 				9C1D61CA2958F7EF00877D79 /* fast_search.cpp in Sources */,
+				9CCA98A7297B119F00CAA085 /* DescendentFontWriter.cpp in Sources */,
 				9C1D61742958F7EF00877D79 /* glyph_effected.cpp in Sources */,
 				9C1D61A32958F7EF00877D79 /* font_guess.cpp in Sources */,
 				9C1D61842958F7EF00877D79 /* recognize_handwriting.cpp in Sources */,
+				9CCA9892297B119F00CAA085 /* TimersRegistry.cpp in Sources */,
 				9C1D61C02958F7EF00877D79 /* operator_parser.cpp in Sources */,
 				9C1D619A2958F7EF00877D79 /* translator.cpp in Sources */,
 				9C620D2829592E7B0041CFA3 /* widget.cpp in Sources */,
+				9CCA986D297B119F00CAA085 /* Ascii7Encoding.cpp in Sources */,
 				9C1D618C2958F7EF00877D79 /* triangulated.cpp in Sources */,
 				9C1D61FB2958F7EF00877D79 /* generic.cpp in Sources */,
+				9CCA989F297B119F00CAA085 /* InputCharStringDecodeStream.cpp in Sources */,
+				9CCA9889297B119F00CAA085 /* InputFile.cpp in Sources */,
 				9C1D61992958F7EF00877D79 /* poor_italic.cpp in Sources */,
 				9C1D61972958F7EF00877D79 /* font_wide.cpp in Sources */,
+				9CCA9878297B119F00CAA085 /* PDFArray.cpp in Sources */,
+				9CCA98A2297B119F00CAA085 /* EncryptionHelper.cpp in Sources */,
+				9CCA9896297B119F00CAA085 /* JPEGImageParser.cpp in Sources */,
 				9C1D61AD2958F7EF00877D79 /* tree_correct.cpp in Sources */,
 				9C1D61542958F7EF00877D79 /* highlight_boxes.cpp in Sources */,
 				9C620CA8295901C90041CFA3 /* text_language.cpp in Sources */,
@@ -2097,175 +3011,273 @@
 				9C1D61222958F7EF00877D79 /* concat_active.cpp in Sources */,
 				9C620D1329590C550041CFA3 /* tex_init.cpp in Sources */,
 				9C1D61F42958F7EF00877D79 /* fromtm.cpp in Sources */,
+				9CCA9857297B119F00CAA085 /* PDFDocumentCopyingContext.cpp in Sources */,
 				9C1D614D2958F7EF00877D79 /* cell.cpp in Sources */,
+				9CCA9885297B119F00CAA085 /* XObjectContentContext.cpp in Sources */,
 				9C620D162959149C0041CFA3 /* scalable.cpp in Sources */,
 				9C1D61D02958F7EF00877D79 /* tree_pointer.cpp in Sources */,
 				9C1D61652958F7EF00877D79 /* composite_boxes.cpp in Sources */,
 				9C1D61862958F7EF00877D79 /* test_math.cpp in Sources */,
 				9C1D61A52958F7EF00877D79 /* smart_font.cpp in Sources */,
 				9C1D617D2958F7EF00877D79 /* raster_random.cpp in Sources */,
+				9CCA98CC297B119F00CAA085 /* CFFEmbeddedFontWriter.cpp in Sources */,
 				9C1D61212958F7EF00877D79 /* concat_animate.cpp in Sources */,
 				9C620D2729592CEB0041CFA3 /* make_file.cpp in Sources */,
+				9CCA985D297B119F00CAA085 /* PDFModifiedPage.cpp in Sources */,
+				9CCA9869297B119F00CAA085 /* TrueTypeANSIFontWriter.cpp in Sources */,
+				9CCA98DD297B119F00CAA085 /* PDFDocumentHandler.cpp in Sources */,
 				9C1D61AA2958F7EF00877D79 /* font_scripts.cpp in Sources */,
 				9C1D61A12958F7EF00877D79 /* recolored_font.cpp in Sources */,
 				9C1D61BD2958F7EF00877D79 /* string_parser.cpp in Sources */,
+				9CCA98A4297B119F00CAA085 /* PDFPageMergingHelper.cpp in Sources */,
 				9C620D0D29590C550041CFA3 /* unicode_math_font.cpp in Sources */,
 				9C1D61EC2958F7EF00877D79 /* verbatim.cpp in Sources */,
+				9CCA9868297B119F00CAA085 /* OutputFileStream.cpp in Sources */,
 				9C1D61EF2958F7EF00877D79 /* fromxml.cpp in Sources */,
+				9CCA98B0297B119F00CAA085 /* CharStringType1Interpreter.cpp in Sources */,
+				9CCA986C297B119F00CAA085 /* CharStringType2Tracer.cpp in Sources */,
 				9C1D61C92958F7EF00877D79 /* converter.cpp in Sources */,
 				9C1D612B2958F7EF00877D79 /* vpenalty.cpp in Sources */,
 				9C620D0E29590C550041CFA3 /* load_pk.cpp in Sources */,
 				9C1D61562958F7EF00877D79 /* art_boxes.cpp in Sources */,
+				9CCA98D1297B119F00CAA085 /* InfoDictionary.cpp in Sources */,
 				9C1D61312958F7EF00877D79 /* bridge_compound.cpp in Sources */,
 				9C1D61232958F7EF00877D79 /* concat_math.cpp in Sources */,
 				9C1D616E2958F7EF00877D79 /* frame.cpp in Sources */,
+				9CCA9854297B119F00CAA085 /* AbstractContentContext.cpp in Sources */,
+				9CCA9850297B119F00CAA085 /* aes_modes.c in Sources */,
 				9C1D60F02958F7EF00877D79 /* object.cpp in Sources */,
 				9C620D242959253E0041CFA3 /* preferences.cpp in Sources */,
+				9CCA989A297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp in Sources */,
+				9CCA9870297B119F00CAA085 /* PDFObject.cpp in Sources */,
 				9C1D61722958F7EF00877D79 /* point.cpp in Sources */,
+				9CCA9881297B119F00CAA085 /* Timer.cpp in Sources */,
 				9C1D62132958F7EF00877D79 /* hashset.cpp in Sources */,
+				9CCA98BE297B119F00CAA085 /* PDFParsingOptions.cpp in Sources */,
 				9C1D61792958F7EF00877D79 /* glyph_distorted.cpp in Sources */,
 				9C1D61242958F7EF00877D79 /* concat_inactive.cpp in Sources */,
 				9C620D0629590C540041CFA3 /* tt_face.cpp in Sources */,
 				9C1D61432958F7EF00877D79 /* env.cpp in Sources */,
 				9C620D1029590C550041CFA3 /* tex_font.cpp in Sources */,
+				9CCA98DA297B119F00CAA085 /* OutputFile.cpp in Sources */,
+				9CCA98A5297B119F00CAA085 /* OutputRC4XcodeStream.cpp in Sources */,
+				9CCA989C297B119F00CAA085 /* FreeTypeWrapper.cpp in Sources */,
 				9C1D611F2958F7EF00877D79 /* concat_graphics.cpp in Sources */,
 				9C1D61C42958F7EF00877D79 /* identifier_parser.cpp in Sources */,
+				9CCA986B297B119F00CAA085 /* OutputStreamTraits.cpp in Sources */,
 				9C1D61FC2958F7EF00877D79 /* indexation.cpp in Sources */,
+				9CCA985B297B119F00CAA085 /* InputAsciiHexDecodeStream.cpp in Sources */,
 				9C1D61892958F7EF00877D79 /* colors.cpp in Sources */,
 				9C1D61B92958F7EF00877D79 /* drd_std.cpp in Sources */,
 				9C1D614C2958F7EF00877D79 /* table.cpp in Sources */,
 				9C1D614F2958F7EF00877D79 /* page_item.cpp in Sources */,
 				9C1D619C2958F7EF00877D79 /* font_select.cpp in Sources */,
+				9CCA9876297B119F00CAA085 /* Type2CharStringWriter.cpp in Sources */,
 				9C1D61BA2958F7EF00877D79 /* new_style.cpp in Sources */,
 				9C1D620E2958F7EF00877D79 /* hashfunc.cpp in Sources */,
 				9C1D61762958F7EF00877D79 /* glyph_unserif.cpp in Sources */,
+				9CCA98AD297B119F00CAA085 /* GraphicStateStack.cpp in Sources */,
 				9C620D0C29590C550041CFA3 /* adjust_stix.cpp in Sources */,
 				9C1D614E2958F7EF00877D79 /* format.cpp in Sources */,
 				9C1D610B2958F7EF00877D79 /* guile_tm.cpp in Sources */,
+				9CCA9871297B119F00CAA085 /* PDFRectangle.cpp in Sources */,
 				9C620CFF29590C540041CFA3 /* free_type.cpp in Sources */,
+				9CCA98C5297B119F00CAA085 /* WrittenFontCFF.cpp in Sources */,
+				9CCA985A297B119F00CAA085 /* InputStringStream.cpp in Sources */,
+				9CCA9852297B119F00CAA085 /* aestab.c in Sources */,
 				9C1D61D42958F7EF00877D79 /* edit_observer.cpp in Sources */,
 				9C1D61D82958F7EF00877D79 /* from_scheme.cpp in Sources */,
 				9C1D61772958F7EF00877D79 /* glyph_shrink.cpp in Sources */,
 				9C1D61982958F7EF00877D79 /* poor_effected.cpp in Sources */,
+				9CCA98A3297B119F00CAA085 /* PDFWriter.cpp in Sources */,
 				9C1D62032958F7EF00877D79 /* path.cpp in Sources */,
+				9CCA98B4297B119F00CAA085 /* OutputFlateEncodeStream.cpp in Sources */,
+				9CCA9875297B119F00CAA085 /* PDFNull.cpp in Sources */,
 				9C01CB93295CA62700C00445 /* vau_glue.cpp in Sources */,
+				9CCA98A6297B119F00CAA085 /* Type1ToType2Converter.cpp in Sources */,
 				9C1D618F2958F7EF00877D79 /* poor_bbb.cpp in Sources */,
 				9C1D61262958F7EF00877D79 /* concat_gui.cpp in Sources */,
+				9CCA98C8297B119F00CAA085 /* InputLimitedStream.cpp in Sources */,
 				9C620D1F295921090041CFA3 /* picture.cpp in Sources */,
 				9C1D61712958F7EF00877D79 /* curve_extras.cpp in Sources */,
 				9C1D619B2958F7EF00877D79 /* font_spacing.cpp in Sources */,
 				9C1D62082958F7EF00877D79 /* basic.cpp in Sources */,
+				9CCA98D4297B119F00CAA085 /* TrueTypeDescendentFontWriter.cpp in Sources */,
 				9C1D61CE2958F7EF00877D79 /* tree_addendum.cpp in Sources */,
 				9C1D61B72958F7EF00877D79 /* drd_mode.cpp in Sources */,
 				9C1D61D72958F7EF00877D79 /* to_scheme.cpp in Sources */,
 				9C1D613A2958F7EF00877D79 /* bridge_gui.cpp in Sources */,
+				9CCA9864297B119F00CAA085 /* PDFCosDict.cpp in Sources */,
 				9C620D222959244A0041CFA3 /* web_files.cpp in Sources */,
 				9C1D61482958F7EF00877D79 /* lazy_vstream.cpp in Sources */,
+				9CCA985E297B119F00CAA085 /* WinAnsiEncoding.cpp in Sources */,
 				9C1D61752958F7EF00877D79 /* glyph.cpp in Sources */,
 				9C1D61AC2958F7EF00877D79 /* tree_brackets.cpp in Sources */,
+				9CCA9894297B119F00CAA085 /* PageTree.cpp in Sources */,
 				9C1D61962958F7EF00877D79 /* poor_bold.cpp in Sources */,
 				9C1D612C2958F7EF00877D79 /* new_breaker.cpp in Sources */,
 				9C1D61352958F7EF00877D79 /* bridge_docrange.cpp in Sources */,
 				9C1D61B42958F7EF00877D79 /* tree_select.cpp in Sources */,
 				9C1D615C2958F7EF00877D79 /* text_boxes.cpp in Sources */,
+				9CCA9861297B119F00CAA085 /* Log.cpp in Sources */,
 				9C1D615E2958F7EF00877D79 /* math_boxes.cpp in Sources */,
 				9C1D61FD2958F7EF00877D79 /* parse_vernac.cpp in Sources */,
+				9CCA9873297B119F00CAA085 /* CFFPrimitiveReader.cpp in Sources */,
+				9CCA98CA297B119F00CAA085 /* PSBool.cpp in Sources */,
+				9CCA98B9297B119F00CAA085 /* StateReader.cpp in Sources */,
 				9C1D61392958F7EF00877D79 /* bridge_mark.cpp in Sources */,
 				9C620CAA295901C90041CFA3 /* verb_language.cpp in Sources */,
 				9C1D61C72958F7EF00877D79 /* archiver.cpp in Sources */,
 				9C1D61FE2958F7EF00877D79 /* tree_label.cpp in Sources */,
 				9C620CAB295901C90041CFA3 /* mathemagix_language.cpp in Sources */,
+				9CCA98D2297B119F00CAA085 /* PDFArrayIterator.cpp in Sources */,
+				9CCA98D7297B119F00CAA085 /* CharStringType2Interpreter.cpp in Sources */,
+				9CCA98C3297B119F00CAA085 /* InputStringBufferStream.cpp in Sources */,
 				9C1D61632958F7EF00877D79 /* misc_boxes.cpp in Sources */,
 				9C1D612A2958F7EF00877D79 /* make_pages.cpp in Sources */,
 				9C620CA9295901C90041CFA3 /* fortran_language.cpp in Sources */,
+				9CCA987B297B119F00CAA085 /* FreeTypeType1Wrapper.cpp in Sources */,
 				9C1D61AE2958F7EF00877D79 /* tree_analyze.cpp in Sources */,
 				9C1D61912958F7EF00877D79 /* virtual_enhance.cpp in Sources */,
 				9C620D0B29590C550041CFA3 /* adjust_schola.cpp in Sources */,
 				9C1D61A02958F7EF00877D79 /* virtual_font.cpp in Sources */,
+				9CCA9874297B119F00CAA085 /* ParsedPrimitiveHelper.cpp in Sources */,
 				9C1D61402958F7EF00877D79 /* env_animate.cpp in Sources */,
 				9C1D61202958F7EF00877D79 /* concat_macro.cpp in Sources */,
 				9C1D620F2958F7EF00877D79 /* hashtree.cpp in Sources */,
+				9CCA9872297B119F00CAA085 /* GraphicState.cpp in Sources */,
 				9C1D61872958F7EF00877D79 /* math_tree.cpp in Sources */,
+				9CCA9859297B119F00CAA085 /* OpenTypeFileInput.cpp in Sources */,
 				9C2D13372959A129007EE3CA /* vau_editor.cpp in Sources */,
+				9CCA98DC297B119F00CAA085 /* SimpleStringTokenizer.cpp in Sources */,
 				9C1D61522958F7EF00877D79 /* stacker.cpp in Sources */,
+				9CCA987E297B119F00CAA085 /* EncryptionOptions.cpp in Sources */,
 				9C1D617A2958F7EF00877D79 /* glyph_transforms.cpp in Sources */,
+				9CCA98DB297B119F00CAA085 /* PNGImageHandler.cpp in Sources */,
+				9CCA987D297B119F00CAA085 /* DictionaryContext.cpp in Sources */,
 				9C1D62022958F7EF00877D79 /* rectangles.cpp in Sources */,
 				9C1D62042958F7EF00877D79 /* tab.cpp in Sources */,
+				9CCA9880297B119F00CAA085 /* PDFUsedFont.cpp in Sources */,
 				9C620D1429590C550041CFA3 /* tex_rubber_font.cpp in Sources */,
 				9C1D61D32958F7EF00877D79 /* highlight_observer.cpp in Sources */,
+				9CCA98DF297B119F00CAA085 /* CharStringType1Tracer.cpp in Sources */,
 				9C620CFD29590C540041CFA3 /* rubber_assemble_font.cpp in Sources */,
 				9C1D61A92958F7EF00877D79 /* find_font.cpp in Sources */,
+				9CCA9890297B119F00CAA085 /* PrimitiveObjectsWriter.cpp in Sources */,
+				9CCA9858297B119F00CAA085 /* CFFANSIFontWriter.cpp in Sources */,
 				9C1D61AB2958F7EF00877D79 /* tree_math_stats.cpp in Sources */,
 				9C1D613D2958F7EF00877D79 /* bridge_document.cpp in Sources */,
 				9C1D612E2958F7EF00877D79 /* bridge_surround.cpp in Sources */,
 				9C1D61572958F7EF00877D79 /* modifier_boxes.cpp in Sources */,
 				9C620CFC29590C540041CFA3 /* tt_tools.cpp in Sources */,
 				9C1D61822958F7EF00877D79 /* poly_line.cpp in Sources */,
+				9CCA987F297B119F00CAA085 /* TrueTypePrimitiveWriter.cpp in Sources */,
 				9C1D61732958F7EF00877D79 /* grid.cpp in Sources */,
+				9CCA989E297B119F00CAA085 /* InputByteArrayStream.cpp in Sources */,
+				9CCA988B297B119F00CAA085 /* TrailerInformation.cpp in Sources */,
 				9C1D61942958F7EF00877D79 /* poor_distorted.cpp in Sources */,
+				9CCA98E1297B119F00CAA085 /* pdf_hummus_renderer.cpp in Sources */,
 				9C1D61D52958F7EF00877D79 /* undo_observer.cpp in Sources */,
 				9C1D61552958F7EF00877D79 /* change_boxes.cpp in Sources */,
 				9C1D61CB2958F7EF00877D79 /* universal.cpp in Sources */,
 				9C1D62012958F7EF00877D79 /* parse_string.cpp in Sources */,
 				9C1D61412958F7EF00877D79 /* env_semantics.cpp in Sources */,
 				9C1D61B52958F7EF00877D79 /* tag_info.cpp in Sources */,
+				9CCA98CF297B119F00CAA085 /* PDFBoolean.cpp in Sources */,
 				9C1D61F22958F7EF00877D79 /* xml.cpp in Sources */,
 				9C1D61CC2958F7EF00877D79 /* wencoding.cpp in Sources */,
 				9C1D61702958F7EF00877D79 /* equations.cpp in Sources */,
 				9C1D61BB2958F7EF00877D79 /* new_data.cpp in Sources */,
+				9CCA9891297B119F00CAA085 /* InputAscii85DecodeStream.cpp in Sources */,
 				9C620CB1295901C90041CFA3 /* hyphenate.cpp in Sources */,
+				9CCA989D297B119F00CAA085 /* PDFParser.cpp in Sources */,
+				9CCA9855297B119F00CAA085 /* PDFFormXObject.cpp in Sources */,
 				9C620D0A29590C550041CFA3 /* adjust_biolinum.cpp in Sources */,
+				9CCA98CE297B119F00CAA085 /* InputFlateDecodeStream.cpp in Sources */,
 				9C620D0529590C540041CFA3 /* adjust_bonum.cpp in Sources */,
+				9CCA9863297B119F00CAA085 /* InputPFBDecodeStream.cpp in Sources */,
 				9C1D61812958F7EF00877D79 /* raster_picture.cpp in Sources */,
 				9C620CB2295901C90041CFA3 /* math_language.cpp in Sources */,
 				9CF282CE295A14BB0064D7F2 /* vau_buffer.cpp in Sources */,
+				9CCA9853297B119F00CAA085 /* Type1Input.cpp in Sources */,
+				9CCA984F297B119F00CAA085 /* aescrypt.c in Sources */,
+				9CCA98B2297B119F00CAA085 /* CatalogInformation.cpp in Sources */,
+				9CCA98AB297B119F00CAA085 /* ANSIFontWriter.cpp in Sources */,
 				9C1D61C32958F7EF00877D79 /* inline_comment_parser.cpp in Sources */,
 				9C1D612D2958F7EF00877D79 /* page_breaker.cpp in Sources */,
 				9C1D61BF2958F7EF00877D79 /* preprocessor_parser.cpp in Sources */,
+				9CCA98D0297B119F00CAA085 /* PDFHexString.cpp in Sources */,
 				9C1D617F2958F7EF00877D79 /* effect.cpp in Sources */,
+				9CCA98AF297B119F00CAA085 /* PDFParserTokenizer.cpp in Sources */,
 				9CDB09BF295B04400033CF82 /* vau_main.cpp in Sources */,
+				9CCA98DE297B119F00CAA085 /* CMYKRGBColor.cpp in Sources */,
+				9CCA98D3297B119F00CAA085 /* JPEGImageHandler.cpp in Sources */,
 				9C1D613C2958F7EF00877D79 /* bridge_default.cpp in Sources */,
+				9CCA9865297B119F00CAA085 /* FontDescriptorWriter.cpp in Sources */,
+				9CCA98B1297B119F00CAA085 /* PFMFileReader.cpp in Sources */,
+				9CCA98B3297B119F00CAA085 /* JPEGImageInformation.cpp in Sources */,
 				9C1D613B2958F7EF00877D79 /* bridge_expand_as.cpp in Sources */,
+				9CCA98CD297B119F00CAA085 /* FreeTypeFaceWrapper.cpp in Sources */,
 				9C1D61512958F7EF00877D79 /* formatter.cpp in Sources */,
 				9C1D61C82958F7EF00877D79 /* base64.cpp in Sources */,
 				9C1D61F32958F7EF00877D79 /* totm.cpp in Sources */,
+				9CCA98BF297B119F00CAA085 /* TiledPatternContentContext.cpp in Sources */,
 				9C1D62102958F7EF00877D79 /* rel_hashmap.cpp in Sources */,
+				9CCA98A8297B119F00CAA085 /* PDFDocEncoding.cpp in Sources */,
 				9C620CAF295901C90041CFA3 /* r_language.cpp in Sources */,
+				9CCA9898297B119F00CAA085 /* FreeTypeOpenTypeWrapper.cpp in Sources */,
+				9CCA9851297B119F00CAA085 /* aes_ni.c in Sources */,
 				9C1D613F2958F7EF00877D79 /* bridge_argument.cpp in Sources */,
 				9C620D1B29591C540041CFA3 /* tm_timer.cpp in Sources */,
 				9C1D620C2958F7EF00877D79 /* hashmap.cpp in Sources */,
 				9C1D61612958F7EF00877D79 /* case_boxes.cpp in Sources */,
+				9CCA9867297B119F00CAA085 /* InputBufferedStream.cpp in Sources */,
 				9C1D62092958F7EF00877D79 /* observer.cpp in Sources */,
 				9C1D619E2958F7EF00877D79 /* font_protrusion.cpp in Sources */,
 				9C1D61952958F7EF00877D79 /* font.cpp in Sources */,
 				9C1D61B22958F7EF00877D79 /* tree_modify.cpp in Sources */,
+				9CCA9883297B119F00CAA085 /* InputFileStream.cpp in Sources */,
 				9C620D0229590C540041CFA3 /* adjust_fira.cpp in Sources */,
 				9C1D62072958F7EF00877D79 /* player.cpp in Sources */,
 				9C1D61BC2958F7EF00877D79 /* new_document.cpp in Sources */,
 				9C1D613E2958F7EF00877D79 /* typesetter.cpp in Sources */,
 				9C1D61AF2958F7EF00877D79 /* tree_cursor.cpp in Sources */,
+				9CCA98AC297B119F00CAA085 /* UppercaseSequance.cpp in Sources */,
 				9C1D61852958F7EF00877D79 /* learn_handwriting.cpp in Sources */,
+				9CCA98A9297B119F00CAA085 /* AbstractWrittenFont.cpp in Sources */,
 				9C620D1E295920E00041CFA3 /* tm_ostream.cpp in Sources */,
+				9CCA98C2297B119F00CAA085 /* PDFPageInput.cpp in Sources */,
 				9C1D611D2958F7EF00877D79 /* concater.cpp in Sources */,
 				9C1D61C12958F7EF00877D79 /* keyword_parser.cpp in Sources */,
+				9CCA9893297B119F00CAA085 /* PDFSymbol.cpp in Sources */,
+				9CCA985F297B119F00CAA085 /* OutputFlateDecodeStream.cpp in Sources */,
+				9CCA98D5297B119F00CAA085 /* XCryptionCommon.cpp in Sources */,
 				9C1D62052958F7EF00877D79 /* space.cpp in Sources */,
 				9C620CAC295901C90041CFA3 /* language.cpp in Sources */,
+				9CCA98C9297B119F00CAA085 /* InputRC4XcodeStream.cpp in Sources */,
+				9CCA98AA297B119F00CAA085 /* PageContentContext.cpp in Sources */,
+				9CCA98B5297B119F00CAA085 /* UsedFontsRepository.cpp in Sources */,
 				9C1D61B02958F7EF00877D79 /* tree_search.cpp in Sources */,
+				9CCA98C6297B119F00CAA085 /* StandardEncoding.cpp in Sources */,
 				9C1D61782958F7EF00877D79 /* bitmap_font.cpp in Sources */,
 				9C1D61EE2958F7EF00877D79 /* queryxml.cpp in Sources */,
 				9C1D61D12958F7EF00877D79 /* tree_position.cpp in Sources */,
 				9C1D616D2958F7EF00877D79 /* renderer.cpp in Sources */,
 				9C1D61342958F7EF00877D79 /* bridge_rewrite.cpp in Sources */,
+				9CCA9886297B119F00CAA085 /* RefCountObject.cpp in Sources */,
 				9C1D61282958F7EF00877D79 /* pager.cpp in Sources */,
 				9C1D61882958F7EF00877D79 /* true_color.cpp in Sources */,
 				9C620CA6295901C90041CFA3 /* packrat_serializer.cpp in Sources */,
 				9C620D0329590C540041CFA3 /* unicode_font.cpp in Sources */,
+				9CCA9897297B119F00CAA085 /* WrittenFontTrueType.cpp in Sources */,
 				9C1D61A62958F7EF00877D79 /* poor_mono.cpp in Sources */,
 				9C1D620A2958F7EF00877D79 /* command.cpp in Sources */,
+				9CCA98A0297B119F00CAA085 /* PDFCosArray.cpp in Sources */,
 				9C620C9E295901C90041CFA3 /* fast_alloc.cpp in Sources */,
 				9C1D61B82958F7EF00877D79 /* drd_info.cpp in Sources */,
 				9C1D61672958F7EF00877D79 /* grid_boxes.cpp in Sources */,
 				9C1D62122958F7EF00877D79 /* list.cpp in Sources */,
+				9CCA9882297B119F00CAA085 /* InputDCTDecodeStream.cpp in Sources */,
 				9C1D61F62958F7EF00877D79 /* rewrite_equation_number.cpp in Sources */,
 				9C1D618E2958F7EF00877D79 /* poor_smallcaps.cpp in Sources */,
 				9C620C9B295901C90041CFA3 /* data_cache.cpp in Sources */,
