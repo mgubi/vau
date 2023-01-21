@@ -150,6 +150,13 @@
 ;(display* "time: " (- (texmacs-time) boot-start) "\n")
 ;(display* "memory: " (texmacs-memory) " bytes\n")
 
+(display "Booting fonts\n")
+(use-modules (fonts fonts-ec) (fonts fonts-adobe) (fonts fonts-x)
+             (fonts fonts-math) (fonts fonts-foreign) (fonts fonts-misc)
+             (fonts fonts-composite) (fonts fonts-truetype))
+
+
+
 (set-new-fonts #t)
 
 (define (notify-debug-message channel)

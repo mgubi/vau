@@ -1211,6 +1211,18 @@ cout_unbuffer () {
 
 //bool is_extension (tree_label t) { return is_extension (tree(t)); }
 
+void
+set_font_rules (scheme_tree_t t) {
+  tree rules= t;
+  int i, n= arity (rules);
+  for (i=0; i<n; i++)
+    if (arity (rules [i]) == 2) {
+      tree l= (tree) rules[i][0];
+      tree r= (tree) rules[i][1];
+      font_rule (l, r);
+    }
+}
+
 /******************************************************************************
 * Declarations
 ******************************************************************************/
@@ -1979,6 +1991,7 @@ DECLARE_GLUE_NAME_TYPE(file_size,"url-size", int (url))
 //DECLARE_GLUE_NAME_TYPE(bib_field,"bib-field", scheme_tree_t (scheme_tree_t, string))
 //DECLARE_GLUE_NAME_TYPE(bib_abbreviate,"bib-abbreviate", scheme_tree_t (scheme_tree_t, scheme_tree_t, scheme_tree_t))
 
+DECLARE_GLUE_NAME_TYPE(set_font_rules, "set-font-rules", void (scheme_tree_t))
 
 void
 glue_function_rep::instantiate_all () {
