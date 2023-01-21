@@ -16,6 +16,7 @@
 #include "font.hpp"
 #include "widget.hpp"
 #include "file.hpp"
+#include "vau_editor.hpp"
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -40,10 +41,12 @@ edit_touch (editor_rep* ed, path p) {
   //FIXME: implement
 }
 
+extern editor current_editor ();
+
 tree
 get_subtree (path p) {
-  //FIXME: implement
-  return tree ();
+  //FIXME: this function is called by the bridge and need access to the current editor. There should be a better way to do it.
+  return current_editor () -> the_subtree (p);
 }
 
 bool

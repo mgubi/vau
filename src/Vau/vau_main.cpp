@@ -192,6 +192,12 @@ init_env_vars () {
 #endif
 }
 
+editor cur_ed;
+
+editor current_editor () {
+  return cur_ed;
+}
+
 void
 TeXmacs_main (int argc, char** argv) {
   the_et     = tuple ();
@@ -212,16 +218,17 @@ TeXmacs_main (int argc, char** argv) {
   if (exists (tm_init_file)) exec_file (tm_init_file);
   bench_cumul ("initialize scheme");
 
-  string name ("$TEXMACS_PATH/examples/texts/accent-test.tm");
+  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
   string output ("$HOME/vau-test.pdf");
   tm_buffer buf= concrete_buffer_insist (name);
   editor ed (buf);
-  
+  cur_ed= ed;
 //  string tm_init_buffer= "/Users/mgubi/t/vau/src/Vau/init-buffer.scm";
 //  if (exists (tm_init_buffer)) exec_file (tm_init_buffer);
   ed->init_style("generic");
 
   ed->print_to_file (output);
+  cur_ed= editor();
 }
 
 

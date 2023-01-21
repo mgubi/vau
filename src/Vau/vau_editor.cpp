@@ -1102,6 +1102,10 @@ editor_rep::get_name () {
   return buf->buf->name;
 }
 
+tree
+editor_rep::the_subtree (path p) {
+  return subtree (et, p);
+}
 
 //FIXME: stubs
 void editor_rep::notify_change (int changed) {}

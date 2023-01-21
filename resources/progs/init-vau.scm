@@ -156,6 +156,9 @@
              (fonts fonts-composite) (fonts fonts-truetype))
 
 
+;; additional markup functions
+(use-modules (utils misc markup-funcs))
+
 
 (set-new-fonts #t)
 

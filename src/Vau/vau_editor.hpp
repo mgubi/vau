@@ -166,6 +166,8 @@ public:
   void print_doc (url ps_name, bool to_file, int first, int last);
   void print_to_file (url ps_name, string first="1", string last="1000000");
 
+  tree the_subtree (path p);
+  
   friend class editor;
 
 };
