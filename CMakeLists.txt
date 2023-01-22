@@ -11,7 +11,7 @@ set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package (PkgConfig REQUIRED)
-pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
+#pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
 find_package (Freetype REQUIRED)
 find_package (Iconv REQUIRED)
 
@@ -67,7 +67,7 @@ set (TeXmacs_Include_Dirs
   ${Vau_SOURCE_DIR}/src/Plugins
   ${Vau_SOURCE_DIR}/src/Plugins/Pdf/LibAesgm
   ${Vau_SOURCE_DIR}/src/Scheme
-  ${Vau_SOURCE_DIR}/src/Scheme/Guile
+  ${Vau_SOURCE_DIR}/src/Scheme/S7
   ${Vau_SOURCE_DIR}/src/Scheme/Scheme
   ${Vau_SOURCE_DIR}/src/Style/Environment
   ${Vau_SOURCE_DIR}/src/Style/Evaluate
@@ -282,14 +282,16 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Kernel/Types/tab.cpp"
   "${Vau_SOURCE_DIR}/src/Kernel/Types/tree.cpp"
   "${Vau_SOURCE_DIR}/src/Kernel/Types/tree_label.cpp"
-  "${Vau_SOURCE_DIR}/src/Scheme/Guile/guile_tm.cpp"
+#  "${Vau_SOURCE_DIR}/src/Scheme/Guile/guile_tm.cpp"
+  "${Vau_SOURCE_DIR}/src/Scheme/S7/s7_tm.cpp"
+  "${Vau_SOURCE_DIR}/src/Scheme/S7/s7.c"
 #  "${Vau_SOURCE_DIR}/src/Scheme/Scheme/glue.cpp"
   "${Vau_SOURCE_DIR}/src/Scheme/Scheme/object.cpp"
   "${Vau_SOURCE_DIR}/src/System/Boot/preferences.cpp"
   "${Vau_SOURCE_DIR}/src/System/Classes/tm_timer.cpp"
   "${Vau_SOURCE_DIR}/src/System/Classes/url.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/file.cpp"
-  "${Vau_SOURCE_DIR}/src/System/Files/make_file.cpp"
+#  "${Vau_SOURCE_DIR}/src/System/Files/make_file.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/tm_ostream.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/web_files.cpp"
   "${Vau_SOURCE_DIR}/src/System/Language/dictionary.cpp"
@@ -428,7 +430,7 @@ set_target_properties (Vau
         PROPERTIES
         OUTPUT_NAME Vau)
 
-target_link_libraries (Vau PRIVATE PkgConfig::Guile)
+#target_link_libraries (Vau PRIVATE PkgConfig::Guile)
 target_link_libraries (Vau PRIVATE Freetype::Freetype)
 target_link_libraries (Vau PRIVATE Iconv::Iconv)
 
