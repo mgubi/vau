@@ -397,8 +397,10 @@ bool texmacs_started = true;
 //hashmap<string,tree> style_tree_cache;
 int script_status = 1;  // from sys_util.c
 
-
-
+url make_file (int cmd, tree data, array<url> args) {
+  //FIXME: stub
+  return url();
+}
 
 
 

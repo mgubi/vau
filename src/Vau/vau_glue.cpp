@@ -1052,16 +1052,12 @@ TMSCM_CONVERSION(list_string)
 * Gluing
 ******************************************************************************/
 
-//#include "server.hpp"
-//#include "tm_window.hpp"
 #include "boot.hpp"
-#include "connect.hpp"
 #include "convert.hpp"
 #include "file.hpp"
 #include "image_files.hpp"
 #include "web_files.hpp"
 #include "sys_utils.hpp"
-#include "client_server.hpp"
 #include "analyze.hpp"
 #include "wencoding.hpp"
 #include "base64.hpp"
@@ -1070,7 +1066,6 @@ TMSCM_CONVERSION(list_string)
 #include "tree_correct.hpp"
 #include "tree_modify.hpp"
 #include "tree_math_stats.hpp"
-//#include "tm_frame.hpp"
 #include "Concat/concater.hpp"
 #include "converter.hpp"
 #include "tm_timer.hpp"

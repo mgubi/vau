@@ -11,7 +11,6 @@
 
 #include "config.h"
 #include "free_type.hpp"
-#include "dyn_link.hpp"
 
 #ifdef USE_FREETYPE
 
