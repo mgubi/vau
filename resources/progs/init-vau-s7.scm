@@ -87,6 +87,7 @@
 ;;(display* "time: " (- (texmacs-time) boot-start) "\n")
 ;;(display* "memory: " (texmacs-memory) " bytes\n")
 
+
 (display "Booting converters\n")
 (lazy-format (convert rewrite init-rewrite) texmacs verbatim)
 (lazy-format (convert tmml init-tmml) tmml)
@@ -129,8 +130,6 @@
 
 (set-new-fonts #t)
 
-(define (notify-debug-message channel)
-  (noop))
   
 (define (standard-paper-size s) s)
 (define (gui-version) "none")

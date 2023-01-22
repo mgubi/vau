@@ -349,6 +349,7 @@ initialize_scheme () {
   "\n"
   "(define (texmacs-version) \"" TEXMACS_VERSION "\")\n"
   "(define object-stack '(()))\n"
+  "(define (notify-debug-message channel) (begin))\n" //FIXME: stub
   ")";
 
   // eval in the root enviornment

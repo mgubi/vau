@@ -162,9 +162,6 @@
 
 (set-new-fonts #t)
 
-(define (notify-debug-message channel)
-  (noop))
-  
 (define (standard-paper-size s) s)
 (define (gui-version) "none")
 (define (image->psdoc a) "")

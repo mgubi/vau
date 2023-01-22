@@ -203,6 +203,10 @@ TeXmacs_main (int argc, char** argv) {
   the_et     = tuple ();
   the_et->obs= ip_observer (path ());
 
+  debug_set ("std", true);
+  debug_set ("io", true);
+  debug_set ("bench", true);
+
   init_std_drd ();
   //cout << "Initialize -- User preferences\n";
   load_user_preferences ();
@@ -229,6 +233,8 @@ TeXmacs_main (int argc, char** argv) {
 
   ed->print_to_file (output);
   cur_ed= editor();
+  
+  bench_print ();
 }
 
 
