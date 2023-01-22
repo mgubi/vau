@@ -11,7 +11,12 @@ I rewrote the Scheme glue code via C++ templating and metaprogramming and make i
 
 ## Logbook
 
-Jan 2022 - the program compiles (under Mac) but still does not produce the correct output. I still have to figure out why.
+Jan 2022 
 
+- I have now a basic setup with an Xcode project and a CMake recipe. I switched to the S7 interpreter and added PDF Hummus. Vau can read and export to PDF fairly complex documents. I still haven't checked what happens with images. Font retrieval is quite slow. I removed almost all the C++ code which is not used at this stage. And Vau load the minimal amount of Scheme code.
+
+- Ideally we want to isolate away I/O, because e.g. in Webasm we do not have direct access to the filesystem and maybe this requires anyway async calls.
+
+- From here I would like to understand how to isolate a well-defined interface for the editor which allow to call it from a scripting language (be it Scheme or Javascript). The editor receives commands and send back responses (e.g. bitmaps of the current page with metadata, like location of the cursors, etc..)
 
 
