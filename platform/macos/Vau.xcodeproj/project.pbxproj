@@ -1312,7 +1312,6 @@
 		9CD7CB6A297DA7BD00FDE895 /* s7-lookup_from-version-2.patch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "s7-lookup_from-version-2.patch"; sourceTree = "<group>"; };
 		9CDB09BD295B04400033CF82 /* vau_main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_main.cpp; sourceTree = "<group>"; };
 		9CDB09BE295B04400033CF82 /* vau_main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_main.hpp; sourceTree = "<group>"; };
-		9CDB09C2295B22FC0033CF82 /* vau-init-unused.scm */ = {isa = PBXFileReference; lastKnownFileType = text; path = "vau-init-unused.scm"; sourceTree = "<group>"; };
 		9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_buffer.cpp; sourceTree = "<group>"; };
 		9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_buffer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1441,7 +1440,6 @@
 				9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */,
 				9CDB09BD295B04400033CF82 /* vau_main.cpp */,
 				9CDB09BE295B04400033CF82 /* vau_main.hpp */,
-				9CDB09C2295B22FC0033CF82 /* vau-init-unused.scm */,
 				9C01CB91295CA62700C00445 /* vau_glue.cpp */,
 				9C01CB92295CA62700C00445 /* vau_glue.hpp */,
 			);

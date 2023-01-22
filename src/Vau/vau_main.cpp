@@ -224,7 +224,7 @@ TeXmacs_main (int argc, char** argv) {
 
   string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
   string output ("$HOME/vau-test.pdf");
-  tm_buffer buf= concrete_buffer_insist (name);
+  vau_buffer buf= concrete_buffer_insist (name);
   editor ed (buf);
   cur_ed= ed;
 //  string tm_init_buffer= "/Users/mgubi/t/vau/src/Vau/init-buffer.scm";

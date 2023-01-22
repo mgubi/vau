@@ -24,15 +24,15 @@
 #define THE_MENUS 256
 #define THE_FREEZE 512
 
-class tm_buffer_rep;
-typedef tm_buffer_rep* tm_buffer;
+class vau_buffer_rep;
+typedef vau_buffer_rep* vau_buffer;
 class document_rep;
 
 class editor_rep: concrete_struct {
 
 protected:
 
-  tm_buffer    buf;  // the underlying buffer
+  vau_buffer    buf;  // the underlying buffer
   drd_info     drd;  // the drd for the buffer
   tree&        et;   // all TeXmacs trees
   box          eb;   // box translation of tree
@@ -72,7 +72,7 @@ protected:
   void                 set_att (hashmap<string,tree> att);
 
 public:
-  editor_rep (tm_buffer buf2);
+  editor_rep (vau_buffer buf2);
   ~editor_rep ();
   void clear_local_info ();
 
@@ -176,7 +176,7 @@ public:
 class editor {
   CONCRETE_NULL(editor);
 public:
-  editor (tm_buffer buf);
+  editor (vau_buffer buf);
   inline bool operator == (editor w) { return rep == w.rep; }
   inline bool operator != (editor w) { return rep != w.rep; }
   friend class editor_rep;
@@ -184,6 +184,6 @@ public:
 
 CONCRETE_NULL_CODE(editor);
 
-editor new_editor (tm_buffer buf);
+editor new_editor (vau_buffer buf);
 
 #endif // defined EDIT_TYPESET_H

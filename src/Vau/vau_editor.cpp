@@ -39,13 +39,13 @@ bool enable_fastenv= false;
 * editor
 ******************************************************************************/
 
-editor::editor (tm_buffer buf) : rep(tm_new<editor_rep> (buf)) {}
+editor::editor (vau_buffer buf) : rep(tm_new<editor_rep> (buf)) {}
 
 /******************************************************************************
 * Contructors, destructors and notification of modifications
 ******************************************************************************/
 
-editor_rep::editor_rep (tm_buffer buf2):
+editor_rep::editor_rep (vau_buffer buf2):
   buf (buf2),
   drd (buf->buf->title, std_drd), et (the_et), rp (buf2->rp),
   the_style (TUPLE),

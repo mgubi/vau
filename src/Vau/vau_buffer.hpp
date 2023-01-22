@@ -57,29 +57,29 @@ inline new_buffer& new_buffer::operator = (new_buffer x) {
 
 
 /******************************************************************************
-* tm_buffer
+* vau_buffer
 ******************************************************************************/
 
-class tm_buffer_rep;
-typedef tm_buffer_rep* tm_buffer;
+class vau_buffer_rep;
+typedef vau_buffer_rep* vau_buffer;
 
-class tm_buffer_rep {
+class vau_buffer_rep {
 public:
   new_buffer buf;         // file related information
   new_data data;          // data associated to document
 //  array<tm_view> vws;     // views attached to buffer
-  tm_buffer prj;          // buffer which corresponds to the project
+  vau_buffer prj;          // buffer which corresponds to the project
   path rp;                // path to the document's root in the_et
   link_repository lns;    // global links
   bool notify;            // notify modifications to scheme
 
-  inline tm_buffer_rep (url name):
+  inline vau_buffer_rep (url name):
     buf (name), data (),
     prj (NULL),
   rp (new_document ()),
   notify (false) {}
 
-  inline ~tm_buffer_rep () {
+  inline ~vau_buffer_rep () {
     delete_document (rp);
   }
 
@@ -88,11 +88,11 @@ public:
   bool needs_to_be_autosaved ();
 };
 
-inline tm_buffer nil_buffer () { return (tm_buffer) NULL; }
-inline bool is_nil (tm_buffer buf) { return buf == NULL; }
+inline vau_buffer nil_buffer () { return (vau_buffer) NULL; }
+inline bool is_nil (vau_buffer buf) { return buf == NULL; }
 
-tm_buffer concrete_buffer (url name);
-tm_buffer concrete_buffer_insist (url name);
+vau_buffer concrete_buffer (url name);
+vau_buffer concrete_buffer_insist (url name);
 
 void set_buffer_tree (url name, tree doc);
 bool buffer_load (url name);
