@@ -213,7 +213,7 @@ TeXmacs_main (int argc, char** argv) {
 
   initialize_scheme ();
   
-  string tm_init_file= "$TEXMACS_PATH/progs/init-vau.scm";
+  string tm_init_file= "$TEXMACS_PATH/progs/init-vau-s7.scm";
   bench_start ("initialize scheme");
   if (exists (tm_init_file)) exec_file (tm_init_file);
   bench_cumul ("initialize scheme");

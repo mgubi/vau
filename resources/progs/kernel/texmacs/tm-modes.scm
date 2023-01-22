@@ -32,7 +32,7 @@
            (deps* (map list (map texmacs-mode-pred deps)))
            (l (if (== action #t) deps* (cons action deps*)))
            (test (if (null? l) #t (if (null? (cdr l)) (car l) (cons 'and l))))
-           (defn `(define-public (,pred) ,test))
+           (defn `(varlet *texmacs-module* ',pred (lambda () ,test)))
            (rules (map (lambda (dep) (list dep mode)) deps))
            (logic-cmd `(logic-rules ,@rules))
            (arch1 `(set-symbol-procedure! ',mode ,pred))
@@ -44,14 +44,16 @@
 
 (define-public-macro (texmacs-modes . l)
   `(begin
-     (set! temp-module ,(current-module))
-     (set-current-module texmacs-user)
-     ,@(map texmacs-mode l)
-     (set-current-module temp-module)))
+     ,@(map texmacs-mode l)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Checking modes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;FIXME: in-active-graphics% and developer-mode%
+; seems to be the only two modes which do not have the associated procedure
+; is the code below meaningful? why we need to do the eval?
+; I want maybe to have the catch inside the eval
 
 (define-public (texmacs-in-mode? mode)
   (with proc (symbol-procedure mode)
@@ -190,21 +192,21 @@
     "danish" "dutch" "english" "esperanto" "finnish" "french" "german" "greek"
     "hungarian" "italian" "japanese" "korean" "polish"
     "portuguese" "romanian" "russian" "slovak" "slovene" "spanish"
-    "swedish" "taiwanese" "ukrainian"))
+    "swedish" "chineset" "ukrainian"))
 
 (define-public (supported-language? lan)
   (and (in? lan supported-languages)
        (cond ((== lan "chinese") (supports-chinese?))
              ((== lan "japanese") (supports-japanese?))
              ((== lan "korean") (supports-korean?))
-             ((== lan "taiwanese") (supports-chinese?))
+             ((== lan "chineset") (supports-chinese?))
              (else #t))))
 
 (texmacs-modes
   (in-cyrillic% (in? (get-env "language")
                      '("bulgarian" "russian" "ukrainian")) in-text%)
   (in-oriental% (in? (get-env "language")
-                     '("chinese" "japanese" "korean" "taiwanese")) in-text%)
+                     '("chinese" "japanese" "korean" "chineset")) in-text%)
   (in-english% (in? (get-env "language")
                     '("british" "english")) in-text%)
   (in-american% (== (get-env "language") "english") in-text%)
@@ -232,7 +234,7 @@
   (in-slovene% (== (get-env "language") "slovene") in-text%)
   (in-spanish% (== (get-env "language") "spanish") in-text%)
   (in-swedish% (== (get-env "language") "swedish") in-text%)
-  (in-taiwanese% (== (get-env "language") "taiwanese") in-oriental%)
+  (in-chineset% (== (get-env "language") "chineset") in-oriental%)
   (in-ukrainian% (== (get-env "language") "ukrainian") in-cyrillic%)
 
   (in-math-english% (in? (get-env "language")

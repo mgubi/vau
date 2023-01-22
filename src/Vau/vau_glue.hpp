@@ -12,9 +12,11 @@
 
 // conversion generics
 template<typename T0> tmscm tmscm_from (T0 out);
-template<typename T0> T0 tmscm_to (SCM in);
+template<typename T0> T0 tmscm_to (tmscm in);
 
 class glue_function;
+
+typedef tmscm (*FN) (s7_scheme*, tmscm args);
 
 class glue_function_rep : concrete_struct {
   const char *name;
@@ -24,7 +26,7 @@ class glue_function_rep : concrete_struct {
 protected:
   glue_function_rep (const char *_name, FN _fn, int _ar);
   void instantiate () {
-    tmscm_install_procedure (name, fn, arity, 0, 0);
+    tmscm_install_procedure_bis (name, fn, arity, 0, 0);
   }
 public:
   static void instantiate_all ();
@@ -57,7 +59,7 @@ struct tm_glue<void (Ts ...), S0, f> : public glue_function_rep {
     wrap (tmscm_to<Ts> (args) ...);
     return TMSCM_UNSPECIFIED;
   }
-  tm_glue (const char *_name) : glue_function_rep (_name, (FN)func, sizeof...(Ts)) {}
+  tm_glue (const char *_name) : glue_function_rep (_name, proc<func>, sizeof...(Ts)) {}
 };
 
 class scheme_tree_t;
@@ -75,7 +77,7 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
     T0 out= wrap (tmscm_to<Ts> (args) ...);
     return tmscm_from<T0> (out);
   }
-  tm_glue (const char *_name) : glue_function_rep (_name, (FN)func, sizeof...(Ts)) {}
+  tm_glue (const char *_name) : glue_function_rep (_name, proc<func>, sizeof...(Ts)) {}
 };
 
 template<typename T0, typename S0, S0 fn> glue_function

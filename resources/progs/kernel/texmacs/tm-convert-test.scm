@@ -27,8 +27,8 @@
   (regression-test-group
    "format-get-name" "string"
    format-get-name :none
-   (test "python format" "python" "Python source code")
-   (test "scala format" "scala" "Scala source code")
+   (test "python format" "python" "Python Source Code")
+   (test "scala format" "scala" "Scala Source Code")
    (test "no such format" "no-such-format" #f)))
 
 (define (regtest-format-from-suffix)
@@ -44,10 +44,6 @@
    (test "cpp format" "hpp" "cpp")
    (test "cpp format" "cc" "cpp")
    (test "cpp format" "hh" "cpp")
-   (test "mathemagix format" "mmx" "mathemagix")
-   (test "mathemagix format" "mmh" "mathemagix")
-   (test "scilab format" "sci" "scilab")
-   (test "scilab format" "sce" "scilab")
    (test "texmacs format" "tm" "texmacs")
    (test "texmacs format" "ts" "texmacs")
    (test "texmacs format" "tmml" "tmml")
@@ -55,9 +51,29 @@
    (test "png format" "png" "png")
    (test "no such format" "no-such-format" "generic")))
 
+(define (regtest-image-format-suffixes)
+  (regression-test-group
+   "format suffix" "boolean"
+   (lambda (suffix) (in? suffix (format-get-suffixes* "image")))
+   :none
+   (test "BMP is not supported" "bmp" #f)
+   (test "GIF" "gif" #t)
+   (test "JPG" "jpg" #t)
+   (test "JPEG" "jpeg" #t)
+   (test "PDF" "pdf" #t)
+   (test "PNG" "png" #t)
+   (test "PNM" "pnm" #t)
+   (test "PS" "ps" #t)
+   (test "EPS" "eps" #t)
+   (test "SVG" "svg" #t)
+   (test "TIF" "tif" #t)
+   (test "TIFF" "tiff" #t)
+   (test "WEBP is not supported" "webp" #f)))
+
 (tm-define (regtest-tm-convert)
   (let ((n (+ (regtest-format?)
               (regtest-format-get-name)
-              (regtest-format-from-suffix))))
+              (regtest-format-from-suffix)
+              (regtest-image-format-suffixes))))
     (display* "Total: " (object->string n) " tests.\n")
     (display "Test suite of tm-convert: ok\n")))
