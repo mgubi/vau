@@ -173,7 +173,6 @@
 		9C1D61C42958F7EF00877D79 /* identifier_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60652958F7EF00877D79 /* identifier_parser.cpp */; };
 		9C1D61C52958F7EF00877D79 /* commute.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D606A2958F7EF00877D79 /* commute.cpp */; };
 		9C1D61C62958F7EF00877D79 /* patch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D606B2958F7EF00877D79 /* patch.cpp */; };
-		9C1D61C72958F7EF00877D79 /* archiver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D606D2958F7EF00877D79 /* archiver.cpp */; };
 		9C1D61C82958F7EF00877D79 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60712958F7EF00877D79 /* base64.cpp */; };
 		9C1D61C92958F7EF00877D79 /* converter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60722958F7EF00877D79 /* converter.cpp */; };
 		9C1D61CA2958F7EF00877D79 /* fast_search.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60742958F7EF00877D79 /* fast_search.cpp */; };
@@ -187,7 +186,6 @@
 		9C1D61D22958F7EF00877D79 /* ip_observer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60822958F7EF00877D79 /* ip_observer.cpp */; };
 		9C1D61D32958F7EF00877D79 /* highlight_observer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60832958F7EF00877D79 /* highlight_observer.cpp */; };
 		9C1D61D42958F7EF00877D79 /* edit_observer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60842958F7EF00877D79 /* edit_observer.cpp */; };
-		9C1D61D52958F7EF00877D79 /* undo_observer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60852958F7EF00877D79 /* undo_observer.cpp */; };
 		9C1D61D72958F7EF00877D79 /* to_scheme.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60892958F7EF00877D79 /* to_scheme.cpp */; };
 		9C1D61D82958F7EF00877D79 /* from_scheme.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D608A2958F7EF00877D79 /* from_scheme.cpp */; };
 		9C1D61EC2958F7EF00877D79 /* verbatim.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60A22958F7EF00877D79 /* verbatim.cpp */; };
@@ -1311,7 +1309,6 @@
 		9CD7CB69297DA7BD00FDE895 /* s7.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = s7.h; sourceTree = "<group>"; };
 		9CD7CB6A297DA7BD00FDE895 /* s7-lookup_from-version-2.patch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "s7-lookup_from-version-2.patch"; sourceTree = "<group>"; };
 		9CDB09BD295B04400033CF82 /* vau_main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_main.cpp; sourceTree = "<group>"; };
-		9CDB09BE295B04400033CF82 /* vau_main.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_main.hpp; sourceTree = "<group>"; };
 		9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_buffer.cpp; sourceTree = "<group>"; };
 		9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_buffer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1439,7 +1436,6 @@
 				9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */,
 				9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */,
 				9CDB09BD295B04400033CF82 /* vau_main.cpp */,
-				9CDB09BE295B04400033CF82 /* vau_main.hpp */,
 				9C01CB91295CA62700C00445 /* vau_glue.cpp */,
 				9C01CB92295CA62700C00445 /* vau_glue.hpp */,
 			);
@@ -3110,7 +3106,6 @@
 				9CCA98B9297B119F00CAA085 /* StateReader.cpp in Sources */,
 				9C1D61392958F7EF00877D79 /* bridge_mark.cpp in Sources */,
 				9C620CAA295901C90041CFA3 /* verb_language.cpp in Sources */,
-				9C1D61C72958F7EF00877D79 /* archiver.cpp in Sources */,
 				9C1D61FE2958F7EF00877D79 /* tree_label.cpp in Sources */,
 				9C620CAB295901C90041CFA3 /* mathemagix_language.cpp in Sources */,
 				9CCA98D2297B119F00CAA085 /* PDFArrayIterator.cpp in Sources */,
@@ -3160,7 +3155,6 @@
 				9CCA988B297B119F00CAA085 /* TrailerInformation.cpp in Sources */,
 				9C1D61942958F7EF00877D79 /* poor_distorted.cpp in Sources */,
 				9CCA98E1297B119F00CAA085 /* pdf_hummus_renderer.cpp in Sources */,
-				9C1D61D52958F7EF00877D79 /* undo_observer.cpp in Sources */,
 				9C1D61552958F7EF00877D79 /* change_boxes.cpp in Sources */,
 				9C1D61CB2958F7EF00877D79 /* universal.cpp in Sources */,
 				9C1D62012958F7EF00877D79 /* parse_string.cpp in Sources */,

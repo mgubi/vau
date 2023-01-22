@@ -1,8 +1,8 @@
 
 /******************************************************************************
-* MODULE     : typeset.cpp
-* DESCRIPTION: typeset the tree being edited
-* COPYRIGHT  : (C) 1999  Joris van der Hoeven
+* MODULE     : vau_editor.hpp
+* DESCRIPTION: Vau editor. Typeset a given buffer.
+* COPYRIGHT  : (C) 2023  Joris van der Hoeven and Massimiliano Gubinelli
 *******************************************************************************
 * This software falls under the GNU general public license version 3 or later.
 * It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE

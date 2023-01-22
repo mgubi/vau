@@ -2,8 +2,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; MODULE      : init-vau-s7.scm
-;; DESCRIPTION : This is the Vau initialization file (S7)
-;; COPYRIGHT   : (C) 2022  Joris van der Hoeven & Massimiliano Gubinelli
+;; DESCRIPTION : This is the Vau initialization file for S7 Scheme
+;; COPYRIGHT   : (C) 2023  Joris van der Hoeven & Massimiliano Gubinelli
 ;;
 ;; This software falls under the GNU general public license version 3 or later.
 ;; It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE

@@ -1,9 +1,13 @@
-//
-//  vau_glue.hpp
-//  VauQt
-//
-//  Created by Massimiliano Gubinelli on 28/12/2022.
-//
+
+/******************************************************************************
+* MODULE     : vau_glue.hpp
+* DESCRIPTION: Glue to Scheme
+* COPYRIGHT  : (C) 2023  Massimiliano Gubinelli
+*******************************************************************************
+* This software falls under the GNU general public license version 3 or later.
+* It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE
+* in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
+******************************************************************************/
 
 #ifndef VAU_GLUE_H
 #define VAU_GLUE_H
