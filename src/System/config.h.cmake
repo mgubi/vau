@@ -107,6 +107,9 @@
 
 #cmakedefine PDFHUMMUS_NO_DCT 1
 
+#cmakedefine PDFHUMMUS_NO_PNG 1
+
+
 /* Disable fast memory allocator */
 #cmakedefine NO_FAST_ALLOC 1
 

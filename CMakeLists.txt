@@ -29,8 +29,11 @@ set (TEXMACS_REVISION ${TEXMACS_VERSION})
 ### Options
 ### --------------------------------------------------------------------
 
-option (PDFHUMMUS_NO_TIFF "Disable TIFF in PDF Hummus" ON)
-option (PDFHUMMUS_NO_DCT "Disable DCT in PDF Hummus" ON)
+option (PDFHUMMUS_NO_TIFF "Disable TIFF support in PDF Hummus" ON)
+option (PDFHUMMUS_NO_DCT "Disable DCT support in PDF Hummus" ON)
+option (PDFHUMMUS_NO_PNG "Disable PNG support in PDF Hummus" ON)
+option (USE_FREETYPE "use Freetype" ON)
+option (LINKED_FREETYPE "linked Freetype" ON)
 
 ### --------------------------------------------------------------------
 ### Include standard modules
@@ -59,8 +62,8 @@ check_include_file (strings.h HAVE_STRINGS_H)
 check_include_file (string.h HAVE_STRING_H)
 check_include_file (sys/stat.h HAVE_SYS_STAT_H)
 check_include_file (unistd.h HAVE_UNISTD_H)
-check_include_file (X11/Xlib.h HAVE_X11_XLIB_H)
-check_include_file (X11/Xutil.h HAVE_X11_XUTIL_H)
+#check_include_file (X11/Xlib.h HAVE_X11_XLIB_H)
+#check_include_file (X11/Xutil.h HAVE_X11_XUTIL_H)
 check_include_file (pty.h HAVE_PTY_H)
 check_include_file (util.h HAVE_UTIL_H)
 check_function_exists (gettimeofday HAVE_GETTIMEOFDAY)
@@ -116,10 +119,13 @@ set (tm_stable TeXmacs-${STABLE_VERSION})
 set (tm_devel_release ${tm_devel}-${DEVEL_RELEASE})
 set (tm_stable_release ${tm_stable}-${STABLE_RELEASE})
 
+set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -include ${Vau_BINARY_DIR}/src/System/config.h")
+
 configure_file (${Vau_SOURCE_DIR}/src/System/config.h.cmake ${Vau_BINARY_DIR}/src/System/config.h)
 configure_file (${Vau_SOURCE_DIR}/src/System/tm_configure.hpp.cmake ${Vau_BINARY_DIR}/src/System/tm_configure.hpp)
 
-set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -include ${Vau_BINARY_DIR}/src/System/config.h")
+configure_file (${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig.cmake ${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig)
+
 
 ### --------------------------------------------------------------------
 ### the include dirs
@@ -471,7 +477,6 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 #  "${Vau_SOURCE_DIR}/src/Plugins/Updater/*.cpp"
 )
 
-
 set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
 include_directories (${Vau_Include_Dirs})
@@ -485,6 +490,8 @@ set_target_properties (Vau
 #target_link_libraries (Vau PRIVATE PkgConfig::Guile)
 target_link_libraries (Vau PRIVATE Freetype::Freetype)
 target_link_libraries (Vau PRIVATE Iconv::Iconv)
+target_link_libraries (Vau PRIVATE PNG::PNG)
+target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
 
 target_sources (Vau PRIVATE ${Vau_All_SRCS})
 

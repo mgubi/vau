@@ -446,7 +446,6 @@
 		9C01CB92295CA62700C00445 /* vau_glue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_glue.hpp; sourceTree = "<group>"; };
 		9C1D553D2958F52800877D79 /* VauQt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VauQt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C1D5D002958F79F00877D79 /* Vau.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Vau.xcodeproj; sourceTree = "<group>"; };
-		9C1D5E392958F7B300877D79 /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		9C1D5EF82958F7EF00877D79 /* object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = object.cpp; sourceTree = "<group>"; };
 		9C1D5EF92958F7EF00877D79 /* glue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glue.cpp; sourceTree = "<group>"; };
 		9C1D5EFA2958F7EF00877D79 /* object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = object.hpp; sourceTree = "<group>"; };
@@ -875,7 +874,6 @@
 		9C620C58295901C90041CFA3 /* preferences.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = preferences.cpp; sourceTree = "<group>"; };
 		9C620C59295901C90041CFA3 /* init_upgrade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = init_upgrade.cpp; sourceTree = "<group>"; };
 		9C620C5A295901C90041CFA3 /* boot.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = boot.hpp; sourceTree = "<group>"; };
-		9C620C5B295901C90041CFA3 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9C620C5D295901C90041CFA3 /* url.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = url.cpp; sourceTree = "<group>"; };
 		9C620C5E295901C90041CFA3 /* tm_timer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tm_timer.hpp; sourceTree = "<group>"; };
 		9C620C5F295901C90041CFA3 /* url.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = url.hpp; sourceTree = "<group>"; };
@@ -907,7 +905,6 @@
 		9C620C7A295901C90041CFA3 /* locale.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = locale.hpp; sourceTree = "<group>"; };
 		9C620C7B295901C90041CFA3 /* config.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = config.in; sourceTree = "<group>"; };
 		9C620C7C295901C90041CFA3 /* config.h.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = config.h.cmake; sourceTree = "<group>"; };
-		9C620C7D295901C90041CFA3 /* tm_configure.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tm_configure.hpp; sourceTree = "<group>"; };
 		9C620C90295901C90041CFA3 /* make_file.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = make_file.cpp; sourceTree = "<group>"; };
 		9C620C91295901C90041CFA3 /* web_files.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = web_files.hpp; sourceTree = "<group>"; };
 		9C620C92295901C90041CFA3 /* tm_ostream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tm_ostream.cpp; sourceTree = "<group>"; };
@@ -1311,6 +1308,9 @@
 		9CDB09BD295B04400033CF82 /* vau_main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_main.cpp; sourceTree = "<group>"; };
 		9CF282CC295A14BB0064D7F2 /* vau_buffer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_buffer.cpp; sourceTree = "<group>"; };
 		9CF282CD295A14BB0064D7F2 /* vau_buffer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_buffer.hpp; sourceTree = "<group>"; };
+		9CFD9EC0297F33430007BE9B /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = CMakeLists.txt; path = ../../CMakeLists.txt; sourceTree = "<group>"; };
+		9CFD9EC1297F370F0007BE9B /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		9CFD9EC2297F372F0007BE9B /* Config.xcconfig.cmake */ = {isa = PBXFileReference; lastKnownFileType = text; path = Config.xcconfig.cmake; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1347,7 +1347,8 @@
 				9C1D62162958FA3600877D79 /* Info.plist */,
 				9C1D62142958F8E100877D79 /* VauQt.xcconfig */,
 				9C1D5D002958F79F00877D79 /* Vau.xcodeproj */,
-				9C1D5E392958F7B300877D79 /* Base.xcconfig */,
+				9CFD9EC1297F370F0007BE9B /* Config.xcconfig */,
+				9CFD9EC2297F372F0007BE9B /* Config.xcconfig.cmake */,
 			);
 			path = macos;
 			sourceTree = "<group>";
@@ -2204,6 +2205,7 @@
 		9C4956E32958F4A100F7BDA9 = {
 			isa = PBXGroup;
 			children = (
+				9CFD9EC0297F33430007BE9B /* CMakeLists.txt */,
 				9C2DE588296341B700B88E9A /* resources */,
 				9C1D5CFE2958F79F00877D79 /* platform */,
 				9C1D5EF52958F7EF00877D79 /* src */,
@@ -2217,12 +2219,10 @@
 				9C620C4A295901C90041CFA3 /* Misc */,
 				9C620C55295901C90041CFA3 /* tm_configure.hpp.cmake */,
 				9C620C56295901C90041CFA3 /* Boot */,
-				9C620C5B295901C90041CFA3 /* config.h */,
 				9C620C5C295901C90041CFA3 /* Classes */,
 				9C620C61295901C90041CFA3 /* Language */,
 				9C620C7B295901C90041CFA3 /* config.in */,
 				9C620C7C295901C90041CFA3 /* config.h.cmake */,
-				9C620C7D295901C90041CFA3 /* tm_configure.hpp */,
 				9C620C8F295901C90041CFA3 /* Files */,
 				9C620C99295901C90041CFA3 /* tm_configure.in */,
 			);

@@ -87,6 +87,7 @@ is_verbatim (tree t) {
          is_compound (t, "picture-mixed");
 }
 
+#if 0
 picture
 native_picture (int w, int h, int ox, int oy) {
   (void) w; (void) h; (void) ox; (void) oy;
@@ -119,7 +120,7 @@ save_picture (url dest, picture p) {
   (void) dest; (void) p;
   FAILED ("not yet implemented");
 }
-
+#endif
 
 /******************************************************************************
 * System functions
@@ -340,10 +341,12 @@ set_setting (string var, string val) {
   texmacs_settings << tuple (var, scm_quote (val));
 }
 
+#if 0
 font qt_font (string family, int size, int dpi)
 {
   return font ();
 }
+#endif
 
 font get_default_font (bool tt, bool mini, bool bold)
 {
@@ -404,6 +407,12 @@ int script_status = 1;  // from sys_util.c
 url make_file (int cmd, tree data, array<url> args) {
   //FIXME: stub
   return url();
+}
+
+tree
+xpm_load (url file_name){
+  //FIXME: stub
+  return tree ();
 }
 
 
