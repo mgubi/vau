@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project (Vau)
+project (Vau CXX C) # check for C/C++ compiler
 
 # The name of our project is "Vau". CMakeLists files in this project can 
 # refer to the root source directory of the project as ${Vau_SOURCE_DIR} and 
@@ -10,33 +10,122 @@ set (CMAKE_CXX_STANDARD 11)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
+### --------------------------------------------------------------------
+### Define some basic config variables
+### --------------------------------------------------------------------
+
+set (VERSION_MAJOR "2")
+set (VERSION_MINOR "1")
+set (VERSION_BUILD "2")
+set (TEXMACS_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD})
+
+set (DEVEL_VERSION ${TEXMACS_VERSION})
+set (DEVEL_RELEASE "1")
+set (STABLE_VERSION ${TEXMACS_VERSION})
+set (STABLE_RELEASE "1")
+set (TEXMACS_REVISION ${TEXMACS_VERSION})
+
+### --------------------------------------------------------------------
+### Options
+### --------------------------------------------------------------------
+
+option (PDFHUMMUS_NO_TIFF "Disable TIFF in PDF Hummus" ON)
+option (PDFHUMMUS_NO_DCT "Disable DCT in PDF Hummus" ON)
+
+### --------------------------------------------------------------------
+### Include standard modules
+### --------------------------------------------------------------------
+
+include (CheckFunctionExists)
+#include (CheckLibraryExists)
+include (CheckIncludeFile)
+include (CheckTypeSize)
+#include (FindPkgConfig)
+#include (CheckCSourceCompiles)
+#include (FindX11)
+
+
+### --------------------------------------------------------------------
+### Check for standard functionalities
+### --------------------------------------------------------------------
+
+check_type_size (FILE HAVE_FILE)
+check_type_size (intptr_t HAVE_INTPTR_T)
+check_type_size (time_t HAVE_TIME_T)
+check_include_file (inttypes.h HAVE_INTTYPES_H)
+check_include_file (memory.h HAVE_MEMORY_H)
+check_include_file (stdlib.h HAVE_STDLIB_H)
+check_include_file (strings.h HAVE_STRINGS_H)
+check_include_file (string.h HAVE_STRING_H)
+check_include_file (sys/stat.h HAVE_SYS_STAT_H)
+check_include_file (unistd.h HAVE_UNISTD_H)
+check_include_file (X11/Xlib.h HAVE_X11_XLIB_H)
+check_include_file (X11/Xutil.h HAVE_X11_XUTIL_H)
+check_include_file (pty.h HAVE_PTY_H)
+check_include_file (util.h HAVE_UTIL_H)
+check_function_exists (gettimeofday HAVE_GETTIMEOFDAY)
+
+check_type_size ("void*" SIZE_OF_VOIDP)
+
+set (CONFIG_WORD_LENGTH "4")
+set (CONFIG_WORD_LENGTH_INC "3")
+set (CONFIG_WORD_MASK "0xfffffffc")
+set (CONFIG_MAX_FAST "260 // WORD_LENGTH more than power of 2")
+
+message (STATUS "Check if we are on a 64-bits computer")
+if (${SIZE_OF_VOIDP} EQUAL 8)
+  set (CONFIG_WORD_LENGTH "8")
+  set (CONFIG_WORD_LENGTH_INC "7")
+  set (CONFIG_WORD_MASK "0xfffffffffffffff8")
+  set (CONFIG_MAX_FAST "264 // WORD_LENGTH more than power of 2")
+endif (${SIZE_OF_VOIDP} EQUAL 8)
+
+### --------------------------------------------------------------------
+###  Test for Libraries
+### --------------------------------------------------------------------
+
 find_package (PkgConfig REQUIRED)
+
+find_package (PNG)
+find_package (Iconv)
+find_package (ZLIB)
+find_package (JPEG)
+
 #pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
 find_package (Freetype REQUIRED)
 find_package (Iconv REQUIRED)
 
-#file(GLOB_RECURSE subdirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
+### --------------------------------------------------------------------
+### Generate configure headers
+### --------------------------------------------------------------------
 
-#message(STATUS ${subdirs})
+set (DEBUG_ASSERT 1)
+set (PDF_RENDERER 1)
+#set (SIZEOF_VOID_P 8)
+set (STDC_HEADERS 1)
+set (CONFIG_STD_SETENV "#define STD_SETENV")
 
-#foreach(subdir ${subdirs})
-#    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
-#        target_include_directories(Vau PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
-#    endif ()
-#endforeach()
+set (tm_orig ${Vau_SOURCE_DIR})
+set (CONFIG_HOST_OS "linux-gnu") # TODO: should not be hard-coded
+set (CONFIG_HOST_VENDOR "pc") # TODO: should not be hard-coded
+set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
+set (CONFIG_USER $ENV{USER})
+string (TIMESTAMP CONFIG_DATE)
+set (tm_devel TeXmacs-${DEVEL_VERSION})
+set (tm_stable TeXmacs-${STABLE_VERSION})
+set (tm_devel_release ${tm_devel}-${DEVEL_RELEASE})
+set (tm_stable_release ${tm_stable}-${STABLE_RELEASE})
 
-#add_subdirectory(Data)
-#add_subdirectory(Graphics)
-#add_subdirectory(Kernel)
-#add_subdirectory(Plugins)
-#add_subdirectory(System)
-#add_subdirectory(Typeset)
-#add_subdirectory(Scheme)
+configure_file (${Vau_SOURCE_DIR}/src/System/config.h.cmake ${Vau_BINARY_DIR}/src/System/config.h)
+configure_file (${Vau_SOURCE_DIR}/src/System/tm_configure.hpp.cmake ${Vau_BINARY_DIR}/src/System/tm_configure.hpp)
+
+set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -include ${Vau_BINARY_DIR}/src/System/config.h")
 
 ### --------------------------------------------------------------------
 ### the include dirs
 ### --------------------------------------------------------------------
-set (TeXmacs_Include_Dirs
+set (Vau_Include_Dirs
+  ${Vau_BINARY_DIR}/src/System
   ${Vau_SOURCE_DIR}/src/Data/Convert
   ${Vau_SOURCE_DIR}/src/Data/Document
   ${Vau_SOURCE_DIR}/src/Data/Drd
@@ -86,51 +175,16 @@ set (TeXmacs_Include_Dirs
   ${Vau_SOURCE_DIR}/src/Typeset/Concat
   ${Vau_SOURCE_DIR}/src/Typeset/Page
   ${Vau_SOURCE_DIR}/TeXmacs/include 
-  ${Vau_BINARY_DIR}/src/System/ 
+#  ${Vau_BINARY_DIR}/src/System/ 
   ${Vau_SOURCE_DIR}/src
+  ${Vau_BINARY_DIR}/src/System
 )
 
 
 ### --------------------------------------------------------------------
 ### the main sources
 ### --------------------------------------------------------------------
-#file (GLOB_RECURSE Vau_Base_SRCS
-#  "${Vau_SOURCE_DIR}/src/Data/Drd/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Observers/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/String/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Document/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/History/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Parser/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Tree/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/generic.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Texmacs/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Scheme/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Xml/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Data/Convert/Verbatim/*.cpp"
-##  "${Vau_SOURCE_DIR}/src/Data/Convert/Tex/*.cpp"
-##  "${Vau_SOURCE_DIR}/src/Edit/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Graphics/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Kernel/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Scheme/Scheme/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Scheme/Guile/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Misc/data_cache.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Misc/fast_alloc.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Boot/preferences.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Classes/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Language/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Files/make_file.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Files/tm_ostream.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Files/web_files.cpp"
-#  "${Vau_SOURCE_DIR}/src/System/Files/file.cpp"
-##  "${Vau_SOURCE_DIR}/src/Texmacs/Data/*.cpp"
-##  "${Vau_SOURCE_DIR}/src/Texmacs/Server/*.cpp"
-##  "${Vau_SOURCE_DIR}/src/Texmacs/Window/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Typeset/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Vau/*.cpp"
-#)
+
 set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/generic.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/indexation.cpp"
@@ -404,8 +458,8 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 #  "${Vau_SOURCE_DIR}/src/Plugins/Cairo/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Database/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Freetype/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.cpp"
-#  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.c"
+  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.cpp"
+  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.c"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ghostscript/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Imlib2/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ispell/*.cpp"
@@ -418,11 +472,9 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 )
 
 
-set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -include ${CMAKE_SOURCE_DIR}/src/System/config.h")
+set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
-set (TeXmacs_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
-
-include_directories (${TeXmacs_Include_Dirs})
+include_directories (${Vau_Include_Dirs})
 
 add_executable (Vau)
 
@@ -434,7 +486,7 @@ set_target_properties (Vau
 target_link_libraries (Vau PRIVATE Freetype::Freetype)
 target_link_libraries (Vau PRIVATE Iconv::Iconv)
 
-target_sources (Vau PRIVATE ${TeXmacs_All_SRCS})
+target_sources (Vau PRIVATE ${Vau_All_SRCS})
 
 target_link_libraries (Vau PRIVATE
         "-framework ApplicationServices"
