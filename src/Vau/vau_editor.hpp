@@ -174,6 +174,9 @@ public:
 
   tree the_subtree (path p);
   
+  
+  void get_page_image (url name, int page, string image_dpi);
+  
   friend class editor;
 
 };

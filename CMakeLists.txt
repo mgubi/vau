@@ -36,6 +36,7 @@ option (PDFHUMMUS_NO_DCT "Disable DCT support in PDF Hummus" ON)
 option (PDFHUMMUS_NO_PNG "Disable PNG support in PDF Hummus" ON)
 option (USE_FREETYPE "use Freetype" ON)
 option (LINKED_FREETYPE "linked Freetype" ON)
+option (MUPDF_RENDERER "Enable MuPDF" ON)
 
 ### --------------------------------------------------------------------
 ### Include standard modules
@@ -468,6 +469,7 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
   "${Vau_SOURCE_DIR}/src/Plugins/Freetype/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.c"
+  "${Vau_SOURCE_DIR}/src/Plugins/MuPDF/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ghostscript/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Imlib2/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ispell/*.cpp"

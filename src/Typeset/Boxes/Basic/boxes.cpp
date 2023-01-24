@@ -935,6 +935,8 @@ make_eps (url name, box b, int dpi) {
   tm_delete (ren);
 }
 
+#endif
+
 void
 make_raster_image (url name, box b, double zoomf) {
   SI pixel= 5*PIXEL;
@@ -954,4 +956,3 @@ make_raster_image (url name, box b, double zoomf) {
   tm_delete (ren);
 }
 
-#endif

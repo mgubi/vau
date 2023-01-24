@@ -518,8 +518,7 @@ delete_renderer (renderer ren) {
   tm_delete (ren);
 }
 
-#ifndef QTTEXMACS
-#ifndef X11TEXMACS
+#if !(defined(QTTEXMACS)||defined(X11TEXMACS)||defined(MUPDF_RENDERER))
 
 picture
 native_picture (int w, int h, int ox, int oy) {
@@ -554,5 +553,4 @@ save_picture (url dest, picture p) {
   FAILED ("not yet implemented");
 }
 
-#endif
 #endif

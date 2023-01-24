@@ -9,8 +9,6 @@
 * in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
 ******************************************************************************/
 
-#if (defined(QTTEXMACS) || defined(AQUATEXMACS))
-
 #include "basic_renderer.hpp"
 #include "analyze.hpp"
 #include "gui.hpp" // for INTERRUPT_EVENT, INTERRUPTED_EVENT
@@ -168,9 +166,9 @@ basic_renderer_rep::apply_shadow (SI x1, SI y1, SI x2, SI y2) {
                  << "," << y1 << "," << y2 << ")\n";
 }
 
+#if 0
 bool
 gui_interrupted (bool check) {
   return check_event (check? INTERRUPT_EVENT: INTERRUPTED_EVENT);
 }
-
 #endif

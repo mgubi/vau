@@ -238,6 +238,7 @@ TeXmacs_main (int argc, char** argv) {
 
   string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
   string output ("$HOME/vau-test.pdf");
+  string image_output  ("$HOME/vau-test.png");
 
   vau_buffer buf= concrete_buffer_insist (name);
 
@@ -248,10 +249,11 @@ TeXmacs_main (int argc, char** argv) {
   ed->set_data (buf->data);
 
   ed->print_to_file (output);
+  ed->get_page_image (image_output, 1, "300");
+  
   cur_ed= editor ();
   
   cache_memorize ();
-
   bench_print ();
 }
 
