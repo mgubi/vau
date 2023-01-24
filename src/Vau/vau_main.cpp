@@ -18,6 +18,7 @@
 #include "drd_std.hpp"
 #include "convert.hpp"
 #include "boot.hpp"
+#include "data_cache.hpp"
 
 
 extern void setup_tex (); // from Plugins/Metafont/tex_init.cpp
@@ -210,7 +211,11 @@ TeXmacs_main (int argc, char** argv) {
   debug_set ("std", true);
   debug_set ("io", true);
   debug_set ("bench", true);
+  debug_set ("verbose", true);
 
+  cache_initialize ();
+  
+  bench_start ("initialize vau");
   //cout << "Initialize -- Succession status table\n";
   init_succession_status_table ();
   //cout << "Initialize -- Succession standard DRD\n";
@@ -219,11 +224,12 @@ TeXmacs_main (int argc, char** argv) {
   load_user_preferences ();
   //cout << "Initialize -- Environment variables\n";
   init_env_vars ();
+  bench_cumul ("initialize vau");
 
   initialize_scheme ();
-  
-  string tm_init_file= "$TEXMACS_PATH/progs/init-vau-s7.scm";
+
   bench_start ("initialize scheme");
+  string tm_init_file= "$TEXMACS_PATH/progs/init-vau-s7.scm";
   if (exists (tm_init_file)) exec_file (tm_init_file);
   bench_cumul ("initialize scheme");
 
@@ -244,6 +250,8 @@ TeXmacs_main (int argc, char** argv) {
   ed->print_to_file (output);
   cur_ed= editor ();
   
+  cache_memorize ();
+
   bench_print ();
 }
 
