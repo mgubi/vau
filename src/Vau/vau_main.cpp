@@ -261,7 +261,7 @@ bool use_ps () { return true; }
 
 int
 main(int argc, char **argv) {
-  set_env ("TEXMACS_PATH", "/Users/mgubi/t/vau/resources"); //FIXME: CUSTOMIZE!
+  set_env ("TEXMACS_PATH", TEXMACS_SOURCES "/resources"); //FIXME: this has to point to the installation dir!
   set_env ("TEXMACS_HOME_PATH", "$HOME/.Vau");
   set_env_path ("GUILE_LOAD_PATH", "$TEXMACS_PATH/progs:$GUILE_LOAD_PATH");
 
