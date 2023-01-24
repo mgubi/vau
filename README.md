@@ -13,7 +13,9 @@ I rewrote the Scheme glue code via C++ templating and metaprogramming and make i
 
 Jan 2022 
 
-- I have now a basic setup with an Xcode project and a CMake recipe. I switched to the S7 interpreter and added PDF Hummus. Vau can read and export to PDF fairly complex documents. I still haven't checked what happens with images. Font retrieval is quite slow. I removed almost all the C++ code which is not used at this stage. And Vau load the minimal amount of Scheme code.
+- I have now a basic setup with an Xcode project and a CMake recipe. I switched to the S7 interpreter, added PDF Hummus and MuPDF support. Vau can read and export to PDF fairly complex documents with PDF Hummus and generate PNG images for pages with MuPDF. Typesetting is not optimized and all the document is retypeset from the beginning at every invocation of the output routines.
+
+- I removed almost all the C++ code which is not used at this stage. And Vau load the minimal amount of Scheme code.
 
 - Ideally we want to isolate away I/O, because e.g. in Webasm we do not have direct access to the filesystem and maybe this requires anyway async calls.
 
