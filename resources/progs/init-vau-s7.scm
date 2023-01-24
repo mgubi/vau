@@ -135,8 +135,9 @@
 (define (gui-version) "none")
 (define (image->psdoc a) "")
 
+(tm-define (notify-set-attachment name key val) (noop))
 
-(display "****** End booting init-vau.scm\n")
+(display "****** End booting init-vau-s7.scm\n")
 
 
 (display "------------------------------------------------------\n")
