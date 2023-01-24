@@ -84,6 +84,27 @@ editor_rep::get_data (new_data& data) {
   data->att  = get_att ();
 }
 
+void
+editor_rep::set_data (new_data data) {
+  set_style (data->style);
+  set_init  (data->init);
+  set_fin   (data->fin);
+  set_ref   (data->ref);
+  set_aux   (data->aux);
+  set_att   (data->att);
+  //FIXME: notify_page_change ();
+  add_init (data->init);
+  notify_change (THE_DECORATIONS);
+  typeset_invalidate_env ();
+  iterator<string> it = iterate (data->att);
+  while (it->busy()) {
+    string key= it->next ();
+    (void) call (string ("notify-set-attachment"),
+                 buf->buf->name, key, data->att [key]);
+  }
+}
+
+
 tree
 editor_rep::get_ref (string key) {
   return buf->data->ref[key];

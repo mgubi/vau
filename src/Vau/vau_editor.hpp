@@ -118,6 +118,7 @@ public:
   
   bool     get_save_aux ();
   void     get_data (new_data& data);
+  void     set_data (new_data data);
   
   tree     exec (tree t, hashmap<string,tree> env, bool expand_refs= true);
   tree     exec_texmacs (tree t, path p);

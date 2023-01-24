@@ -211,13 +211,14 @@ TeXmacs_main (int argc, char** argv) {
   debug_set ("io", true);
   debug_set ("bench", true);
 
+  //cout << "Initialize -- Succession status table\n";
+  init_succession_status_table ();
+  //cout << "Initialize -- Succession standard DRD\n";
   init_std_drd ();
   //cout << "Initialize -- User preferences\n";
   load_user_preferences ();
   //cout << "Initialize -- Environment variables\n";
   init_env_vars ();
-
-  init_tex (); // for paths 
 
   initialize_scheme ();
   
@@ -226,17 +227,22 @@ TeXmacs_main (int argc, char** argv) {
   if (exists (tm_init_file)) exec_file (tm_init_file);
   bench_cumul ("initialize scheme");
 
+  //  setup_tex ();
+  init_tex (); // for paths
+
   string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
   string output ("$HOME/vau-test.pdf");
+
   vau_buffer buf= concrete_buffer_insist (name);
+
   editor ed (buf);
   cur_ed= ed;
-//  string tm_init_buffer= "/Users/mgubi/t/vau/src/Vau/init-buffer.scm";
-//  if (exists (tm_init_buffer)) exec_file (tm_init_buffer);
-  ed->init_style("generic");
+  
+  //ed->init_style("generic");
+  ed->set_data (buf->data);
 
   ed->print_to_file (output);
-  cur_ed= editor();
+  cur_ed= editor ();
   
   bench_print ();
 }
