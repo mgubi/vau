@@ -9,6 +9,8 @@ project (Vau CXX C) # check for C/C++ compiler
 set (CMAKE_CXX_STANDARD 11)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
+set (CMAKE_MODULE_PATH ${Vau_SOURCE_DIR}/devel)
+
 
 ### --------------------------------------------------------------------
 ### Define some basic config variables
@@ -100,6 +102,11 @@ find_package (JPEG)
 #pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
 find_package (Freetype REQUIRED)
 find_package (Iconv REQUIRED)
+find_package (MuPDF REQUIRED)
+
+#include(CMakePrintHelpers)
+#cmake_print_variables(MUPDF_INCLUDE_DIR MUPDF_THIRD_LIBRARY_RELEASE MUPDF_LIBRARY_RELEASE)
+
 
 ### --------------------------------------------------------------------
 ### Generate configure headers
@@ -308,7 +315,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Graphics/Pictures/raster_picture.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Pictures/raster_random.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Pictures/scalable.cpp"
-#  "${Vau_SOURCE_DIR}/src/Graphics/Renderer/basic_renderer.cpp"
+  "${Vau_SOURCE_DIR}/src/Graphics/Renderer/basic_renderer.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Renderer/brush.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Renderer/page_type.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Renderer/pencil.cpp"
@@ -496,6 +503,8 @@ target_link_libraries (Vau PRIVATE Freetype::Freetype)
 target_link_libraries (Vau PRIVATE Iconv::Iconv)
 target_link_libraries (Vau PRIVATE PNG::PNG)
 target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
+target_link_libraries (Vau PRIVATE MuPDF::MuPDF)
+target_link_libraries (Vau PRIVATE MuPDF::MuPDF-third)
 
 target_sources (Vau PRIVATE ${Vau_All_SRCS})
 
