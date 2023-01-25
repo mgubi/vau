@@ -80,6 +80,21 @@ set (CONFIG_WORD_LENGTH_INC "3")
 set (CONFIG_WORD_MASK "0xfffffffc")
 set (CONFIG_MAX_FAST "260 // WORD_LENGTH more than power of 2")
 
+set (CONFIG_HOST_OS "linux-gnu") # TODO: should not be hard-coded
+set (CONFIG_HOST_VENDOR "pc") # TODO: should not be hard-coded
+set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
+
+if(EMSCRIPTEN)
+  message (STATUS "Final adjustments for WASM host")
+  set (CONFIG_OS "WASM")
+  set (CONFIG_OS_SUFFIX "wasm")
+  set (CONFIG_HOST_OS "wasm-emscripten")
+  set (CONFIG_HOST_VENDOR "pc")
+  set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
+  set (SIZE_OF_VOIDP 8) ## 32 bit
+  set (HAVE_TIME_T TRUE)
+endif(EMSCRIPTEN)
+
 if (SIZE_OF_VOIDP)
   message (STATUS "Check if we are on a 64-bits computer")
   if (${SIZE_OF_VOIDP} EQUAL 8)
@@ -92,34 +107,27 @@ else ()
   set (SIZE_OF_VOIDP 4)
 endif () 
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
-  message (STATUS "final adjustments for wasm host")
-  set (CONFIG_OS "WASM")
-  set (CONFIG_OS_SUFFIX "wasm")
-  set (CONFIG_HOST_OS "wasm-emscripten")
-  set (CONFIG_HOST_VENDOR "pc")
-  set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
-endif(${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
 
 ### --------------------------------------------------------------------
 ###  Test for Libraries
 ### --------------------------------------------------------------------
 
-find_package (PkgConfig REQUIRED)
+if (EMSCRIPTEN)
 
-find_package (PNG)
-find_package (Iconv)
-find_package (ZLIB)
-find_package (JPEG)
+else (EMSCRIPTEN)
+#  find_package (PkgConfig REQUIRED)
+  find_package (PNG)
+  find_package (Iconv)
+  find_package (ZLIB)
+  find_package (JPEG)
+  #pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
+  find_package (Freetype REQUIRED)
+  find_package (Iconv REQUIRED)
+  #include(CMakePrintHelpers)
+  #cmake_print_variables(MUPDF_INCLUDE_DIR MUPDF_THIRD_LIBRARY_RELEASE MUPDF_LIBRARY_RELEASE)
+endif (EMSCRIPTEN)
 
-#pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
-find_package (Freetype REQUIRED)
-find_package (Iconv REQUIRED)
 find_package (MuPDF REQUIRED)
-
-#include(CMakePrintHelpers)
-#cmake_print_variables(MUPDF_INCLUDE_DIR MUPDF_THIRD_LIBRARY_RELEASE MUPDF_LIBRARY_RELEASE)
-
 
 ### --------------------------------------------------------------------
 ### Generate configure headers
@@ -132,9 +140,6 @@ set (STDC_HEADERS 1)
 set (CONFIG_STD_SETENV "#define STD_SETENV")
 
 set (tm_orig ${Vau_SOURCE_DIR})
-set (CONFIG_HOST_OS "linux-gnu") # TODO: should not be hard-coded
-set (CONFIG_HOST_VENDOR "pc") # TODO: should not be hard-coded
-set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
 set (CONFIG_USER $ENV{USER})
 string (TIMESTAMP CONFIG_DATE)
 set (tm_devel TeXmacs-${DEVEL_VERSION})
@@ -208,7 +213,6 @@ set (Vau_Include_Dirs
   ${Vau_SOURCE_DIR}/src
   ${Vau_BINARY_DIR}/src/System
 )
-
 
 ### --------------------------------------------------------------------
 ### the main sources
@@ -503,25 +507,42 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 
 set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
-include_directories (${Vau_Include_Dirs})
-
 add_executable (Vau)
-
+target_sources (Vau PRIVATE ${Vau_All_SRCS})
+target_include_directories (Vau PRIVATE ${Vau_Include_Dirs})
 set_target_properties (Vau
         PROPERTIES
         OUTPUT_NAME Vau)
 
-#target_link_libraries (Vau PRIVATE PkgConfig::Guile)
-target_link_libraries (Vau PRIVATE Freetype::Freetype)
-target_link_libraries (Vau PRIVATE Iconv::Iconv)
-target_link_libraries (Vau PRIVATE PNG::PNG)
-target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
 target_link_libraries (Vau PRIVATE MuPDF::MuPDF)
 target_link_libraries (Vau PRIVATE MuPDF::MuPDF-third)
 
-target_sources (Vau PRIVATE ${Vau_All_SRCS})
-
-target_link_libraries (Vau PRIVATE
+if (EMSCRIPTEN)
+  target_compile_options (Vau
+    PRIVATE
+    "SHELL:-include ${Vau_BINARY_DIR}/src/System/config.h"
+    "SHELL:-s USE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
+  )   
+  target_link_options (Vau
+    PRIVATE
+    "SHELL:--source-map-base /" 
+#   "SHELL:-s DISABLE_EXCEPTION_CATCHING=0" 
+    "SHELL:-s USE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
+    "SHELL:--preload-file ${Vau_SOURCE_DIR}/resources@Vau"
+  )
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options (Vau PRIVATE 
+      "SHELL:-s ASSERTIONS=1" "SHELL:-s DEMANGLE_SUPPORT=1" "-g3")
+    add_link_options (Vau PRIVATE 
+      "SHELL:-s ASSERTIONS=1" "SHELL:-s DEMANGLE_SUPPORT=1"  "-g3" "-gsource-map")
+  endif()
+else (EMSCRIPTEN)
+  #target_link_libraries (Vau PRIVATE PkgConfig::Guile)
+  target_link_libraries (Vau PRIVATE Freetype::Freetype)
+  target_link_libraries (Vau PRIVATE Iconv::Iconv)
+  target_link_libraries (Vau PRIVATE PNG::PNG)
+  target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
+  target_link_libraries (Vau PRIVATE
         "-framework ApplicationServices"
         "-framework CoreFoundation"
         "-framework Security"
@@ -535,4 +556,6 @@ target_link_libraries (Vau PRIVATE
         "-framework Foundation"
         "-framework ImageIO"
         )
+endif (EMSCRIPTEN)
+
 

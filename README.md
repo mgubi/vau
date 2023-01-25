@@ -22,3 +22,23 @@ Jan 2022
 - From here I would like to understand how to isolate a well-defined interface for the editor which allow to call it from a scripting language (be it Scheme or Javascript). The editor receives commands and send back responses (e.g. bitmaps of the current page with metadata, like location of the cursors, etc..)
 
 
+## Build instructons
+
+Use CMake. We depend on [MuPDF](https://mupdf.com), which you can find on [github](https://github.com/ArtifexSoftware/mupdf), for example. 
+
+For the native architecture of the machine
+```
+mkdir build; cd build;
+cmake  ..
+make
+```
+If CMake cannot find MuPDF, set the environment variable `MUPDF_DIR` to the root of the MuPDF installation.
+
+
+For the WebAssembly version, you will probably need to build it yourself from sources, and in that case  we need to specify where to find the appropriate libraries. So build invocation for Vau is more complicated. Something like:
+```
+mkdir build; cd build;
+emcmake cmake  .. -DMUPDF_LIBRARY=$MUPDF_DIR/build/wasm/release/libmupdf.a -DMUPDF_THIRD_LIBRARY=$MUPDF_DIR/build/wasm/release/libmupdf-third.a -DMUPDF_INCLUDE_DIR=$MUPDF_DIR/usr/include
+emmake make 
+```
+where again it is assumed that `MUPDF_DIR` points to the appropriate place.
