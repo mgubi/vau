@@ -54,7 +54,7 @@ if (NOT MUPDF_LIBRARY)
     PATH_SUFFIXES
       lib
   )
-  find_library(MUPDF_THIRD_LIBRARY
+  find_library (MUPDF_THIRD_LIBRARY
     mupdf-third
     ${MUPDF_FIND_ARGS}
     PATH_SUFFIXES
