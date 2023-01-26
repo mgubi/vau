@@ -152,8 +152,10 @@ set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -include ${Vau_BINARY_DIR}/src/System/
 configure_file (${Vau_SOURCE_DIR}/src/System/config.h.cmake ${Vau_BINARY_DIR}/src/System/config.h)
 configure_file (${Vau_SOURCE_DIR}/src/System/tm_configure.hpp.cmake ${Vau_BINARY_DIR}/src/System/tm_configure.hpp)
 
-configure_file (${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig.cmake ${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig)
-
+if (NOT EMSCRIPTEN)
+  # we generate Xcode config files only if not configuring Wasm
+  configure_file (${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig.cmake ${Vau_SOURCE_DIR}/platform/macos/Config.xcconfig)
+endif (NOT EMSCRIPTEN)
 
 ### --------------------------------------------------------------------
 ### the include dirs
