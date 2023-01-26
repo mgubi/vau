@@ -1,0 +1,40 @@
+diff --git a/platform/wasm/Makefile b/platform/wasm/Makefile
+index 9b61bc7bb..c6e9fb2e0 100644
+--- a/platform/wasm/Makefile
++++ b/platform/wasm/Makefile
+@@ -2,7 +2,7 @@
+ 
+ build ?= release
+ 
+-EMSDK_DIR ?= /opt/emsdk
++EMSDK_DIR ?= /Users/mgubi/emsdk
+ BUILD_DIR ?= ../../build/wasm/$(build)
+ WASM_SKIP_TRY_CATCH ?= 0
+ 
+@@ -24,7 +24,7 @@ all: mupdf-wasm.js mupdf-wasm.wasm mupdf-wasm-singlethread.js mupdf-wasm-singlet
+ MUPDF_CORE := $(BUILD_DIR)/libmupdf.a $(BUILD_DIR)/libmupdf-third.a
+ $(MUPDF_CORE): .FORCE
+ 	$(MAKE) -j4 -C ../.. generate
+-	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh; \
++#	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh; 
+ 	. $(EMSDK_DIR)/emsdk_env.sh; \
+ 	$(MAKE) -j4 -C ../.. \
+ 		OS=wasm build=$(build) \
+@@ -32,7 +32,7 @@ $(MUPDF_CORE): .FORCE
+ 		libs
+ 
+ mupdf-wasm-singlethread.js mupdf-wasm-singlethread.wasm: $(MUPDF_CORE) lib/wrap.c
+-	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh \
++#	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh 
+ 	. $(EMSDK_DIR)/emsdk_env.sh; \
+ 	emcc -o $@ $(BUILD_FLAGS) \
+ 		--no-entry \
+@@ -51,7 +51,7 @@ mupdf-wasm-singlethread.js mupdf-wasm-singlethread.wasm: $(MUPDF_CORE) lib/wrap.
+ 		$(BUILD_DIR)/libmupdf-third.a
+ 
+ mupdf-wasm.js mupdf-wasm.wasm: $(MUPDF_CORE) lib/wrap.c
+-	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh \
++#	BASH_SOURCE=$(EMSDK_DIR)/emsdk_env.sh 
+ 	. $(EMSDK_DIR)/emsdk_env.sh; \
+ 	emcc -o $@ $(BUILD_FLAGS) \
+ 		-pthread \
