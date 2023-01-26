@@ -145,7 +145,7 @@ save_string (url u, string s, bool fatal) {
     return err;
   }
 
-  // cout << "Save " << u << LF;
+  if (DEBUG_STD) debug_std << "Save " << u << LF;
   url r= u;
   if (!is_rooted_name (r)) r= resolve (r, "");
   bool err= !is_rooted_name (r);
@@ -207,7 +207,7 @@ bool
 append_string (url u, string s, bool fatal) {
   if (is_rooted_tmfs (u)) FAILED ("file not appendable");
 
-  // cout << "Save " << u << LF;
+  if (DEBUG_STD) debug_std << "Append " << u << LF;
   url r= u;
   if (!is_rooted_name (r)) r= resolve (r, "");
   bool err= !is_rooted_name (r);
