@@ -14,11 +14,23 @@
 
 list<glue_function> glue_function_rep::glue_functions;
 
+//TMSCM_ASSERT (tmscm_is_string (s), s, arg, rout)
 
-#define TMSCM_CONVERSION(TYPE) \
-template<> tmscm tmscm_from<TYPE> (TYPE p) { return TYPE##_to_tmscm (p); } \
-template<> TYPE tmscm_to<TYPE> (tmscm p) { return tmscm_to_##TYPE (p); }
+//FIXME: put correct arg number
+#define TMSCM_CONVERSION_2(TYPE, TYPE_CHECK) \
+  template<> tmscm tmscm_from<TYPE> (TYPE p) { return TYPE##_to_tmscm (p); } \
+  template<> TYPE tmscm_to<TYPE> (tmscm p) { return tmscm_to_##TYPE (p); } \
+  template<> void tmscm_check<TYPE> (tmscm p, int arg, const char *fname) { \
+    TMSCM_ASSERT (tmscm_is_##TYPE_CHECK (p), p, arg, fname); \
+  }
 
+#define TMSCM_CONVERSION(TYPE) TMSCM_CONVERSION_2(TYPE, TYPE) \
+  template<> bool tmscm_is<TYPE> (tmscm p) { return tmscm_is_##TYPE (p); }
+
+template<typename S0, S0 f, typename T0, typename ... Ts>
+const char *tm_glue<T0 (Ts ...), S0, f>::__name;
+
+bool tmscm_is_object (tmscm o) { return true; } // no check
 
 TMSCM_CONVERSION(int)
 TMSCM_CONVERSION(double)
@@ -36,16 +48,12 @@ TMSCM_CONVERSION(object)
 #include "patch.hpp"
 
 #include "boxes.hpp"
-//#include "editor.hpp"
 #include "universal.hpp"
 #include "convert.hpp"
 #include "file.hpp"
 #include "locale.hpp"
 #include "iterator.hpp"
 #include "Freetype/tt_tools.hpp"
-//#include "Database/database.hpp"
-//#include "Sqlite3/sqlite3.hpp"
-//#include "Updater/tm_updater.hpp"
 
 class scheme_tree_t {
   scheme_tree t;
@@ -103,6 +111,7 @@ TMSCM_ASSERT (tmscm_is_blackbox (t), t, arg, rout)
 #define TMSCM_ASSERT_OBJECT(a,b,c)
 // no check
 
+
 /******************************************************************************
 * Tree labels
 ******************************************************************************/
@@ -121,7 +130,7 @@ tmscm_to_tree_label (tmscm p) {
   return make_tree_label (s);
 }
 
-TMSCM_CONVERSION(tree_label)
+TMSCM_CONVERSION_2(tree_label, symbol)
 
 /******************************************************************************
 * Trees
@@ -344,11 +353,6 @@ scheme_tree_to_tmscm (scheme_tree t) {
   }
 }
 
-tmscm
-scheme_tree_t_to_tmscm (scheme_tree_t t) {
-  return scheme_tree_to_tmscm ((tree)t);
-}
-
 scheme_tree
 tmscm_to_scheme_tree (tmscm p) {
   if (tmscm_is_list (p)) {
@@ -368,14 +372,19 @@ tmscm_to_scheme_tree (tmscm p) {
   return "?";
 }
 
+tmscm
+scheme_tree_t_to_tmscm (scheme_tree_t t) {
+  return scheme_tree_to_tmscm ((tree)t);
+}
+
 scheme_tree_t tmscm_to_scheme_tree_t (tmscm obj) {
   return tree (tmscm_to_scheme_tree (obj));
 }
 
 template<> tmscm tmscm_from<scheme_tree_t> (scheme_tree_t p) { return scheme_tree_t_to_tmscm (p); }
 template<> scheme_tree_t tmscm_to<scheme_tree_t> (tmscm p) { return tmscm_to_scheme_tree_t (p); }
-
-
+template<> bool tmscm_is<scheme_tree_t> (tmscm p) { return true; } //FIXME: let's do better.
+template<> void tmscm_check<scheme_tree_t> (tmscm p, int arg, const char* fname) { } //FIXME: let's do better.
 
 /******************************************************************************
 * Content
@@ -427,6 +436,10 @@ struct content_wrap {
 
 template<> content_wrap
 tmscm_to<content_wrap> (tmscm p) { return tmscm_to_content (p); }
+template<> tmscm
+tmscm_from<content_wrap> (content_wrap c) { return tree_to_tmscm (c.t); }
+template<> bool
+tmscm_is<content_wrap> (tmscm o) { return tmscm_is_content(o); }
 
 
 /******************************************************************************
@@ -841,8 +854,6 @@ tmscm_to_array_array_array_double (tmscm p) {
 void register_glyph (string s, array_array_array_double gl);
 string recognize_glyph (array_array_array_double gl);
 
-
-
 #define TMSCM_ASSERT_ARRAY_STRING(p,arg,rout) \
 TMSCM_ASSERT (tmscm_is_array_string (p), p, arg, rout)
 
@@ -930,7 +941,6 @@ tmscm_is_array_patch (tmscm p) {
     tmscm_is_patch (tmscm_car (p)) &&
     tmscm_is_array_patch (tmscm_cdr (p));
 }
-
 
 #define TMSCM_ASSERT_ARRAY_PATCH(p,arg,rout) \
 TMSCM_ASSERT (tmscm_is_array_patch (p), p, arg, rout)

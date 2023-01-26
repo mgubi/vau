@@ -17,6 +17,8 @@
 // conversion generics
 template<typename T0> tmscm tmscm_from (T0 out);
 template<typename T0> T0 tmscm_to (tmscm in);
+template<typename T0> void tmscm_check (tmscm in, int arg, const char *fname);
+template<typename T0> bool tmscm_is (tmscm in);
 
 class glue_function;
 
@@ -39,7 +41,7 @@ public:
 
 class glue_function {
   CONCRETE(glue_function);
-  glue_function (glue_function_rep *_rep) : rep(_rep) {}
+  glue_function (glue_function_rep *_rep) : rep (_rep) {}
 };
 CONCRETE_CODE(glue_function);
 
@@ -53,35 +55,45 @@ template<typename T0, typename S0, S0 fn> struct tm_glue  {
   // we do not provide constructor to detect matching errors
 };
 
-template<typename S0, S0 f, typename ... Ts>
-struct tm_glue<void (Ts ...), S0, f> : public glue_function_rep {
-  template<typename A> struct Arg { typedef tmscm Type; };
-  static void wrap (Ts ... args) {
-    f (args ...);
-  }
-  static tmscm func (typename Arg<Ts>::Type ... args) {
-    wrap (tmscm_to<Ts> (args) ...);
-    return TMSCM_UNSPECIFIED;
-  }
-  tm_glue (const char *_name) : glue_function_rep (_name, proc<func>, sizeof...(Ts)) {}
-};
-
 class scheme_tree_t;
+
+
 
 template<typename S0, S0 f, typename T0, typename ... Ts>
 struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
   template<typename A> struct Arg { typedef tmscm Type; };
   template<typename A> struct Res { typedef A Type; };
   template<> struct Res<scheme_tree_t> { typedef scheme_tree Type; };
-
-  static typename Res<T0>::Type wrap (Ts ... args) {
+  template<typename ... As> struct tmscm_check_args {
+    int arg;
+//    bool v[sizeof...(As)];
+    tmscm_check_args (const char *name, typename Arg<As>::Type ... args)
+      : arg(0) {
+        bool vv[sizeof...(As)]= {(arg++, tmscm_check<As>(args, arg, name), true) ...};
+        (void) vv;
+    }
+  };
+  template<> struct tmscm_check_args<> {
+    tmscm_check_args (const char *name) {}
+  };
+  static const char*__name;
+  template<typename TT> static typename Res<T0>::Type wrap (Ts ... args) {
     return f (args ...);
   }
-  static tmscm func (typename Arg<Ts>::Type ... args) {
-    T0 out= wrap (tmscm_to<Ts> (args) ...);
-    return tmscm_from<T0> (out);
+  static void wrap_void (Ts ... args) {
+    f (args ...);
   }
-  tm_glue (const char *_name) : glue_function_rep (_name, proc<func>, sizeof...(Ts)) {}
+  template<typename TT> static tmscm func (typename Arg<Ts>::Type ... args) {
+    tmscm_check_args<Ts...> check (__name, args...);
+    TT out= wrap<TT> (tmscm_to<Ts> (args) ...);
+    return tmscm_from<TT> (out);
+  }
+  template<> static tmscm func<void> (typename Arg<Ts>::Type ... args) {
+    tmscm_check_args<Ts...> check (__name, args...);
+    wrap_void (tmscm_to<Ts> (args) ...);
+    return TMSCM_UNSPECIFIED;
+  }
+  tm_glue (const char *_name) : glue_function_rep (_name, proc<func<T0> >, sizeof...(Ts)) { __name= _name; }
 };
 
 template<typename T0, typename S0, S0 fn> glue_function
