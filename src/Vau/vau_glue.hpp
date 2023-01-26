@@ -93,7 +93,12 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
     wrap_void (tmscm_to<Ts> (args) ...);
     return TMSCM_UNSPECIFIED;
   }
-  tm_glue (const char *_name) : glue_function_rep (_name, proc<func<T0> >, sizeof...(Ts)) { __name= _name; }
+  template<typename S> struct Xarg { tmscm value; Xarg (tmscm &args) : value (tmscm_car(args)) { args=tmscm_cdr (args); }  };
+  template<typename TT> static tmscm proc (s7_scheme*, tmscm args) {
+    tmscm res = func<TT> (Xarg<Ts>(args).value ...);
+    return (res);
+  }
+  tm_glue (const char *_name) : glue_function_rep (_name, proc<T0>, sizeof...(Ts)) { __name= _name; }
 };
 
 template<typename T0, typename S0, S0 fn> glue_function

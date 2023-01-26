@@ -81,159 +81,24 @@ tmscm call_scheme (tmscm fun, array<tmscm> a);
  * Gluing
  ******************************************************************************/
 
-template<tmscm (*PROC)()>
-static tmscm proc (s7_scheme*, tmscm ) {
-        tmscm res = PROC();
-        return (res);
-}
-template<tmscm (*PROC)(tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1);
-        return (res);
-}
-template<tmscm (*PROC)(tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2);
-        return (res);
-}
-template<tmscm (*PROC)(tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3);
-        return (res);
-}
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4);
-        return (res);
-}
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5);
-        return (res);
-}
+template<typename T> struct Proc {};
 
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a6 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5,a6);
-        return (res);
-}
-
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a6 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a7 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5,a6,a7);
-        return (res);
-}
-
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a6 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a7 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a8 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5,a6,a7,a8);
-        return (res);
-}
-
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a6 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a7 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a8 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a9 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5,a6,a7,a8,a9);
-        return (res);
-}
-
-template<tmscm (*PROC)(tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm, tmscm)>
-static tmscm proc (s7_scheme*, tmscm args) {
-        tmscm a1 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a2 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a3 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a4 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a5 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a6 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a7 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a8 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a9 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm a10 = (tmscm_car(args)); args = tmscm_cdr (args);
-        tmscm res = PROC(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10);
-        return (res);
-}
-
-typedef tmscm (*FN) (s7_scheme*, tmscm args);
+template<typename T0, typename ... Ts>
+struct Proc<T0 (Ts ...)> {
+  template<typename S> struct Arg { tmscm value; Arg (tmscm &args) : value (tmscm_car(args)) { args=tmscm_cdr (args); }  };
+  template<T0 (*PROC)(Ts ...)>
+  static tmscm proc (s7_scheme*, tmscm args) {
+    tmscm res = PROC (Arg<Ts>(args).value ...);
+    return (res);
+  }
+};
 
 //FIXME: check the correct use of p0 and p1 and maybe add documentation
 #define tmscm_install_procedure(name, func, args, p0, p1) \
-  s7_define_function (tm_s7, name, proc<func>, args, 0, false, "[missing doc]")
+  s7_define_function (tm_s7, name, Proc<decltype(func)>::proc<func>, args, 0, false, "[missing doc]")
 
 #define tmscm_install_procedure_bis(name, func, args, p0, p1) \
   s7_define_function (tm_s7, name, func, args, 0, false, "[missing doc]")
-
-
-/* The SCM_EXPECT macros provide branch prediction hints to the
-   compiler.  To use only in places where the result of the expression
-   under "normal" circumstances is known.  */
-#ifdef __GNUC__
-# define TMSCM_EXPECT    __builtin_expect
-#else
-# define TMSCM_EXPECT(_expr, _value) (_expr)
-#endif
-
-#define TMSCM_LIKELY(_expr)    TMSCM_EXPECT ((_expr), 1)
-#define TMSCM_UNLIKELY(_expr)  TMSCM_EXPECT ((_expr), 0)
-
-#define TMSCM_ASSERT(_cond, _arg, _pos, _subr)                    \
-  do { if (TMSCM_UNLIKELY (!(_cond)))                             \
-     s7_wrong_type_arg_error (tm_s7, _subr, _pos, _arg, "some other thing"); } while (0)
-
-
-#define TMSCM_ARG1 1
-#define TMSCM_ARG2 2
-#define TMSCM_ARG3 3
-#define TMSCM_ARG4 4
-#define TMSCM_ARG5 5
-#define TMSCM_ARG6 6
-#define TMSCM_ARG7 7
-#define TMSCM_ARG8 8
-#define TMSCM_ARG9 9
-#define TMSCM_ARG10 10
 
 #define TMSCM_UNSPECIFIED (s7_unspecified (tm_s7))
 

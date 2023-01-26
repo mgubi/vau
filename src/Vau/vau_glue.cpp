@@ -12,34 +12,6 @@
 
 #include "vau_glue.hpp"
 
-list<glue_function> glue_function_rep::glue_functions;
-
-//TMSCM_ASSERT (tmscm_is_string (s), s, arg, rout)
-
-//FIXME: put correct arg number
-#define TMSCM_CONVERSION_2(TYPE, TYPE_CHECK) \
-  template<> tmscm tmscm_from<TYPE> (TYPE p) { return TYPE##_to_tmscm (p); } \
-  template<> TYPE tmscm_to<TYPE> (tmscm p) { return tmscm_to_##TYPE (p); } \
-  template<> void tmscm_check<TYPE> (tmscm p, int arg, const char *fname) { \
-    TMSCM_ASSERT (tmscm_is_##TYPE_CHECK (p), p, arg, fname); \
-  }
-
-#define TMSCM_CONVERSION(TYPE) TMSCM_CONVERSION_2(TYPE, TYPE) \
-  template<> bool tmscm_is<TYPE> (tmscm p) { return tmscm_is_##TYPE (p); }
-
-template<typename S0, S0 f, typename T0, typename ... Ts>
-const char *tm_glue<T0 (Ts ...), S0, f>::__name;
-
-bool tmscm_is_object (tmscm o) { return true; } // no check
-
-TMSCM_CONVERSION(int)
-TMSCM_CONVERSION(double)
-TMSCM_CONVERSION(bool)
-TMSCM_CONVERSION(string)
-TMSCM_CONVERSION(object)
-
-#include "glue.hpp"
-
 #include "promise.hpp"
 #include "tree.hpp"
 #include "drd_mode.hpp"
@@ -54,6 +26,71 @@ TMSCM_CONVERSION(object)
 #include "locale.hpp"
 #include "iterator.hpp"
 #include "Freetype/tt_tools.hpp"
+
+
+/******************************************************************************
+* Assertion support (partly obsolete)
+******************************************************************************/
+
+/* The SCM_EXPECT macros provide branch prediction hints to the
+   compiler.  To use only in places where the result of the expression
+   under "normal" circumstances is known.  */
+#ifdef __GNUC__
+# define TMSCM_EXPECT    __builtin_expect
+#else
+# define TMSCM_EXPECT(_expr, _value) (_expr)
+#endif
+
+#define TMSCM_LIKELY(_expr)    TMSCM_EXPECT ((_expr), 1)
+#define TMSCM_UNLIKELY(_expr)  TMSCM_EXPECT ((_expr), 0)
+
+#define TMSCM_ASSERT(_cond, _arg, _pos, _subr)                    \
+  do { if (TMSCM_UNLIKELY (!(_cond)))                             \
+     s7_wrong_type_arg_error (tm_s7, _subr, _pos, _arg, "some other thing"); } while (0)
+
+// old unused stuff
+
+#define TMSCM_ARG1 1
+#define TMSCM_ARG2 2
+#define TMSCM_ARG3 3
+#define TMSCM_ARG4 4
+#define TMSCM_ARG5 5
+#define TMSCM_ARG6 6
+#define TMSCM_ARG7 7
+#define TMSCM_ARG8 8
+#define TMSCM_ARG9 9
+#define TMSCM_ARG10 10
+
+/*******************************************************************************/
+
+#define TMSCM_CONVERSION_2(TYPE, TYPE_CHECK) \
+  template<> tmscm tmscm_from<TYPE> (TYPE p) { return TYPE##_to_tmscm (p); } \
+  template<> TYPE tmscm_to<TYPE> (tmscm p) { return tmscm_to_##TYPE (p); } \
+  template<> void tmscm_check<TYPE> (tmscm p, int arg, const char *fname) { \
+    TMSCM_ASSERT (tmscm_is_##TYPE_CHECK (p), p, arg, fname); \
+  }
+
+#define TMSCM_CONVERSION(TYPE) TMSCM_CONVERSION_2(TYPE, TYPE) \
+  template<> bool tmscm_is<TYPE> (tmscm p) { return tmscm_is_##TYPE (p); }
+
+list<glue_function> glue_function_rep::glue_functions;
+
+template<typename S0, S0 f, typename T0, typename ... Ts>
+  const char *tm_glue<T0 (Ts ...), S0, f>::__name;
+
+bool tmscm_is_object (tmscm o) { return true; } // no check
+
+TMSCM_CONVERSION(int)
+TMSCM_CONVERSION(double)
+TMSCM_CONVERSION(bool)
+TMSCM_CONVERSION(string)
+TMSCM_CONVERSION(object)
+
+
+// scheme_tree is a typedef and does not play well with C++ templates
+// so we need to define a real type scheme_tree_t to marshall correctly
+// data across the Scheme boundary
+// same happens for content_wrap (see below)
 
 class scheme_tree_t {
   scheme_tree t;
@@ -110,7 +147,6 @@ TMSCM_ASSERT (tmscm_is_blackbox (t), t, arg, rout)
 
 #define TMSCM_ASSERT_OBJECT(a,b,c)
 // no check
-
 
 /******************************************************************************
 * Tree labels
