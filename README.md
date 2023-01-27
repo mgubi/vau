@@ -34,11 +34,22 @@ make
 ```
 If CMake cannot find MuPDF, set the environment variable `MUPDF_DIR` to the root of the MuPDF installation.
 
+CMake configures also the Xcode project which is found in `./platform/macos/Vau.xcodeproj`.
 
-For the WebAssembly version, you will probably need to build it yourself from sources, and in that case  we need to specify where to find the appropriate libraries. So build invocation for Vau is more complicated. Something like:
+## Build and run Vau/Wasm
+
+For the WebAssembly version, you will probably need to build it yourself MuPDF from sources, and in that case  we need to specify where to find the appropriate libraries. So build invocation for Vau is more complicated. Something like:
 ```
 mkdir build; cd build;
-emcmake cmake  .. -DMUPDF_LIBRARY=$MUPDF_DIR/build/wasm/release/libmupdf.a -DMUPDF_THIRD_LIBRARY=$MUPDF_DIR/build/wasm/release/libmupdf-third.a -DMUPDF_INCLUDE_DIR=$MUPDF_DIR/usr/include
+emcmake cmake  .. -DMUPDF_LIBRARY=$MUPDF_BUILD_DIR/build/wasm/release/libmupdf.a -DMUPDF_THIRD_LIBRARY=$MUPDF_BUILD_DIR/build/wasm/release/libmupdf-third.a -DMUPDF_INCLUDE_DIR=$MUPDF_BUILD_DIR/usr/include
 emmake make 
 ```
-where again it is assumed that `MUPDF_DIR` points to the appropriate place.
+where again it is assumed that `MUPDF_BUILD_DIR` points to the folder where the MuPDF build has been performed. 
+
+The build process produces three files : `Vau.html`, `Vau.data`, `Vau.js`. We need also `Vau.html` which is found in `./platform/wasm` and then we can serve it via `emrun`:
+```
+cp ../platform/wasm/Vau.html .
+emrun --browser firefox Vau.html
+```
+The current script runs the main function of the Vau program,  retrieve the file `/vau-test.png` from the Emscripten memory filesystem and embed it in an image on the page. 
+
