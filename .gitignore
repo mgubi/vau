@@ -2,3 +2,4 @@ platform/macos/Vau.xcodeproj/project.xcworkspace/xcuserdata/**
 platform/macos/Vau.xcodeproj/xcuserdata/**
 platform/macos/Config.xcconfig
 build/
+build-wasm/
