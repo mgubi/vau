@@ -15,6 +15,7 @@
 #include "glue.hpp"
 
 // conversion generics
+
 template<typename T0> tmscm tmscm_from (T0 out);
 template<typename T0> T0 tmscm_to (tmscm in);
 template<typename T0> void tmscm_check (tmscm in, int arg, const char *fname);
@@ -22,15 +23,13 @@ template<typename T0> bool tmscm_is (tmscm in);
 
 class glue_function;
 
-typedef tmscm (*FN) (s7_scheme*, tmscm args);
-
 class glue_function_rep : concrete_struct {
   const char *name;
-  FN fn;
+  s7_function fn;
   int arity;
   static list<glue_function> glue_functions;
 protected:
-  glue_function_rep (const char *_name, FN _fn, int _ar);
+  glue_function_rep (const char *_name, s7_function _fn, int _ar);
   void instantiate () {
     tmscm_install_procedure_bis (name, fn, arity, 0, 0);
   }
@@ -45,7 +44,7 @@ class glue_function {
 };
 CONCRETE_CODE(glue_function);
 
-glue_function_rep::glue_function_rep (const char *_name, FN _fn, int _ar)
+glue_function_rep::glue_function_rep (const char *_name, s7_function _fn, int _ar)
   : name (_name), fn (_fn), arity (_ar) {
   glue_functions= list<glue_function> (this, glue_functions);
 }
