@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Vau",
+            "cppStandard": "c++11",
+            "includePath": [
+                @VSCODE_INCLUDE_DIRS@
+            ]
+        }
+    ],
+    "version": 4
+}
