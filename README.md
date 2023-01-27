@@ -53,3 +53,6 @@ emrun --browser firefox Vau.html
 ```
 The current script runs the main function of the Vau program,  retrieve the file `/vau-test.png` from the Emscripten memory filesystem and embed it in an image on the page. 
 
+Screenshot:
+
+![screenshot](./devel/screenshot-wasm.png)
