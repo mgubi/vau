@@ -3,3 +3,5 @@ platform/macos/Vau.xcodeproj/xcuserdata/**
 platform/macos/Config.xcconfig
 build/
 build-wasm/
+.DS_Store
+*/.DS_Store
