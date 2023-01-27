@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+Module.preRun = function () {
+	var img = document.getElementById("page1");
+	img.innerHTML = "LOADING...";
+}
+Module.logReadFiles = true;
+Module.postRun = function () {
+	var img = document.getElementById("page1");
+	img.innerHTML = "DONE!";
+}
+</script>
+<script src="Vau.js"></script>
+</head>
+<body>
+<div id="page1">WAIT</div>
+</body>
+</html>

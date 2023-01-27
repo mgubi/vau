@@ -236,7 +236,9 @@ TeXmacs_main (int argc, char** argv) {
   //  setup_tex ();
   init_tex (); // for paths
 
-  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+  
+//  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
   string output ("$HOME/vau-test.pdf");
   string image_output  ("$HOME/vau-test.png");
 
@@ -248,7 +250,7 @@ TeXmacs_main (int argc, char** argv) {
   //ed->init_style("generic");
   ed->set_data (buf->data);
 
-  ed->print_to_file (output);
+//  ed->print_to_file (output);
   ed->get_page_image (image_output, 1, "300");
   
   cur_ed= editor ();
@@ -263,8 +265,15 @@ bool use_ps () { return true; }
 
 int
 main(int argc, char **argv) {
+  cout << "Starting Vau" << LF;
+#ifndef __EMSCRIPTEN__
   set_env ("TEXMACS_PATH", TEXMACS_SOURCES "/resources"); //FIXME: this has to point to the installation dir!
   set_env ("TEXMACS_HOME_PATH", "$HOME/.Vau");
+#else
+  set_env ("TEXMACS_PATH", "/Vau"); //FIXME: this has to point to the installation dir!
+  set_env ("TEXMACS_HOME_PATH", "/Home_Vau");
+  set_env ("HOME", "/");
+#endif
   set_env_path ("GUILE_LOAD_PATH", "$TEXMACS_PATH/progs:$GUILE_LOAD_PATH");
 
   init_user_dirs ();

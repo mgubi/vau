@@ -11,6 +11,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(display "In init-vau-s7.scm\n")
 
 ;; S7 macros are not usual macros...
 (define define-macro define-expansion)

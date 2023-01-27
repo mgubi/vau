@@ -350,6 +350,7 @@ initialize_scheme () {
   "(define (texmacs-version) \"" TEXMACS_VERSION "\")\n"
   "(define object-stack '(()))\n"
   "(define (notify-debug-message channel) (begin))\n" //FIXME: stub
+  "(display \"S7 Scheme initializing\\n\")\n"
   ")";
 
   // eval in the root enviornment

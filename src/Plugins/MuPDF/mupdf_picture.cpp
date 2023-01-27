@@ -259,6 +259,7 @@ save_picture (url dest, picture p) {
   mupdf_picture_rep* pict= (mupdf_picture_rep*) q->get_handle ();
   if (exists (dest)) remove (dest);
   c_string path= concretize (dest);
+  if (DEBUG_STD) debug_std << "Saving PNG image to: " << path << LF;
   fz_output *out= fz_new_output_with_path (mupdf_context (), path, 0);
   fz_write_pixmap_as_png (mupdf_context (), out, pict->pix);
   fz_close_output (mupdf_context (), out);
