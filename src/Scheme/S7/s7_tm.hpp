@@ -81,8 +81,8 @@ tmscm call_scheme (tmscm fun, array<tmscm> a);
  * Gluing
  ******************************************************************************/
 
+// template to adapt the format for function call, from scheme list to C++ arg list
 template<typename T> struct Proc {};
-
 template<typename T0, typename ... Ts>
 struct Proc<T0 (Ts ...)> {
   template<typename S> struct Arg { tmscm value; Arg (tmscm &args) : value (tmscm_car(args)) { args=tmscm_cdr (args); }  };

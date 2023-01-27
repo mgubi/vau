@@ -2059,9 +2059,6 @@ initialize_glue () {
   tmscm_install_procedure ("blackbox?", blackboxP, 1, 0, 0);
   
   glue_function_rep::instantiate_all ();
-//  initialize_glue_basic ();
-//  initialize_glue_editor ();
-//  initialize_glue_server ();
 }
 
 
