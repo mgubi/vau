@@ -72,7 +72,7 @@ substitute (tree by, hashmap<string,tree>& H) {
 
 font
 find_font_bis (tree t) {
-  // cout << "Find " << t << "\n";
+  if (DEBUG_VERBOSE) debug_fonts << "Find " << t << "\n";
 
   if ((arity (t)==0) || is_compound (t[0])) return font ();
 
@@ -186,7 +186,7 @@ find_font_bis (tree t) {
       string series = as_string (t[2]);
       string shape  = as_string (t[3]);
       array<string> a= font_database_search (family, variant, series, shape);
-      //cout << t << " -> " << a << "\n";
+      if (DEBUG_VERBOSE) debug_fonts << t << " -> " << a << "\n";
       for (int i=0; i<N(a); i++)
         if (tt_font_exists (strip_suffix (a[i])))
           return unicode_font (strip_suffix (a[i]),
@@ -199,8 +199,10 @@ find_font_bis (tree t) {
   int i, n= N(rule);
   for (i=0; i<n; i++) {
     hashmap<string,tree> H ("?");
-    if (matches (t, rule[i][0], H))
+    if (matches (t, rule[i][0], H)) {
+//      if (DEBUG_VERBOSE) debug_fonts << "Font rule match " << rule[i] << LF;
       return find_font (substitute (rule[i][1], H));
+    }
   }
 
   return font ();

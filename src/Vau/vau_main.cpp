@@ -237,8 +237,8 @@ TeXmacs_main (int argc, char** argv) {
   init_tex (); // for paths
 
   
-//  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
-  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
+  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+//  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
   string output ("$HOME/vau-test.pdf");
   string image_output  ("$HOME/vau-test.png");
 
@@ -250,8 +250,8 @@ TeXmacs_main (int argc, char** argv) {
   //ed->init_style("generic");
   ed->set_data (buf->data);
 
-//  ed->print_to_file (output);
-  ed->get_page_image (image_output, 1, "300");
+  ed->print_to_file (output);
+//  ed->get_page_image (image_output, 1, "300");
   
   cur_ed= editor ();
   

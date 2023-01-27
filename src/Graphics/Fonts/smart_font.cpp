@@ -1396,7 +1396,7 @@ smart_font_rep::initialize_font (int nr) {
     font cfn = closest_font (a[0], a[1], a[2], a[3], sz, ndpi, as_int (a[4]));
     fn[nr]= adjust_subfont (cfn);
   }
-  //cout << "Font " << nr << ", " << a << " -> " << fn[nr]->res_name << "\n";
+  if (DEBUG_VERBOSE) debug_fonts  << "Font " << nr << ", " << a << " -> " << fn[nr]->res_name << "\n";
   if (fn[nr]->res_name == res_name) {
     failed_error << "Font " << nr << ", " << a
                  << " -> " << fn[nr]->res_name << "\n";

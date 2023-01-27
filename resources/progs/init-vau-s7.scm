@@ -127,6 +127,40 @@
 (use-modules (fonts fonts-truetype))
 
 (set-font-rules
+ '(((unicode-math $up $it $bup $bit $t $a $b $s $d)
+    (unimath
+     (unicode $up $s $d)
+     (unicode $it $s $d)
+     (unicode $bup $s $d)
+     (unicode $bit $s $d)
+     (roman $t $a $b $s $d)))
+
+   ((roman mr $a right $s $d)
+    (unicode-math latinmodern-math latinmodern-math
+              lmroman10-bold lmroman10-bolditalic
+          $t $a $b $s $d))
+   ((roman mr $a $b $s $d)
+    (unicode-math latinmodern-math lmsans10-italic
+              lmroman10-bold lmroman10-bolditalic
+          $t $a $b $s $d))
+   ((roman ms $a right $s $d)
+    (unicode-math latinmodern-math latinmodern-math
+              lmsans10-bold lmsans10-bolditalic
+          $t $a $b $s $d))
+   ((roman ms $a $b $s $d)
+    (unicode-math latinmodern-math lmsans10-italic
+              lmmonolt10-bold lmmonolt10-bolditalic
+          $t $a $b $s $d))
+   ((roman mt $a right $s $d)
+    (unicode-math latinmodern-math latinmodern-math
+              lmsans10-bold lmsans10-bolditalic
+          $t $a $b $s $d))
+   ((roman mt $a $b $s $d)
+    (unicode-math latinmodern-math lmsans10-italic
+              lmmonolt10-bold lmmonolt10-bolditalic
+          $t $a $b $s $d))))
+
+(set-font-rules
   `(
     ((roman tt bold italic $s $d) (unicode lmmonolt10-bolditalic $s $d))
     ((roman tt bold $b $s $d) (unicode lmmonolt10-bold $s $d))
@@ -141,27 +175,6 @@
     ((roman $v $a italic $s $d) (unicode lmroman10-italic $s $d))
     ((roman $v $a $b $s $d) (unicode lmroman10-regular $s $d))))
 
-(set-font-rules
- '(((unicode-math $up $it $bup $bit $t $a $b $s $d)
-    (unimath
-     (unicode $up $s $d)
-     (unicode $it $s $d)
-     (unicode $bup $s $d)
-     (unicode $bit $s $d)
-     (roman $t $a $b $s $d)))
-
-   ((roman mr $a right $s $d)
-    (unicode-math lmroman10-regular lmroman10-italic
-              lmroman10-bold lmroman10-bolditalic
-          $t $a $b $s $d))
-   ((roman ms $a right $s $d)
-    (unicode-math lmsans10-regular lmsans10-italic
-              lmsans10-bold lmsans10-bolditalic
-          $t $a $b $s $d))
-   ((roman mt $a right $s $d)
-    (unicode-math lmmonolt10-regular lmmonolt10-italic
-              lmmonolt10-bold lmmonolt10-bolditalic
-          $t $a $b $s $d))))
 
 
 
