@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script>
-Module.preRun = function () {
-	var img = document.getElementById("page1");
-	img.innerHTML = "LOADING...";
-}
-Module.logReadFiles = true;
-Module.postRun = function () {
-	var img = document.getElementById("page1");
-	img.innerHTML = "DONE!";
-}
+<script type='text/javascript'>
+var VauWasm = {
+  preRun: [function () {
+	var status = document.getElementById("status");
+	status.innerHTML = "LOADING...";
+  }], 
+  logReadFiles: true,
+  postRun: [function () {
+	var status = document.getElementById("status");
+	status.innerHTML = "DONE!";
+	var doc = FS.readFile("/vau-test.png");
+	var img = document.getElementById("image");
+	img.src = URL.createObjectURL(new Blob([doc], { type: "image/png" }));
+  }]
+};
 </script>
 <script src="Vau.js"></script>
 </head>
 <body>
-<div id="page1">WAIT</div>
+<div id="status">WAIT</div>
+<img id="image" width="500px">
 </body>
 </html>
