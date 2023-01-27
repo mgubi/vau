@@ -5,3 +5,4 @@ build/
 build-wasm/
 .DS_Store
 */.DS_Store
+.vscode/

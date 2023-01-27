@@ -564,4 +564,23 @@ else (EMSCRIPTEN)
         )
 endif (EMSCRIPTEN)
 
+if (EMSCRIPTEN)
+  install (FILES ${Vau_SOURCE_DIR}/platform/wasm/Vau.html
+    DESTINATION ${Vau_BINARY_DIR}
+    PERMISSIONS OWNER_WRITE OWNER_READ
+       GROUP_READ WORLD_READ)
+endif (EMSCRIPTEN)
 
+
+
+### ---------------------------------------------------------------------
+### VSCode Support
+### ---------------------------------------------------------------------
+foreach (DIR ${Vau_Include_Dirs})
+  set (VSCODE_INCLUDE_DIRS "${VSCODE_INCLUDE_DIRS}\"${DIR}\",\n                ")
+endforeach (DIR ${Vau_Include_Dirs})
+
+configure_file (${Vau_SOURCE_DIR}/devel/c_cpp_properties.json.in
+  ${Vau_SOURCE_DIR}/.vscode/c_cpp_properties.json
+  @ONLY
+)
