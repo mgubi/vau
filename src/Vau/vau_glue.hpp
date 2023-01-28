@@ -59,7 +59,7 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
   static const char*__name;
   template<typename S> struct Arg {
       S value;
-      Arg (tmscm &args) : value (tmscm_to<S>(tmscm_car (args)))  { args=tmscm_cdr (args); }
+      Arg (tmscm &args) : value (tmscm_to<S> (tmscm_car (args)))  { args= tmscm_cdr (args); }
   };
   template<typename ... As> struct Check_args { // full template
     Check_args (tmscm args, int n, const char *name) {}
@@ -67,7 +67,7 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
   template<typename A, typename ... As> struct Check_args<A, As...> : public Check_args<As ...> {
     Check_args (tmscm args, int n, const char *name)
       : Check_args<As ...> (tmscm_cdr (args), n+1, name) {
-        tmscm_check<A>(tmscm_car (args), n, name);
+        tmscm_check<A> (tmscm_car (args), n, name);
     }
   };
   template<typename TT> static tmscm wrap (Ts ... args) {
