@@ -61,18 +61,13 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
       S value;
       Arg (tmscm &args) : value (tmscm_to<S>(tmscm_car (args)))  { args=tmscm_cdr (args); }
   };
-  template<typename ... As> struct Check_args {
-    template<typename S>   struct Check {
-        bool check;
-        Check (tmscm &args, int& n, const char *name) : check(true)   {
-            tmscm_check<S>(tmscm_car (args), ++n, name); args=tmscm_cdr (args);
-        }
-    };
-    int arg;
-    Check_args (tmscm args, const char *name)
-      : arg(0) {
-        bool vv[sizeof...(As)]= { Check<As>(args, arg, __name).check ...};
-        (void) vv;
+  template<typename ... As> struct Check_args { // full template
+    Check_args (tmscm args, int n, const char *name) {}
+  };
+  template<typename A, typename ... As> struct Check_args<A, As...> : public Check_args<As ...> {
+    Check_args (tmscm args, int n, const char *name)
+      : Check_args<As ...> (tmscm_cdr (args), n+1, name) {
+        tmscm_check<A>(tmscm_car (args), n, name);
     }
   };
   template<typename TT> static tmscm wrap (Ts ... args) {
@@ -84,7 +79,7 @@ struct tm_glue<T0 (Ts ...), S0, f> : public glue_function_rep {
     return TMSCM_UNSPECIFIED;
   }
   template<typename TT> static tmscm proc (s7_scheme*, tmscm args) {
-    Check_args<Ts ...>(args, __name);
+    Check_args<Ts ...> (args, 1, __name);
     return  wrap<TT> (Arg<Ts>(args).value ...);
   }
   tm_glue (const char *_name) : glue_function_rep (_name, proc<T0>, sizeof...(Ts)) { __name= _name; }
