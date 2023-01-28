@@ -1136,6 +1136,68 @@ bool editor_rep::inside_graphics (bool b) { return false; }
 
 
 void
+editor_rep::typeset_document (string image_dpi) {
+  bool conform= true;
+
+  typeset_preamble ();
+  
+  // Set environment variables for printing
+
+  typeset_prepare ();
+  env->write (DPI, image_dpi);
+  env->write (PAGE_SHOW_HF, "true");
+  env->write (PAGE_SCREEN_MARGIN, "false");
+  env->write (PAGE_BORDER, "none");
+  if (is_func (env->read (BG_COLOR), PATTERN))
+    env->write (BG_COLOR, env->exec (env->read (BG_COLOR)));
+
+  if (!conform) {
+    env->write (PAGE_MEDIUM, "paper");
+    env->write (PAGE_PRINTED, "true");
+  }
+
+  // Typeset pages for printing
+  // FIXME: we want maybe to typeset only the page we need ?
+
+  eb= typeset_as_document (env, subtree (et, rp), reverse (rp));
+}
+
+picture
+editor_rep::get_page_picture (int page) {
+  box the_box= eb;
+  page= min(N(the_box[0]), max (0, page-1));
+  {
+    box b=  the_box[0][page];
+    double zoomf= 5.0;
+    
+    SI pixel= 5*PIXEL;
+    SI w= b->x4 - b->x3;
+    SI h= b->y4 - b->y3;
+    SI ww= (SI) round (zoomf * w);
+    SI hh= (SI) round (zoomf * h);
+    int pxw= (ww+pixel-1)/pixel;
+    int pxh= (hh+pixel-1)/pixel;
+    picture pic= native_picture (pxw, pxh, 0, 0);
+    renderer ren= picture_renderer (pic, zoomf);
+    
+    {
+      tree bg= env->read (BG_COLOR);
+      ren->set_background (bg);
+      if (bg != "white" && bg != "#ffffff")
+        ren->clear_pattern (0, (SI) -h, (SI) w, 0);
+      
+      rectangles rs;
+      the_box[0]->sx(page)= 0;
+      the_box[0]->sy(page)= 0;
+      the_box[0][page]->redraw (ren, path (0), rs);
+      //      if (i<end-1) ren->next_page ();
+    }
+    return pic;
+  }
+}
+
+
+void
 editor_rep::get_page_image (url name, int page, string image_dpi) {
 
   bool conform= true;

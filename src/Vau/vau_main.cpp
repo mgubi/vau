@@ -203,6 +203,19 @@ editor current_editor () {
   return cur_ed;
 }
 
+editor set_current_editor (editor ed) {
+  editor old_ed= cur_ed;
+  cur_ed= ed;
+  return old_ed;
+}
+
+editor new_editor (vau_buffer buf) {
+  editor ed (buf);
+  //ed->init_style("generic");
+  ed->set_data (buf->data);
+  return ed;
+}
+
 void
 TeXmacs_main (int argc, char** argv) {
   the_et     = tuple ();
@@ -239,22 +252,18 @@ TeXmacs_main (int argc, char** argv) {
   
   string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
 //  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
-  string output ("$HOME/vau-test.pdf");
-  string image_output  ("$HOME/vau-test.png");
 
   vau_buffer buf= concrete_buffer_insist (name);
 
-  editor ed (buf);
-  cur_ed= ed;
+  set_current_editor (new_editor (buf));
+  current_editor ()->typeset_document ("300");
+  picture pic= current_editor ()->get_page_picture (1);
+  save_picture ("$HOME/vau-test.png", pic);
   
-  //ed->init_style("generic");
-  ed->set_data (buf->data);
+  
+  //current_editor()->print_to_file ("$HOME/vau-test.pdf");
 
-  ed->print_to_file (output);
-//  ed->get_page_image (image_output, 1, "300");
-  
-  cur_ed= editor ();
-  
+  set_current_editor (editor ());
   cache_memorize ();
   bench_print ();
 }
@@ -264,7 +273,7 @@ bool use_pdf () { return true; }
 bool use_ps () { return true; }
 
 int
-main(int argc, char **argv) {
+main (int argc, char **argv) {
   cout << "Starting Vau" << LF;
 #ifndef __EMSCRIPTEN__
   set_env ("TEXMACS_PATH", TEXMACS_SOURCES "/resources"); //FIXME: this has to point to the installation dir!
