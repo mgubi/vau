@@ -47,10 +47,19 @@ function updateImage() {
 }
 
 function showPage(n) {
-	_wasm_get_page_png(n);
-	updateImage();
+	//_wasm_get_page_png(n);
+	//updateImage();
+
+	_wasm_get_page_pixmap(n);
+	var canvas = document.getElementById('canvas');
+	canvas.width= VAUJSPIXMAP.width;
+	canvas.height= VAUJSPIXMAP.height;
+	var ctx = canvas.getContext('2d');
+	ctx.putImageData(VAUJSPIXMAP, 0, 0);
+
 	updateStatus();
 }
+
 
 
 </script>
@@ -58,7 +67,8 @@ function showPage(n) {
 </head>
 <body>
 <div id="status">LOADING...</div>
-<img id="image" width="900px" class="center">
+<!---img id="image" width="900px" class="center"--->
+<canvas id="canvas" width="900px" class="center">
 </body>
 <script>
 var page=1;
@@ -67,12 +77,15 @@ var zoom=1;
 
 function updateStatus() {
 	var status = document.getElementById("status");
-	status.innerHTML = `Page ${page} | Zoom ${zoom}`;
+	status.innerHTML = `Page ${page} | Zoom ${Math.round(zoom*100)/100}`;
 }
 
 
 function runViewer() {
 	openDocument("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+
+//	openDocument("$TEXMACS_PATH/examples/texts/bracket-test.tm");
+	
 	showPage(page);
 
 	window.addEventListener("keydown", function (event) {
@@ -95,7 +108,7 @@ function runViewer() {
 		if (event.key == "+") {
 			console.log("ZOOMIN");
 			zoom = zoom*1.2;
-			var img = document.getElementById("image");
+			var img = document.getElementById("canvas");
 			img.style.width=`${zoom*1000}px`;
 			updateStatus();
 			event.preventDefault();
@@ -103,7 +116,7 @@ function runViewer() {
 		if (event.key == "-") {
 			console.log("ZOOMOUT");
 			zoom = zoom/1.2;
-			var img = document.getElementById("image");
+			var img = document.getElementById("canvas");
 			img.style.width=`${zoom*1000}px`;
 			updateStatus();
 			event.preventDefault();

@@ -1179,7 +1179,6 @@ editor_rep::get_page_picture (int page) {
     int pxh= (hh+pixel-1)/pixel;
     picture pic= native_picture (pxw, pxh, 0, 0);
     renderer ren= picture_renderer (pic, zoomf);
-    
     {
       tree bg= env->read (BG_COLOR);
       ren->set_background (bg);
@@ -1192,6 +1191,7 @@ editor_rep::get_page_picture (int page) {
       the_box[0][page]->redraw (ren, path (0), rs);
       //      if (i<end-1) ren->next_page ();
     }
+    tm_delete (ren);
     return pic;
   }
 }
@@ -1242,7 +1242,6 @@ editor_rep::get_page_image (url name, int page, string image_dpi) {
     int pxh= (hh+pixel-1)/pixel;
     picture pic= native_picture (pxw, pxh, 0, 0);
     renderer ren= picture_renderer (pic, zoomf);
-
     {
       tree bg= env->read (BG_COLOR);
       ren->set_background (bg);
@@ -1255,9 +1254,7 @@ editor_rep::get_page_image (url name, int page, string image_dpi) {
       the_box[0][page]->redraw (ren, path (0), rs);
       //      if (i<end-1) ren->next_page ();
     }
-
-    save_picture (name, pic);
     tm_delete (ren);
-
+    save_picture (name, pic);
   }
 }

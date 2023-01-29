@@ -531,10 +531,12 @@ if (EMSCRIPTEN)
 #   "SHELL:-sDISABLE_EXCEPTION_CATCHING=0"
     "SHELL:-sUSE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
     "SHELL:--preload-file ${Vau_SOURCE_DIR}/resources@/Vau"
+    "SHELL:--preload-file ${Vau_SOURCE_DIR}/vau_home@/Vau_Home"
 #    "SHELL:--emrun"
     "SHELL:-sALLOW_MEMORY_GROWTH=1"
     "SHELL:-sSTACK_SIZE=300000"
     "SHELL:-sASSERTIONS=1"
+    "SHELL:--js-library ${Vau_SOURCE_DIR}/platform/wasm/mylib.js"
     -sNO_EXIT_RUNTIME
     -sEXPORT_NAME='VauWasm'
     -sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,wasmMemory]

@@ -249,21 +249,11 @@ TeXmacs_main (int argc, char** argv) {
   //  setup_tex ();
   init_tex (); // for paths
 
-  
-  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
-//  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
+#ifndef __EMSCRIPTEN__
+  extern void test_vau();
+  test_vau();
+#endif
 
-  vau_buffer buf= concrete_buffer_insist (name);
-
-  set_current_editor (new_editor (buf));
-  current_editor ()->typeset_document ("300");
-  picture pic= current_editor ()->get_page_picture (1);
-  save_picture ("$HOME/vau-test.png", pic);
-  
-  
-  //current_editor()->print_to_file ("$HOME/vau-test.pdf");
-
-  set_current_editor (editor ());
   cache_memorize ();
   bench_print ();
 }
@@ -275,13 +265,13 @@ bool use_ps () { return true; }
 int
 main (int argc, char **argv) {
   cout << "Starting Vau" << LF;
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+  set_env ("TEXMACS_PATH", "/Vau"); //FIXME: this has to point to the installation dir!
+  set_env ("TEXMACS_HOME_PATH", "/Vau_Home");
+  set_env ("HOME", "/");
+#else
   set_env ("TEXMACS_PATH", TEXMACS_SOURCES "/resources"); //FIXME: this has to point to the installation dir!
   set_env ("TEXMACS_HOME_PATH", "$HOME/.Vau");
-#else
-  set_env ("TEXMACS_PATH", "/Vau"); //FIXME: this has to point to the installation dir!
-  set_env ("TEXMACS_HOME_PATH", "/Home_Vau");
-  set_env ("HOME", "/");
 #endif
   set_env_path ("GUILE_LOAD_PATH", "$TEXMACS_PATH/progs:$GUILE_LOAD_PATH");
 
@@ -296,6 +286,10 @@ main (int argc, char **argv) {
 #else
 #define EMSCRIPTEN_KEEPALIVE
 #endif
+
+#include "MuPDF/mupdf_picture.hpp"
+
+picture cur_pic;
 
 extern "C" {
 
@@ -317,5 +311,46 @@ wasm_get_page_png (int page) {
   save_picture ("$HOME/vau-test.png", pic);
 }
 
+EMSCRIPTEN_KEEPALIVE
+void
+wasm_get_page_pixmap (int page) {
+  cout << "wasm_get_page_pixmap " << page << LF;
+  cur_pic= as_native_picture (current_editor ()->get_page_picture (page));
+  mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
+  unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
+#ifdef __EMSCRIPTEN__
+  extern void vaujs_set_pixmap (unsigned char* p, unsigned int s, int w, int h);
+  vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n, pp->get_width(), pp->get_height());
+#endif
+//  save_picture ("$HOME/cur_pic.png", cur_pic);
+}
+
+EMSCRIPTEN_KEEPALIVE
+unsigned int
+wasm_get_page_pixmap_width () {
+  return cur_pic->get_width();
+}
+
+EMSCRIPTEN_KEEPALIVE
+unsigned int
+wasm_get_page_pixmap_height () {
+  return cur_pic->get_height();
+}
+
 } // extern "C"
 
+
+void test_vau() {
+//  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+//  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
+//  vau_buffer buf= concrete_buffer_insist (name);
+//  set_current_editor (new_editor (buf));
+//  current_editor ()->typeset_document ("300");
+//  picture pic= current_editor ()->get_page_picture (1);
+//  save_picture ("$HOME/vau-test.png", pic);
+  //current_editor()->print_to_file ("$HOME/vau-test.pdf");
+  
+  wasm_open_document ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+  for (int i=0; i<40; i++) wasm_get_page_pixmap (i);
+//  set_current_editor (editor ());
+}
