@@ -35,6 +35,7 @@ function allocateUTF8(str) {
 }
 
 function openDocument(str) {
+	console.log(`Typesetting ${str} ...`);
 	var p= allocateUTF8(str);
 	_wasm_open_document(p);
 	_free(p)
@@ -82,7 +83,7 @@ function updateStatus() {
 
 
 function runViewer() {
-	openDocument("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+	openDocument("$TEXMACS_PATH/vau-tests/ibp-exponential-example.tm");
 
 //	openDocument("$TEXMACS_PATH/examples/texts/bracket-test.tm");
 	

@@ -293,6 +293,9 @@ picture cur_pic;
 
 extern "C" {
 
+// implemented in platform/wasm/mylib.js
+extern void vaujs_set_pixmap (unsigned char* p, unsigned int s, int w, int h);
+
 EMSCRIPTEN_KEEPALIVE
 void
 wasm_open_document (const char *name) {
@@ -316,10 +319,9 @@ void
 wasm_get_page_pixmap (int page) {
   cout << "wasm_get_page_pixmap " << page << LF;
   cur_pic= as_native_picture (current_editor ()->get_page_picture (page));
+#ifdef __EMSCRIPTEN__
   mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
   unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
-#ifdef __EMSCRIPTEN__
-  extern void vaujs_set_pixmap (unsigned char* p, unsigned int s, int w, int h);
   vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n, pp->get_width(), pp->get_height());
 #endif
 //  save_picture ("$HOME/cur_pic.png", cur_pic);
