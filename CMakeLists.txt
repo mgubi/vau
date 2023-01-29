@@ -480,7 +480,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Vau/vau_buffer.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_editor.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_glue.cpp"
-  "${Vau_SOURCE_DIR}/src/Vau/vau_main.cpp"
+  "${Vau_SOURCE_DIR}/src/Vau/vau_lib.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_stuff.cpp"
 )
 
@@ -509,17 +509,21 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 
 set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
+if (NOT EMSCRIPTEN)
+  set (Vau_All_SRCS ${Vau_All_SRCS} "${Vau_SOURCE_DIR}/src/Vau/vau_main.cpp")
+endif (NOT EMSCRIPTEN)
+
 add_executable (Vau)
 target_sources (Vau PRIVATE ${Vau_All_SRCS})
 target_include_directories (Vau PRIVATE ${Vau_Include_Dirs})
-set_target_properties (Vau
-        PROPERTIES
-        OUTPUT_NAME Vau)
 
 target_link_libraries (Vau PRIVATE MuPDF::MuPDF)
 target_link_libraries (Vau PRIVATE MuPDF::MuPDF-third)
 
 if (EMSCRIPTEN)
+  set_target_properties (Vau
+        PROPERTIES
+        OUTPUT_NAME Vau-wasm)
   target_compile_options (Vau
     PRIVATE
     "SHELL:-include ${Vau_BINARY_DIR}/src/System/config.h"
@@ -527,6 +531,8 @@ if (EMSCRIPTEN)
   )
   target_link_options (Vau
     PRIVATE
+    "SHELL:--no-entry"
+    "SHELL:-sMODULARIZE=1"
     "SHELL:--source-map-base /" 
 #   "SHELL:-sDISABLE_EXCEPTION_CATCHING=0"
     "SHELL:-sUSE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
@@ -538,7 +544,7 @@ if (EMSCRIPTEN)
     "SHELL:-sASSERTIONS=1"
     "SHELL:--js-library ${Vau_SOURCE_DIR}/platform/wasm/mylib.js"
     -sNO_EXIT_RUNTIME
-    -sEXPORT_NAME='VauWasm'
+    -sEXPORT_NAME='libvau'
     -sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,wasmMemory]
 #    "-sEXPORTED_FUNCTIONS=[_main,_malloc,_free,_wasm_open_document,_wasm_get_page_png]"
   )
@@ -549,6 +555,9 @@ if (EMSCRIPTEN)
       "SHELL:-s ASSERTIONS=1" "SHELL:-s DEMANGLE_SUPPORT=1"  "-g3" "-gsource-map")
   endif()
 else (EMSCRIPTEN)
+  set_target_properties (Vau
+        PROPERTIES
+        OUTPUT_NAME Vau)
   #target_link_libraries (Vau PRIVATE PkgConfig::Guile)
   target_link_libraries (Vau PRIVATE Freetype::Freetype)
   target_link_libraries (Vau PRIVATE Iconv::Iconv)

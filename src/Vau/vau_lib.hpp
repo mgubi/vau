@@ -1,7 +1,7 @@
 
 /******************************************************************************
-* MODULE     : vau_main.cpp
-* DESCRIPTION: Vau app entrypoint
+* MODULE     : vau_lib.hpp
+* DESCRIPTION: The Vau library
 * COPYRIGHT  : (C) 2023  Massimiliano Gubinelli
 *******************************************************************************
 * This software falls under the GNU general public license version 3 or later.
@@ -9,11 +9,9 @@
 * in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
 ******************************************************************************/
 
-#include "vau_lib.hpp"
+#ifndef VAU_LIB_H
+#define VAU_LIB_H
 
-int
-main (int argc, char **argv) {
-  init_vau_lib (argc, argv);
-  return 0;
-}
+void init_vau_lib (int argc, char **argv);
 
+#endif /* VAU_LIB_H */

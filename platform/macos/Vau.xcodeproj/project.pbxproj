@@ -282,6 +282,7 @@
 		9C620D232959249E0041CFA3 /* upgradetm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60AD2958F7EF00877D79 /* upgradetm.cpp */; };
 		9C620D242959253E0041CFA3 /* preferences.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C58295901C90041CFA3 /* preferences.cpp */; };
 		9C620D2829592E7B0041CFA3 /* widget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60042958F7EF00877D79 /* widget.cpp */; };
+		9CAC27E52986F7C90069643C /* vau_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC27E32986F7C90069643C /* vau_lib.cpp */; };
 		9CCA984E297B119F00CAA085 /* aeskey.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96F5297B119F00CAA085 /* aeskey.c */; };
 		9CCA984F297B119F00CAA085 /* aescrypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96F7297B119F00CAA085 /* aescrypt.c */; };
 		9CCA9850297B119F00CAA085 /* aes_modes.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96FB297B119F00CAA085 /* aes_modes.c */; };
@@ -957,6 +958,8 @@
 		9C620D1929591BCC0041CFA3 /* vau_stuff.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_stuff.hpp; sourceTree = "<group>"; };
 		9CAC27E12986D8130069643C /* Vau.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = Vau.html; sourceTree = "<group>"; };
 		9CAC27E22986D8130069643C /* mylib.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = mylib.js; sourceTree = "<group>"; };
+		9CAC27E32986F7C90069643C /* vau_lib.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_lib.cpp; sourceTree = "<group>"; };
+		9CAC27E42986F7C90069643C /* vau_lib.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_lib.hpp; sourceTree = "<group>"; };
 		9CCA96F2297B119F00CAA085 /* pdf_hummus_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pdf_hummus_renderer.hpp; sourceTree = "<group>"; };
 		9CCA96F4297B119F00CAA085 /* aes_ni.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_ni.h; sourceTree = "<group>"; };
 		9CCA96F5297B119F00CAA085 /* aeskey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aeskey.c; sourceTree = "<group>"; };
@@ -1449,6 +1452,8 @@
 				9CDB09BD295B04400033CF82 /* vau_main.cpp */,
 				9C01CB91295CA62700C00445 /* vau_glue.cpp */,
 				9C01CB92295CA62700C00445 /* vau_glue.hpp */,
+				9CAC27E32986F7C90069643C /* vau_lib.cpp */,
+				9CAC27E42986F7C90069643C /* vau_lib.hpp */,
 			);
 			path = Vau;
 			sourceTree = "<group>";
@@ -3197,6 +3202,7 @@
 				9CCA98CF297B119F00CAA085 /* PDFBoolean.cpp in Sources */,
 				9C1D61F22958F7EF00877D79 /* xml.cpp in Sources */,
 				9C1D61CC2958F7EF00877D79 /* wencoding.cpp in Sources */,
+				9CAC27E52986F7C90069643C /* vau_lib.cpp in Sources */,
 				9C1D61702958F7EF00877D79 /* equations.cpp in Sources */,
 				9C1D61BB2958F7EF00877D79 /* new_data.cpp in Sources */,
 				9CCA9891297B119F00CAA085 /* InputAscii85DecodeStream.cpp in Sources */,

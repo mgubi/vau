@@ -14,31 +14,71 @@ html {
 }
 </style>
 <script type='text/javascript'>
-var VauWasm = {
-  	preRun: [function () {
-		var status = document.getElementById("status");
-		status.innerHTML = "INITIALIZING...";
-  	}], 
-  	logReadFiles: true,
-  	postRun: [function () {
-		var status = document.getElementById("status");
-		status.innerHTML = "READY.";
-		runViewer();
-  	}]
-};
 
-function allocateUTF8(str) {
-	var size = lengthBytesUTF8(str) + 1;
-	var pointer = _malloc(size);
-	stringToUTF8(str, pointer, size);
-	return pointer;
+"use strict";
+
+var vauView = {};
+
+const worker = new Worker("vau_worker.js");
+const messagePromises = new Map();
+let lastPromiseId = 0;
+
+vauView.ready = new Promise((resolve, reject) => {
+	worker.onmessage = function (event) {
+		let type = event.data[0];
+		if (type === "READY") {
+			vauView.wasmMemory = event.data[1];
+			let methodNames = event.data[2];
+			for (let method of methodNames)
+			  vauView[method] = wrap(method);
+			worker.onmessage = onWorkerMessage;
+			resolve();
+		} else if (type === "ERROR") {
+			let error = event.data[1];
+			reject(new Error(error));
+		} else {
+			reject(new Error(`Unexpected first message: ${event.data}`));
+		}
+	};
+});
+
+function onWorkerMessage(event) {
+	let [ type, id, result ] = event.data;
+	if (type === "RESULT")
+		messagePromises.get(id).resolve(result);
+	else if (type === "READY")
+		messagePromises.get(id).reject(new Error("Unexpected READY message"));
+	else if (type === "ERROR") {
+		let error = new Error(result.message);
+		error.name = result.name;
+		error.stack = result.stack;
+		messagePromises.get(id).reject(error);
+	}
+	else
+		messagePromises.get(id).reject(new Error(`Unexpected result type '${type}'`));
+
+	messagePromises.delete(id);
 }
+
+// TODO - Add cancelation for trylater queues
+function wrap(func) {
+	return function(...args) {
+		return new Promise(function (resolve, reject) {
+			let id = lastPromiseId++;
+			messagePromises.set(id, { resolve, reject });
+			if (args[0] instanceof ArrayBuffer)
+				worker.postMessage([func, id, args], [args[0]]);
+			else
+				worker.postMessage([func, id, args]);
+		});
+	};
+}
+
 
 function openDocument(str) {
 	console.log(`Typesetting ${str} ...`);
-	var p= allocateUTF8(str);
-	_wasm_open_document(p);
-	_free(p)
+	vauView.openDocument(str).then( () => {
+   	  console.log(`Typesetting ${str} DONE`); } );
 }
 
 function updateImage() { 
@@ -47,24 +87,21 @@ function updateImage() {
 	img.src = URL.createObjectURL(new Blob([doc], { type: "image/png" }));
 }
 
-function showPage(n) {
+function showPage (n) {
 	//_wasm_get_page_png(n);
 	//updateImage();
+    vauView.getPagePixmap(n).then( (pix) => {
+  	  var canvas = document.getElementById('canvas');
+	  canvas.width= pix.width;
+	  canvas.height= pix.height;
+	  var ctx = canvas.getContext('2d');
+	  ctx.putImageData(pix, 0, 0);
 
-	_wasm_get_page_pixmap(n);
-	var canvas = document.getElementById('canvas');
-	canvas.width= VAUJSPIXMAP.width;
-	canvas.height= VAUJSPIXMAP.height;
-	var ctx = canvas.getContext('2d');
-	ctx.putImageData(VAUJSPIXMAP, 0, 0);
-
-	updateStatus();
+	  updateStatus();
+	});
 }
 
-
-
 </script>
-<script src="Vau.js"></script>
 </head>
 <body>
 <div id="status">LOADING...</div>
