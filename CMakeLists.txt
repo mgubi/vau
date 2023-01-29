@@ -523,18 +523,22 @@ if (EMSCRIPTEN)
   target_compile_options (Vau
     PRIVATE
     "SHELL:-include ${Vau_BINARY_DIR}/src/System/config.h"
-    "SHELL:-s USE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
-  )   
+    "SHELL:-sUSE_FREETYPE=1" "SHELL:-sUSE_ZLIB=1" "SHELL:-sUSE_LIBPNG=1"
+  )
   target_link_options (Vau
     PRIVATE
     "SHELL:--source-map-base /" 
-#   "SHELL:-s DISABLE_EXCEPTION_CATCHING=0" 
-    "SHELL:-s USE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
+#   "SHELL:-sDISABLE_EXCEPTION_CATCHING=0"
+    "SHELL:-sUSE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
     "SHELL:--preload-file ${Vau_SOURCE_DIR}/resources@/Vau"
-    "SHELL:--emrun "
+#    "SHELL:--emrun"
     "SHELL:-sALLOW_MEMORY_GROWTH=1"
     "SHELL:-sSTACK_SIZE=300000"
-    "SHELL:-s EXPORT_NAME='VauWasm'"
+    "SHELL:-sASSERTIONS=1"
+    -sNO_EXIT_RUNTIME
+    -sEXPORT_NAME='VauWasm'
+    -sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,wasmMemory]
+#    "-sEXPORTED_FUNCTIONS=[_main,_malloc,_free,_wasm_open_document,_wasm_get_page_png]"
   )
   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options (Vau PRIVATE 

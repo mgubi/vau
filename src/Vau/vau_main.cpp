@@ -290,3 +290,32 @@ main (int argc, char **argv) {
   start_scheme (argc, argv, TeXmacs_main);
   return 0;
 }
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#else
+#define EMSCRIPTEN_KEEPALIVE
+#endif
+
+extern "C" {
+
+EMSCRIPTEN_KEEPALIVE
+void
+wasm_open_document (const char *name) {
+  string s(name);
+  cout << "wasm_open_document " << s << LF;
+  vau_buffer buf= concrete_buffer_insist (s);
+  set_current_editor (new_editor (buf));
+  current_editor ()->typeset_document ("300");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void
+wasm_get_page_png (int page) {
+  cout << "wasm_get_page_png " << page << LF;
+  picture pic= current_editor ()->get_page_picture (page);
+  save_picture ("$HOME/vau-test.png", pic);
+}
+
+} // extern "C"
+
