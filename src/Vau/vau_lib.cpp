@@ -347,6 +347,12 @@ wasm_get_page_pixmap_height () {
   return cur_pic->get_height();
 }
 
+EMSCRIPTEN_KEEPALIVE
+void
+wasm_eval (const char *s) {
+  eval (s);
+}
+
 } // extern "C"
 
 

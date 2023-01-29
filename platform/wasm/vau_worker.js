@@ -109,6 +109,12 @@ workerMethods.getPagePixmap = function (page) {
     return VAUJSPIXMAP;
 };
 
+workerMethods.evalScheme = function (str) {
+	var p= allocateUTF8(str);
+	libvau._wasm_eval(p);
+	libvau._free(p);
+};
+
 var vau_ready = libvau({}).then(m => {
 	libvau = m;
 	libvau._wasm_init_vau();
