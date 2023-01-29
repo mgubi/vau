@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+<style>
+html {
+	background-color: #6e6e91;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+</style>
 <script type='text/javascript'>
 var VauWasm = {
   	preRun: [function () {
@@ -37,8 +49,7 @@ function updateImage() {
 function showPage(n) {
 	_wasm_get_page_png(n);
 	updateImage();
-	var status = document.getElementById("status");
-	status.innerHTML = `Page ${n}.`;
+	updateStatus();
 }
 
 
@@ -47,33 +58,57 @@ function showPage(n) {
 </head>
 <body>
 <div id="status">LOADING...</div>
-<img id="image" width="500px">
+<img id="image" width="900px" class="center">
 </body>
 <script>
-	var page=1;
+var page=1;
+var zoom=1;
 
-	function runViewer() {
-		openDocument("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
-		showPage(page);
 
-		window.addEventListener("keydown", function (event) {
-			console.log(event);
-			if (event.key == "PageDown") {
-				showPage(page);
-				console.log("PAGEDOWN");
-				page= page+1;
-			    showPage(page);
-				event.preventDefault();
+function updateStatus() {
+	var status = document.getElementById("status");
+	status.innerHTML = `Page ${page} | Zoom ${zoom}`;
+}
+
+
+function runViewer() {
+	openDocument("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+	showPage(page);
+
+	window.addEventListener("keydown", function (event) {
+		console.log(event);
+		if (event.key == "PageDown") {
+			showPage(page);
+			console.log("PAGEDOWN");
+			page= page+1;
+		    showPage(page);
+			event.preventDefault();
+		}
+		if (event.key == "PageUp") {
+			console.log("PAGEUP");
+			if (page > 1) {
+				page= page-1;
+		    	showPage(page);
 			}
-			if (event.key == "PageUp") {
-				console.log("PAGEUP");
-				if (page > 1) {
-					page= page-1;
-			    	showPage(page);
-				}
-				event.preventDefault();
-			}
-		});
-	}
+			event.preventDefault();
+		}
+		if (event.key == "+") {
+			console.log("ZOOMIN");
+			zoom = zoom*1.2;
+			var img = document.getElementById("image");
+			img.style.width=`${zoom*1000}px`;
+			updateStatus();
+			event.preventDefault();
+		}
+		if (event.key == "-") {
+			console.log("ZOOMOUT");
+			zoom = zoom/1.2;
+			var img = document.getElementById("image");
+			img.style.width=`${zoom*1000}px`;
+			updateStatus();
+			event.preventDefault();
+		}
+	});
+}
 </script>
 </html>
