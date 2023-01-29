@@ -76,9 +76,13 @@ function wrap(func) {
 
 
 function openDocument(str) {
+	var status = document.getElementById("status");
+	status.innerHTML = `Typesetting ${str} ...`;
 	console.log(`Typesetting ${str} ...`);
 	vauView.openDocument(str).then( () => {
-   	  console.log(`Typesetting ${str} DONE`); } );
+   	  	console.log(`Typesetting ${str} DONE`);
+		status.innerHTML = `DONE Typesetting ${str}`;	
+	} );
 }
 
 function updateImage() { 
@@ -161,5 +165,8 @@ function runViewer() {
 		}
 	});
 }
+
+vauView.ready.then(() => {runViewer()});
+
 </script>
 </html>
