@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="Vau-wasm.js" ></script>
+<script type='text/javascript'>
+
+"use strict";
+
+var vau_ready = libvau({}).then(m => {
+	libvau = m;
+	libvau._wasm_init_vau();
+	updateStatus('READY');
+});
+
+function updateStatus(str) {
+	var status = document.getElementById("status");
+	status.innerHTML = str;
+}
+
+function evalScheme (str) {
+	var p= allocateUTF8(str);
+	libvau._wasm_eval(p);
+	libvau._free(p);
+};
+
+function allocateUTF8(str) {
+	var size = libvau.lengthBytesUTF8(str) + 1;
+	var pointer = libvau._malloc(size);
+	libvau.stringToUTF8(str, pointer, size);
+	return pointer;
+}
+
+</script>
+</head>
+<body>
+<div id="status">LOADING...</div>
+</body>
+<script>
+</script>
+</html>

@@ -511,6 +511,8 @@ set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
 if (NOT EMSCRIPTEN)
   set (Vau_All_SRCS ${Vau_All_SRCS} "${Vau_SOURCE_DIR}/src/Vau/vau_main.cpp")
+else (NOT EMSCRIPTEN)
+#  set (Vau_All_SRCS ${Vau_All_SRCS} "${Vau_SOURCE_DIR}/src/Vau/vau_js.cpp")
 endif (NOT EMSCRIPTEN)
 
 add_executable (Vau)
@@ -543,6 +545,7 @@ if (EMSCRIPTEN)
     "SHELL:-sSTACK_SIZE=300000"
     "SHELL:-sASSERTIONS=1"
     "SHELL:--js-library ${Vau_SOURCE_DIR}/platform/wasm/mylib.js"
+    "SHELL:-l embind"
     -sNO_EXIT_RUNTIME
     -sEXPORT_NAME='libvau'
     -sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,wasmMemory]
