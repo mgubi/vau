@@ -22,6 +22,7 @@
 
 
 #include <mupdf/pdf.h>
+#include <mupdf/fitz/version.h> // for FZ_VERSION_MAJOR, FZ_VERSION_MINOR
 
 #include "mupdf_picture.hpp"
 
@@ -229,8 +230,11 @@ mupdf_renderer_rep::begin (void* handle) {
     h= fz_pixmap_height (ctx, pixmap);
     dev= fz_new_draw_device (ctx, fz_identity, pixmap);
     fz_matrix ctm= fz_make_matrix(1, 0, 0, -1, 0, 0);
+#if ((FZ_VERSION_MAJOR == 1) && (FZ_VERSION_MINOR < 22))
+    proc= pdf_new_run_processor (ctx, dev, ctm, -1, "View", NULL, NULL, NULL);
+#else
     proc= pdf_new_run_processor (ctx, mupdf_document (), dev, ctm, -1, "View", NULL, NULL, NULL);
-    
+#endif
     fg  = -1;
     bg  = -1;
     lw  = -1;
