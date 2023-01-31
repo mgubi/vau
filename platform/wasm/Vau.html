@@ -92,7 +92,6 @@ function wrap(func) {
 	};
 }
 
-
 function openDocument(str) {
 	var status = document.getElementById("status");
 	status.innerHTML = `Typesetting ${str} ...`;
@@ -109,12 +108,10 @@ function updateImage() {
 	img.src = URL.createObjectURL(new Blob([doc], { type: "image/png" }));
 }
 
-function showPage (n) {
-	//_wasm_get_page_png(n);
-	//updateImage();
+function showPage () {
 	var dpr= 2;
 	var canvas = document.getElementById('canvas');
-    vauView.getViewPixmap(n, dpr*canvas.offsetWidth, dpr*canvas.offsetHeight, zoom*5.0).then( (pix) => {
+    vauView.getViewPixmap(page, dpr*canvas.offsetWidth, dpr*canvas.offsetHeight, zoom*5.0).then( (pix) => {
 	  var ctx = canvas.getContext('2d');
 	  ctx.canvas.width = dpr*canvas.clientWidth;
    	  ctx.canvas.height = dpr*canvas.clientHeight;
@@ -132,47 +129,47 @@ function showPage (n) {
 </body>
 <script>
 
-
 function updateStatus() {
 	var status = document.getElementById("status");
 	status.innerHTML = `Page ${page} | Zoom ${Math.round(zoom*100)/100}`;
 }
 
-
 function runViewer() {
+	// add resize observer to sync canvas size
+    new ResizeObserver(showPage).observe(document.getElementById('canvas'));
+
 	openDocument("$TEXMACS_PATH/vau-tests/ibp-exponential-example.tm");
 
 //	openDocument("$TEXMACS_PATH/examples/texts/bracket-test.tm");
 	
-	showPage(page);
+	showPage();
 
 	window.addEventListener("keydown", function (event) {
 		console.log(event);
 		if (event.key == "PageDown") {
-			showPage(page);
 			console.log("PAGEDOWN");
 			page= page+1;
-		    showPage(page);
+		    showPage();
 			event.preventDefault();
 		}
 		if (event.key == "PageUp") {
 			console.log("PAGEUP");
 			if (page > 1) {
 				page= page-1;
-		    	showPage(page);
+		    	showPage();
 			}
 			event.preventDefault();
 		}
 		if (event.key == "+") {
 			console.log("ZOOMIN");
 			zoom = zoom*1.2;
-		    showPage(page);
+		    showPage();
 			event.preventDefault();
 		}
 		if (event.key == "-") {
 			console.log("ZOOMOUT");
 			zoom = zoom/1.2;
-		    showPage(page);
+		    showPage();
 			event.preventDefault();
 		}
 	});

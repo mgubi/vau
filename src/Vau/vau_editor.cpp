@@ -1210,16 +1210,16 @@ editor_rep::get_view_picture (int page, int width, int height, double zoomf) {
     SI hh= (SI) round (zoomf * h);
     int pxw= (ww+pixel-1)/pixel;
     int pxh= (hh+pixel-1)/pixel;
-    cout << pxw << "," << pxh << LF;
-    cout << width << "," << height << LF;
-    picture pic= native_picture (width, height, 0, 0);
+    cout << pxw << "," << pxh << "   " << width << "," << height << LF;
+    picture pic= native_picture (width, height, max ((width-pxw)/2, 0), -max ((height-pxh)/2, 0));
     renderer ren= picture_renderer (pic, zoomf);
     {
       tree bg= env->read (BG_COLOR);
       ren->set_background (bg);
       if (bg != "white" && bg != "#ffffff")
         ren->clear_pattern (0, (SI) -h, (SI) w, 0);
-      
+    //  ren->ox= max ((width-pxw)/2, 0)*pixel;
+    //  ren->oy= max ((height-pxh)/2, 0)*pixel;
       rectangles rs;
       the_box[0]->sx(page)= 0;
       the_box[0]->sy(page)= 0;
