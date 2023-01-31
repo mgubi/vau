@@ -336,6 +336,21 @@ wasm_get_page_pixmap (int page) {
 }
 
 EMSCRIPTEN_KEEPALIVE
+void
+wasm_get_view_pixmap (int page, int width, int height, double zoomf) {
+  cout << "wasm_get_view_pixmap " << page << ", " << width << ", " << height << ", " << zoomf  << LF;
+  cur_pic= as_native_picture (current_editor ()->get_view_picture (page, width, height, zoomf));
+#ifdef __EMSCRIPTEN__
+  mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
+  unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
+  vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n, pp->get_width(), pp->get_height());
+#endif
+//  save_picture ("$HOME/cur_pic.png", cur_pic);
+}
+
+
+
+EMSCRIPTEN_KEEPALIVE
 unsigned int
 wasm_get_page_pixmap_width () {
   return cur_pic->get_width();

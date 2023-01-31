@@ -177,6 +177,7 @@ public:
   // interface
   void get_page_image (url name, int page, string image_dpi);
   picture get_page_picture (int page);
+  picture get_view_picture (int page, int width, int height, double zoomf);
   void typeset_document (string image_dpi);
   
   friend class editor;

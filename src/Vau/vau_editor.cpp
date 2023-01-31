@@ -1196,6 +1196,42 @@ editor_rep::get_page_picture (int page) {
   }
 }
 
+picture
+editor_rep::get_view_picture (int page, int width, int height, double zoomf) {
+  box the_box= eb;
+  page= min(N(the_box[0]), max (0, page-1));
+  {
+    box b=  the_box[0][page];
+    
+    SI pixel= 5*PIXEL;
+    SI w= b->x4 - b->x3;
+    SI h= b->y4 - b->y3;
+    SI ww= (SI) round (zoomf * w);
+    SI hh= (SI) round (zoomf * h);
+    int pxw= (ww+pixel-1)/pixel;
+    int pxh= (hh+pixel-1)/pixel;
+    cout << pxw << "," << pxh << LF;
+    cout << width << "," << height << LF;
+    picture pic= native_picture (width, height, 0, 0);
+    renderer ren= picture_renderer (pic, zoomf);
+    {
+      tree bg= env->read (BG_COLOR);
+      ren->set_background (bg);
+      if (bg != "white" && bg != "#ffffff")
+        ren->clear_pattern (0, (SI) -h, (SI) w, 0);
+      
+      rectangles rs;
+      the_box[0]->sx(page)= 0;
+      the_box[0]->sy(page)= 0;
+      the_box[0][page]->redraw (ren, path (0), rs);
+      //      if (i<end-1) ren->next_page ();
+    }
+    tm_delete (ren);
+    return pic;
+  }
+}
+
+
 
 void
 editor_rep::get_page_image (url name, int page, string image_dpi) {

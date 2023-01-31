@@ -4,13 +4,28 @@
 <style>
 html {
 	background-color: #6e6e91;
+	height: 100%;
+	width: 100%;
+	margin: 0px;
 }
-
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 50%;
+body {
+	height: 100%;
+	width: 100%;
+	margin: 0px;
+	display: flex;
+	flex-direction: column;
+}
+#status {
+	height: 30px;
+	line-height: 30px;
+	padding: 5px;
+	padding-left: 10px;
+}
+canvas {
+  flex-grow: 1;
+  height: 100%;
+  width: 100%;
+  margin: 0px;
 }
 </style>
 <script type='text/javascript'>
@@ -18,6 +33,9 @@ html {
 "use strict";
 
 var vauView = {};
+
+var page=1;
+var zoom=1;
 
 const worker = new Worker("vau_worker.js");
 const messagePromises = new Map();
@@ -94,13 +112,13 @@ function updateImage() {
 function showPage (n) {
 	//_wasm_get_page_png(n);
 	//updateImage();
-    vauView.getPagePixmap(n).then( (pix) => {
-  	  var canvas = document.getElementById('canvas');
-	  canvas.width= pix.width;
-	  canvas.height= pix.height;
+	var dpr= 2;
+	var canvas = document.getElementById('canvas');
+    vauView.getViewPixmap(n, dpr*canvas.offsetWidth, dpr*canvas.offsetHeight, zoom*5.0).then( (pix) => {
 	  var ctx = canvas.getContext('2d');
+	  ctx.canvas.width = dpr*canvas.clientWidth;
+   	  ctx.canvas.height = dpr*canvas.clientHeight;
 	  ctx.putImageData(pix, 0, 0);
-
 	  updateStatus();
 	});
 }
@@ -110,11 +128,9 @@ function showPage (n) {
 <body>
 <div id="status">LOADING...</div>
 <!---img id="image" width="900px" class="center"--->
-<canvas id="canvas" width="900px" class="center">
+<canvas id="canvas"></canvas>
 </body>
 <script>
-var page=1;
-var zoom=1;
 
 
 function updateStatus() {
@@ -150,17 +166,13 @@ function runViewer() {
 		if (event.key == "+") {
 			console.log("ZOOMIN");
 			zoom = zoom*1.2;
-			var img = document.getElementById("canvas");
-			img.style.width=`${zoom*1000}px`;
-			updateStatus();
+		    showPage(page);
 			event.preventDefault();
 		}
 		if (event.key == "-") {
 			console.log("ZOOMOUT");
 			zoom = zoom/1.2;
-			var img = document.getElementById("canvas");
-			img.style.width=`${zoom*1000}px`;
-			updateStatus();
+		    showPage(page);
 			event.preventDefault();
 		}
 	});
