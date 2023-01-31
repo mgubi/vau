@@ -8,8 +8,15 @@
 
 I rewrote the Scheme glue code via C++ templating and metaprogramming and make it local to each submodule. Glue code should be defined locally where the relevant C++ function belongs, so that if a module is not linked in the corresponding glue code is not compiled in and will not be visible from scheme. 
 
-
 ## Logbook
+
+Feb 2022
+
+- The library renders pixmaps in a worker thread and this is then put on a canvas which fills the viewport of the viewer. Implemented zoom and page change. We are still very slow in bootstrapping a document due to the loading of many fonts variations (mainly TeX fonts, which I should get rid of). After this slow typesetting phase, rendering speed is very good.
+
+- Ideally we want to move the UI logic in Scheme and be able to both drive the typesetter and manage the UI at the browser level. I guess for the moment I will settle to drive the UI from the C++ code, maybe using `embind` and `val` to interface C++ with Javascript.
+
+- Later on I will implement loading files from URL and possibily better caching to improve bootstrap. We already pre-cached some informations by loading it in the virtual file-system at startup, but this has not produced a substantial speedup.
 
 Jan 2022 
 
@@ -20,7 +27,6 @@ Jan 2022
 - Ideally we want to isolate away I/O, because e.g. in Webasm we do not have direct access to the filesystem and maybe this requires anyway async calls.
 
 - From here I would like to understand how to isolate a well-defined interface for the editor which allow to call it from a scripting language (be it Scheme or Javascript). The editor receives commands and send back responses (e.g. bitmaps of the current page with metadata, like location of the cursors, etc..)
-
 
 ## Build instructons
 
