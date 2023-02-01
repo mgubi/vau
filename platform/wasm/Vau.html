@@ -21,7 +21,7 @@ body {
 	padding: 5px;
 	padding-left: 10px;
 }
-canvas {
+#canvas {
   flex-grow: 1;
   height: 100%;
   width: 100%;
@@ -36,6 +36,8 @@ var vauView = {};
 
 var page=1;
 var zoom=1;
+var scroolX=0;
+var scroolY=0;
 
 const worker = new Worker("vau_worker.js");
 const messagePromises = new Map();
@@ -124,7 +126,6 @@ function showPage () {
 </head>
 <body>
 <div id="status">LOADING...</div>
-<!---img id="image" width="900px" class="center"--->
 <canvas id="canvas"></canvas>
 </body>
 <script>
@@ -144,11 +145,15 @@ function runViewer() {
 	
 	showPage();
 
+	window.addEventListener('wheel', e => {
+		console.log(`wheel event ${e.deltaX} ${e.deltaY}`);
+	})
+
 	window.addEventListener("keydown", function (event) {
 		console.log(event);
 		if (event.key == "PageDown") {
 			console.log("PAGEDOWN");
-			page= page+1;
+			page = page+1;
 		    showPage();
 			event.preventDefault();
 		}

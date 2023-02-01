@@ -1218,8 +1218,6 @@ editor_rep::get_view_picture (int page, int width, int height, double zoomf) {
       ren->set_background (bg);
       if (bg != "white" && bg != "#ffffff")
         ren->clear_pattern (0, (SI) -h, (SI) w, 0);
-    //  ren->ox= max ((width-pxw)/2, 0)*pixel;
-    //  ren->oy= max ((height-pxh)/2, 0)*pixel;
       rectangles rs;
       the_box[0]->sx(page)= 0;
       the_box[0]->sy(page)= 0;
