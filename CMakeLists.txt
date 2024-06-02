@@ -162,6 +162,7 @@ endif (NOT EMSCRIPTEN)
 ### --------------------------------------------------------------------
 set (Vau_Include_Dirs
   ${Vau_BINARY_DIR}/src/System
+  ${Vau_SOURCE_DIR}/src/Vau
   ${Vau_SOURCE_DIR}/src/Data/Convert
   ${Vau_SOURCE_DIR}/src/Data/Document
   ${Vau_SOURCE_DIR}/src/Data/Drd
@@ -376,7 +377,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Scheme/S7/s7.c"
 #  "${Vau_SOURCE_DIR}/src/Scheme/Scheme/glue.cpp"
   "${Vau_SOURCE_DIR}/src/Scheme/Scheme/object.cpp"
-  "${Vau_SOURCE_DIR}/src/System/Boot/preferences.cpp"
+  "${Vau_SOURCE_DIR}/src/Vau/preferences.cpp"
   "${Vau_SOURCE_DIR}/src/System/Classes/tm_timer.cpp"
   "${Vau_SOURCE_DIR}/src/System/Classes/url.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/file.cpp"

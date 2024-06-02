@@ -105,7 +105,6 @@
 		9C1D617C2958F7EF00877D79 /* glyph_ops.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FD82958F7EF00877D79 /* glyph_ops.cpp */; };
 		9C1D617D2958F7EF00877D79 /* raster_random.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FDA2958F7EF00877D79 /* raster_random.cpp */; };
 		9C1D617F2958F7EF00877D79 /* effect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE12958F7EF00877D79 /* effect.cpp */; };
-		9C1D61812958F7EF00877D79 /* raster_picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE32958F7EF00877D79 /* raster_picture.cpp */; };
 		9C1D61822958F7EF00877D79 /* poly_line.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE62958F7EF00877D79 /* poly_line.cpp */; };
 		9C1D61832958F7EF00877D79 /* smoothen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE82958F7EF00877D79 /* smoothen.cpp */; };
 		9C1D61842958F7EF00877D79 /* recognize_handwriting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FEA2958F7EF00877D79 /* recognize_handwriting.cpp */; };
@@ -223,6 +222,9 @@
 		9C1D62132958F7EF00877D79 /* hashset.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60ED2958F7EF00877D79 /* hashset.cpp */; };
 		9C2D133329599944007EE3CA /* link.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60862958F7EF00877D79 /* link.cpp */; };
 		9C2D13372959A129007EE3CA /* vau_editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C2D13352959A129007EE3CA /* vau_editor.cpp */; };
+		9C3839992C0CD7FD00EAD868 /* locale.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C66295901C90041CFA3 /* locale.cpp */; };
+		9C38399C2C0CDA5300EAD868 /* preferences.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C38399A2C0CDA5300EAD868 /* preferences.cpp */; };
+		9C390FF329959D920041D647 /* raster_picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FE32958F7EF00877D79 /* raster_picture.cpp */; };
 		9C620C9B295901C90041CFA3 /* data_cache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C4E295901C90041CFA3 /* data_cache.cpp */; };
 		9C620C9E295901C90041CFA3 /* fast_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C53295901C90041CFA3 /* fast_alloc.cpp */; };
 		9C620CA0295901C90041CFA3 /* tm_configure.hpp.cmake in Resources */ = {isa = PBXBuildFile; fileRef = 9C620C55295901C90041CFA3 /* tm_configure.hpp.cmake */; };
@@ -278,9 +280,7 @@
 		9C620D1B29591C540041CFA3 /* tm_timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C60295901C90041CFA3 /* tm_timer.cpp */; };
 		9C620D1E295920E00041CFA3 /* tm_ostream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C92295901C90041CFA3 /* tm_ostream.cpp */; };
 		9C620D1F295921090041CFA3 /* picture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D5FDD2958F7EF00877D79 /* picture.cpp */; };
-		9C620D212959239E0041CFA3 /* locale.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C66295901C90041CFA3 /* locale.cpp */; };
 		9C620D232959249E0041CFA3 /* upgradetm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60AD2958F7EF00877D79 /* upgradetm.cpp */; };
-		9C620D242959253E0041CFA3 /* preferences.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C620C58295901C90041CFA3 /* preferences.cpp */; };
 		9C620D2829592E7B0041CFA3 /* widget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C1D60042958F7EF00877D79 /* widget.cpp */; };
 		9CAC27E52986F7C90069643C /* vau_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC27E32986F7C90069643C /* vau_lib.cpp */; };
 		9CCA984E297B119F00CAA085 /* aeskey.c in Sources */ = {isa = PBXBuildFile; fileRef = 9CCA96F5297B119F00CAA085 /* aeskey.c */; };
@@ -862,6 +862,9 @@
 		9C2D13352959A129007EE3CA /* vau_editor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vau_editor.cpp; sourceTree = "<group>"; };
 		9C2D13362959A129007EE3CA /* vau_editor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = vau_editor.hpp; sourceTree = "<group>"; };
 		9C2DE588296341B700B88E9A /* resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = resources; path = ../../resources; sourceTree = "<group>"; };
+		9C38399A2C0CDA5300EAD868 /* preferences.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = preferences.cpp; sourceTree = "<group>"; };
+		9C38399B2C0CDA5300EAD868 /* vau_js.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vau_js.cpp; sourceTree = "<group>"; };
+		9C38399E2C0CDAD100EAD868 /* boot.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = boot.hpp; sourceTree = "<group>"; };
 		9C620C48295900D30041CFA3 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9C620C4B295901C90041CFA3 /* sys_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sys_utils.cpp; sourceTree = "<group>"; };
 		9C620C4C295901C90041CFA3 /* fast_alloc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fast_alloc.hpp; sourceTree = "<group>"; };
@@ -874,10 +877,6 @@
 		9C620C53295901C90041CFA3 /* fast_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fast_alloc.cpp; sourceTree = "<group>"; };
 		9C620C54295901C90041CFA3 /* persistent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = persistent.cpp; sourceTree = "<group>"; };
 		9C620C55295901C90041CFA3 /* tm_configure.hpp.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = tm_configure.hpp.cmake; sourceTree = "<group>"; };
-		9C620C57295901C90041CFA3 /* init_texmacs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = init_texmacs.cpp; sourceTree = "<group>"; };
-		9C620C58295901C90041CFA3 /* preferences.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = preferences.cpp; sourceTree = "<group>"; };
-		9C620C59295901C90041CFA3 /* init_upgrade.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = init_upgrade.cpp; sourceTree = "<group>"; };
-		9C620C5A295901C90041CFA3 /* boot.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = boot.hpp; sourceTree = "<group>"; };
 		9C620C5D295901C90041CFA3 /* url.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = url.cpp; sourceTree = "<group>"; };
 		9C620C5E295901C90041CFA3 /* tm_timer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tm_timer.hpp; sourceTree = "<group>"; };
 		9C620C5F295901C90041CFA3 /* url.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = url.hpp; sourceTree = "<group>"; };
@@ -1443,6 +1442,9 @@
 		9C1D5F202958F7EF00877D79 /* Vau */ = {
 			isa = PBXGroup;
 			children = (
+				9C38399E2C0CDAD100EAD868 /* boot.hpp */,
+				9C38399A2C0CDA5300EAD868 /* preferences.cpp */,
+				9C38399B2C0CDA5300EAD868 /* vau_js.cpp */,
 				9C620D1829591BCC0041CFA3 /* vau_stuff.cpp */,
 				9C620D1929591BCC0041CFA3 /* vau_stuff.hpp */,
 				9C2D13352959A129007EE3CA /* vau_editor.cpp */,
@@ -2232,7 +2234,6 @@
 			isa = PBXGroup;
 			children = (
 				9C620C4A295901C90041CFA3 /* Misc */,
-				9C620C56295901C90041CFA3 /* Boot */,
 				9C620C5C295901C90041CFA3 /* Classes */,
 				9C620C61295901C90041CFA3 /* Language */,
 				9C620C8F295901C90041CFA3 /* Files */,
@@ -2259,17 +2260,6 @@
 				9C620C54295901C90041CFA3 /* persistent.cpp */,
 			);
 			path = Misc;
-			sourceTree = "<group>";
-		};
-		9C620C56295901C90041CFA3 /* Boot */ = {
-			isa = PBXGroup;
-			children = (
-				9C620C57295901C90041CFA3 /* init_texmacs.cpp */,
-				9C620C58295901C90041CFA3 /* preferences.cpp */,
-				9C620C59295901C90041CFA3 /* init_upgrade.cpp */,
-				9C620C5A295901C90041CFA3 /* boot.hpp */,
-			);
-			path = Boot;
 			sourceTree = "<group>";
 		};
 		9C620C5C295901C90041CFA3 /* Classes */ = {
@@ -2917,6 +2907,7 @@
 				9C1D61322958F7EF00877D79 /* bridge_formatting.cpp in Sources */,
 				9CCA9862297B119F00CAA085 /* ArrayOfInputStreamsStream.cpp in Sources */,
 				9CCA9879297B119F00CAA085 /* OutputStringBufferStream.cpp in Sources */,
+				9C390FF329959D920041D647 /* raster_picture.cpp in Sources */,
 				9CCA988A297B119F00CAA085 /* IndirectObjectsReferenceRegistry.cpp in Sources */,
 				9C1D61C22958F7EF00877D79 /* escaped_char_parser.cpp in Sources */,
 				9C1D62112958F7EF00877D79 /* array.cpp in Sources */,
@@ -2969,6 +2960,7 @@
 				9C1D612F2958F7EF00877D79 /* bridge_with.cpp in Sources */,
 				9CCA98BA297B119F00CAA085 /* InputPredictorTIFFSubStream.cpp in Sources */,
 				9CCA98B7297B119F00CAA085 /* PDFObjectParser.cpp in Sources */,
+				9C38399C2C0CDA5300EAD868 /* preferences.cpp in Sources */,
 				9C1D617C2958F7EF00877D79 /* glyph_ops.cpp in Sources */,
 				9C620CAD295901C90041CFA3 /* scilab_language.cpp in Sources */,
 				9CCA989B297B119F00CAA085 /* ObjectsContext.cpp in Sources */,
@@ -3064,7 +3056,6 @@
 				9CCA9854297B119F00CAA085 /* AbstractContentContext.cpp in Sources */,
 				9CCA9850297B119F00CAA085 /* aes_modes.c in Sources */,
 				9C1D60F02958F7EF00877D79 /* object.cpp in Sources */,
-				9C620D242959253E0041CFA3 /* preferences.cpp in Sources */,
 				9CCA989A297B119F00CAA085 /* Type1ToCFFEmbeddedFontWriter.cpp in Sources */,
 				9CCA9870297B119F00CAA085 /* PDFObject.cpp in Sources */,
 				9CD7CB61297DA49100FDE895 /* file.cpp in Sources */,
@@ -3206,6 +3197,7 @@
 				9C1D61702958F7EF00877D79 /* equations.cpp in Sources */,
 				9C1D61BB2958F7EF00877D79 /* new_data.cpp in Sources */,
 				9CCA9891297B119F00CAA085 /* InputAscii85DecodeStream.cpp in Sources */,
+				9C3839992C0CD7FD00EAD868 /* locale.cpp in Sources */,
 				9C620CB1295901C90041CFA3 /* hyphenate.cpp in Sources */,
 				9CCA989D297B119F00CAA085 /* PDFParser.cpp in Sources */,
 				9CCA9855297B119F00CAA085 /* PDFFormXObject.cpp in Sources */,
@@ -3213,7 +3205,6 @@
 				9CCA98CE297B119F00CAA085 /* InputFlateDecodeStream.cpp in Sources */,
 				9C620D0529590C540041CFA3 /* adjust_bonum.cpp in Sources */,
 				9CCA9863297B119F00CAA085 /* InputPFBDecodeStream.cpp in Sources */,
-				9C1D61812958F7EF00877D79 /* raster_picture.cpp in Sources */,
 				9C620CB2295901C90041CFA3 /* math_language.cpp in Sources */,
 				9CF282CE295A14BB0064D7F2 /* vau_buffer.cpp in Sources */,
 				9CCA9853297B119F00CAA085 /* Type1Input.cpp in Sources */,
@@ -3302,7 +3293,6 @@
 				9C1D61642958F7EF00877D79 /* script_boxes.cpp in Sources */,
 				9CF282CA295A09840064D7F2 /* printer.cpp in Sources */,
 				9C1D62002958F7EF00877D79 /* tree.cpp in Sources */,
-				9C620D212959239E0041CFA3 /* locale.cpp in Sources */,
 				9C1D616F2958F7EF00877D79 /* curve.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3488,12 +3478,14 @@
 		9C4956E82958F4A100F7BDA9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
 		9C4956E92958F4A100F7BDA9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Release;
 		};

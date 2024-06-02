@@ -393,13 +393,8 @@ void clear_imgbox_cache(tree t) {
   
 }
 
-widget glue_widget (bool hx, bool vx, SI w, SI h)
-{
-  return widget ();
-}
-
-bool use_which        = false;
-bool use_locate       = false;
+bool use_which        = false; // used in url.cpp
+bool use_locate       = false; // used in tt_file.cpp
 bool texmacs_started = true;
 //hashmap<string,tree> style_tree_cache;
 int script_status = 1;  // from sys_util.c
