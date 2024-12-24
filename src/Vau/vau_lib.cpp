@@ -371,17 +371,180 @@ wasm_eval (const char *s) {
 } // extern "C"
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+#include <SDL2/SDL.h>
+
+struct gezira_Window_ {
+    int width, height;
+    SDL_Window *win;
+    SDL_Renderer *ren;
+    SDL_Surface *surface;
+  int page;
+  double zoomf;
+};
+
+typedef struct gezira_Window_ gezira_Window_t;
+
+void
+gezira_Window_init (gezira_Window_t *window, int width, int height)
+{
+  if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+    fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
+  }
+  window->width = width; window->height = height;
+  window->page = 1; window->zoomf = 2.0;
+  window->win = SDL_CreateWindow("Hello World!", 100, 100, width, height,
+                                 SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
+                                 SDL_WINDOW_ALLOW_HIGHDPI);
+  if (window->win == NULL) {
+    fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
+  }
+  
+  window->ren = SDL_CreateRenderer(window->win, -1,
+                                   SDL_RENDERER_ACCELERATED |
+                                   SDL_RENDERER_PRESENTVSYNC);
+  if (window->ren == NULL) {
+    fprintf(stderr, "SDL_CreateRenderer Error: %s\n", SDL_GetError());
+    SDL_DestroyWindow(window->win);
+  }
+}
+
+void
+gezira_Window_fini (gezira_Window_t *window)
+{
+  SDL_DestroyRenderer(window->ren);
+  SDL_DestroyWindow(window->win);
+}
+
+static SDL_Surface*
+get_surface (picture backing_store) {
+  fz_pixmap *pix= ((mupdf_picture_rep*)backing_store->get_handle())->pix;
+  //snapshot_pixmap (pix);
+  unsigned char *samples= fz_pixmap_samples (mupdf_context (), pix);
+  int w= fz_pixmap_width (mupdf_context (), pix);
+  int h= fz_pixmap_height (mupdf_context (), pix);
+  //  fz_keep_pixmap (mupdf_context (), pix);
+  SDL_Surface *surf= NULL;
+  unsigned char *pixels= tm_new_array<unsigned char>(w*h*4);
+  memcpy (pixels, samples, w*h*4);
+  // the SDL pixel data is not copied so we need to ensure that the pixmap stays alive.
+  surf= SDL_CreateRGBSurfaceWithFormatFrom (pixels, w, h, 32, 4*w,
+                                            SDL_PIXELFORMAT_RGBA32); // FIXME: premultiplied?
+  return surf;
+}
+
+
+void
+gezira_Window_update (gezira_Window_t *window)
+{
+  SDL_GetWindowSize(window->win, &window->width, &window->height);
+  
+  cout << "wasm_get_view_pixmap " << window->page << ", "
+       << window->width << ", " << window->height << ", "
+       << window->zoomf  << LF;
+  cur_pic= as_native_picture (
+            current_editor ()->get_view_picture (window->page, window->width,
+                                                 window->height, window->zoomf));
+  window->surface = get_surface(cur_pic);
+
+  if (window->surface == NULL) {
+    fprintf(stderr, "SDL_CreateRGBSurfaceFrom Error: %s\n", SDL_GetError());
+    SDL_DestroyRenderer(window->ren);
+    SDL_DestroyWindow(window->win);
+  }
+  
+  SDL_Texture* tex = SDL_CreateTextureFromSurface(window->ren, window->surface);
+  SDL_SetTextureBlendMode (tex, SDL_BLENDMODE_NONE);
+  SDL_Rect srcrect;
+  srcrect.x= 0; srcrect.y= 0;
+  srcrect.w= window->width; srcrect.h= window->height;
+  SDL_Rect destrect;
+  destrect.x= 0; destrect.y= 0;
+  destrect.w= window->width*2; destrect.h= window->height*2;
+  SDL_RenderClear (window->ren);
+  SDL_RenderCopy (window->ren, tex, &srcrect, &destrect);
+  //SDL_RenderCopy (window->ren, tex, NULL, NULL);
+  SDL_DestroyTexture (tex);
+  unsigned char *p= (unsigned char*)window->surface->pixels;
+  SDL_FreeSurface (window->surface);
+  tm_delete_array (p);
+  SDL_RenderPresent (window->ren);
+}
+
+
+void
+gezira_Window_loop (gezira_Window_t *window)
+{
+  SDL_Event event;
+  bool quit = false;
+  bool redraw = true;
+
+  while (!quit) {
+    SDL_PollEvent(&event);
+
+    if (redraw) {
+      gezira_Window_update(window);
+      redraw = false;
+    }
+
+    switch( event.type ){
+      case SDL_KEYDOWN: {
+        fprintf(stderr, "Key press detected: %c %s\n", (char)event.key.keysym.sym, SDL_GetScancodeName(event.key.keysym.scancode));
+        //return (char)event.key.keysym.sym;
+        switch(event.key.keysym.sym) {
+          case SDLK_MINUS:
+            fprintf(stderr, "zoom out\n");
+            window->zoomf /= 1.2; redraw = true;
+            break;
+          case SDLK_EQUALS:
+            fprintf(stderr, "zoom in\n");
+            window->zoomf *= 1.2; redraw = true;
+            break;
+          case SDLK_PAGEUP:
+            fprintf(stderr, "page up\n");
+            window->page -= 1; redraw = true;
+            break;
+          case SDLK_PAGEDOWN:
+            fprintf(stderr, "page down\n");
+            window->page += 1; redraw = true;
+            break;
+          default:
+            break;
+        }
+        }
+        break;
+        
+      case SDL_QUIT:
+        fprintf(stderr, "SDL_QUIT\n");
+        quit = true;
+        break;
+        
+      default:
+        break;
+    }
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void test_vau() {
-//  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
-//  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
-//  vau_buffer buf= concrete_buffer_insist (name);
-//  set_current_editor (new_editor (buf));
-//  current_editor ()->typeset_document ("300");
-//  picture pic= current_editor ()->get_page_picture (1);
-//  save_picture ("$HOME/vau-test.png", pic);
+  //  string name ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+  //  string name ("$TEXMACS_PATH/examples/texts/bracket-test.tm");
+  //  vau_buffer buf= concrete_buffer_insist (name);
+  //  set_current_editor (new_editor (buf));
+  //  current_editor ()->typeset_document ("300");
+  //  picture pic= current_editor ()->get_page_picture (1);
+  //  save_picture ("$HOME/vau-test.png", pic);
   //current_editor()->print_to_file ("$HOME/vau-test.pdf");
   
   wasm_open_document ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
-  for (int i=0; i<40; i++) wasm_get_page_pixmap (i);
-//  set_current_editor (editor ());
+  // for (int i=0; i<40; i++) wasm_get_page_pixmap (i);
+  //  set_current_editor (editor ());
+  gezira_Window_t win;
+  gezira_Window_init(&win, 800, 600);
+  gezira_Window_update(&win);
+  gezira_Window_loop(&win);
+  gezira_Window_fini(&win);
 }
