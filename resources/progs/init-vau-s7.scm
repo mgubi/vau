@@ -110,7 +110,8 @@
 (display "Booting fonts\n")
 (use-modules (fonts fonts-ec) (fonts fonts-adobe) (fonts fonts-x)
              (fonts fonts-math) (fonts fonts-foreign) (fonts fonts-misc)
-             (fonts fonts-composite) (fonts fonts-truetype))
+             (fonts fonts-composite) (fonts fonts-truetype)
+             (fonts fonts-opentype))
 
 ;; additional markup functions
 (use-modules (utils misc markup-funcs))

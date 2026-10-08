@@ -36,13 +36,13 @@ jobs:
           version: ${{ env.EMSCRIPTEN_VERSION }}
           actions-cache-folder: emsdk-cache
 
-      # MuPDF for WebAssembly: built again only when its script, its version
-      # or Emscripten change
+      # MuPDF for WebAssembly: built again only when its script, its patches,
+      # its version or Emscripten change
       - name: Cache of MuPDF
         uses: actions/cache@v4
         with:
           path: build-wasm/mupdf-${{ env.MUPDF_VERSION }}-source
-          key: mupdf-${{ env.MUPDF_VERSION }}-emscripten-${{ env.EMSCRIPTEN_VERSION }}-${{ hashFiles('devel/build-mupdf-wasm.sh') }}
+          key: mupdf-${{ env.MUPDF_VERSION }}-emscripten-${{ env.EMSCRIPTEN_VERSION }}-${{ hashFiles('devel/build-mupdf-wasm.sh', 'devel/mupdf-*.patch') }}
 
       - name: MuPDF
         run: |

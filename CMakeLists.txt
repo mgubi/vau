@@ -33,9 +33,6 @@ set (TEXMACS_REVISION ${TEXMACS_VERSION})
 ### Options
 ### --------------------------------------------------------------------
 
-option (PDFHUMMUS_NO_TIFF "Disable TIFF support in PDF Hummus" ON)
-option (PDFHUMMUS_NO_DCT "Disable DCT support in PDF Hummus" ON)
-option (PDFHUMMUS_NO_PNG "Disable PNG support in PDF Hummus" ON)
 option (USE_FREETYPE "use Freetype" ON)
 option (LINKED_FREETYPE "linked Freetype" ON)
 option (MUPDF_RENDERER "Enable MuPDF" ON)
@@ -151,10 +148,8 @@ if (EMSCRIPTEN)
   endif ()
 else (EMSCRIPTEN)
 #  find_package (PkgConfig REQUIRED)
-  find_package (PNG)
   find_package (Iconv)
   find_package (ZLIB)
-  find_package (JPEG)
   #pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
   find_package (Freetype REQUIRED)
   find_package (SDL2 REQUIRED)
@@ -172,11 +167,7 @@ find_package (MuPDF REQUIRED)
 set (DEBUG_ASSERT 1)
 set (USE_S7 1)
 set (USE_MUPDF 1)
-if (NOT EMSCRIPTEN)
-  # PDF Hummus; in the browser the PDF is written by the MuPDF plugin
-  # (Hummus needs parts of Freetype which the one of MuPDF lacks)
-  set (PDF_RENDERER 1)
-endif ()
+# the PDF is written by the MuPDF plugin (mupdf_pdf_renderer.cpp)
 set (STDC_HEADERS 1)
 set (STD_SETENV 1)
 
@@ -232,7 +223,6 @@ set (Vau_Include_Dirs
   ${Vau_SOURCE_DIR}/src/Kernel/Containers
   ${Vau_SOURCE_DIR}/src/Kernel/Types
   ${Vau_SOURCE_DIR}/src/Plugins
-  ${Vau_SOURCE_DIR}/src/Plugins/Pdf/LibAesgm
   ${Vau_SOURCE_DIR}/src/Scheme
   ${Vau_SOURCE_DIR}/src/Scheme/S7
   ${Vau_SOURCE_DIR}/src/Scheme/Scheme
@@ -527,6 +517,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Typeset/Table/table.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_buffer.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_editor.cpp"
+  "${Vau_SOURCE_DIR}/src/Vau/vau_fonts.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_glue.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_lib.cpp"
   "${Vau_SOURCE_DIR}/src/Vau/vau_stuff.cpp"
@@ -541,14 +532,11 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 #  "${Vau_SOURCE_DIR}/src/Plugins/Cairo/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Database/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Freetype/*.cpp"
-  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.cpp"
-  "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.c"
   "${Vau_SOURCE_DIR}/src/Plugins/MuPDF/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/MuPDF/*.c"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ghostscript/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Imlib2/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ispell/*.cpp"
-  "${Vau_SOURCE_DIR}/src/Plugins/Metafont/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Unix/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/LaTeX_Preview/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Mplayer/*.cpp"
@@ -556,10 +544,6 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 #  "${Vau_SOURCE_DIR}/src/Plugins/Sqlite3/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Updater/*.cpp"
 )
-
-if (EMSCRIPTEN)
-  list (FILTER Vau_Std_Plugins_SRCS EXCLUDE REGEX "/src/Plugins/Pdf/")
-endif ()
 
 # the handling of PDF attachments depends on the buffer management of TeXmacs
 list (FILTER Vau_Std_Plugins_SRCS EXCLUDE REGEX "attachment")
@@ -623,7 +607,6 @@ else (EMSCRIPTEN)
   #target_link_libraries (Vau PRIVATE PkgConfig::Guile)
   target_link_libraries (Vau PRIVATE Freetype::Freetype)
   target_link_libraries (Vau PRIVATE Iconv::Iconv)
-  target_link_libraries (Vau PRIVATE PNG::PNG)
   target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
   target_link_libraries (Vau PRIVATE SDL2::SDL2)
   target_link_libraries (Vau PRIVATE

@@ -146,8 +146,6 @@
 #cmakedefine PDFHUMMUS_NO_TIFF 1
 #cmakedefine PDF_RENDERER 1
 
-#cmakedefine PDFHUMMUS_NO_PNG 1
-
 /* Memory allocator */
 #cmakedefine NO_FAST_ALLOC 1
 #cmakedefine MAX_FAST @MAX_FAST@

@@ -23,8 +23,6 @@
 #include "data_cache.hpp"
 
 
-extern void setup_tex (); // from Plugins/Metafont/tex_init.cpp
-extern void init_tex  (); // from Plugins/Metafont/tex_init.cpp
 
 /******************************************************************************
 * Subroutines for paths
@@ -250,8 +248,6 @@ TeXmacs_main (int argc, char** argv) {
   extern bool texmacs_started;
   texmacs_started= true;
 
-  //  setup_tex ();
-  init_tex (); // for paths
 
 #ifndef __EMSCRIPTEN__
   extern void test_vau();

@@ -349,10 +349,6 @@ font qt_font (string family, int size, int dpi)
 }
 #endif
 
-font get_default_font (bool tt, bool mini, bool bold)
-{
-  return font ();
-}
 
 bool in_presentation_mode () {
   return false;
@@ -420,11 +416,8 @@ xpm_load (url file_name){
 
 bool
 use_mupdf_pdf () {
-#ifdef __EMSCRIPTEN__
-  return true; // the only way to a PDF in the browser (no Ghostscript)
-#elif defined(MUPDF_RENDERER)
-  if (get_env ("TEXMACS_PDF_MUPDF") == "1") return true;
-  return get_preference ("native pdf renderer", "default") == "mupdf";
+#ifdef MUPDF_RENDERER
+  return true; // the MuPDF plugin is the PDF writer of Vau
 #else
   return false;
 #endif

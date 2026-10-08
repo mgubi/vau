@@ -1207,7 +1207,7 @@ get_bounding_rectangle (tree t) {
 
 bool
 supports_native_pdf () {
-#ifdef PDF_RENDERER
+#if defined(PDF_RENDERER) || defined(MUPDF_RENDERER)
   return true;
 #else
   return false;
@@ -1381,6 +1381,12 @@ DECLARE_GLUE_NAME_TYPE(new_marker,"mark-new", double ())
 DECLARE_GLUE_NAME_TYPE(register_glyph,"glyph-register", void (string, array_array_array_double))
 DECLARE_GLUE_NAME_TYPE(recognize_glyph,"glyph-recognize", string (array_array_array_double))
 DECLARE_GLUE_NAME_TYPE(set_new_fonts,"set-new-fonts", void (bool))
+DECLARE_GLUE_NAME_TYPE(set_hand_tuned_math_fonts,"set-hand-tuned-math-fonts", void (bool))
+DECLARE_GLUE_NAME_TYPE(get_hand_tuned_math_fonts,"hand-tuned-math-fonts?", bool ())
+DECLARE_GLUE_NAME_TYPE(math_font_profile_set,"math-font-profile-set", void (string, scheme_tree_t))
+DECLARE_GLUE_NAME_TYPE(math_font_profile,"math-font-profile", scheme_tree_t (string))
+DECLARE_GLUE_NAME_TYPE(math_font_profile_families,"math-font-profile-families", array_string ())
+DECLARE_GLUE_NAME_TYPE(math_font_profile_attr,"math-font-profile-attr", string (string, string))
 DECLARE_GLUE_NAME_TYPE(get_new_fonts,"new-fonts?", bool ())
 DECLARE_GLUE_NAME_TYPE(eqnumber_to_nonumber,"tmtm-eqnumber->nonumber", tree (tree))
 DECLARE_GLUE_NAME_TYPE(is_busy_versioning,"busy-versioning?", bool ())
