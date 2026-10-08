@@ -16,7 +16,8 @@ const types = {
 	".html": "text/html; charset=utf-8", ".js": "text/javascript",
 	".mjs": "text/javascript", ".wasm": "application/wasm",
 	".data": "application/octet-stream", ".json": "application/json",
-	".png": "image/png", ".gz": "application/gzip", ".tm": "text/plain; charset=utf-8"
+	".png": "image/png", ".gz": "application/gzip",
+	".pack": "application/octet-stream", ".otf": "font/otf", ".ttf": "font/ttf", ".tm": "text/plain; charset=utf-8"
 };
 
 http.createServer((req, res) => {

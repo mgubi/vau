@@ -3,8 +3,9 @@
 //
 //   node test-node.mjs [document] [output prefix]
 //
-// It starts the library, typesets a document (one of the file system of
-// the library, or a file of this machine), draws its first page and a view
+// It starts the library on the resources of the source tree (their place is
+// in vau-build.json, or VAU_RESOURCES), typesets a document (one of the
+// resources, as /Vau/..., or a file of this machine), draws its first page and a view
 // of it, and writes <prefix>.png and <prefix>.pdf.
 
 import fs from "node:fs";
@@ -28,9 +29,18 @@ function check(cond, what) {
 let t0 = Date.now();
 const lap = () => { const t = Date.now(), d = t - t0; t0 = t; return `${d} ms`; };
 
+// under node the resources are those of the source tree, mounted as /Vau
+// (in the browser they come in packages: vau_packages.js)
+const resources = process.env.VAU_RESOURCES ||
+	JSON.parse(fs.readFileSync(path.join(here, "vau-build.json"), "utf8")).resources;
+
 const vau = await libvau({
 	print: quiet ? () => {} : console.log,
-	printErr: quiet ? () => {} : console.error
+	printErr: quiet ? () => {} : console.error,
+	preRun: [module => {
+		module.FS.mkdir("/Vau");
+		module.FS.mount(module.FS.filesystems.NODEFS, { root: resources }, "/Vau");
+	}]
 });
 vau._wasm_init_vau();
 console.log(`     started in ${lap()}`);

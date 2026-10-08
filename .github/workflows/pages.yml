@@ -64,17 +64,21 @@ jobs:
           ls -l vau-test.png vau-test.pdf
 
       # the site: the viewer as index.html, the worker, the program, and the
-      # resources as a gzip copy, which the worker decompresses (Pages does
-      # not compress such files itself)
+      # resources in packages with their manifest (devel/package.py: the
+      # boot package, those loaded in the background, and the fonts and
+      # examples which are fetched when they are read)
       - name: The site
         run: |
           mkdir site
           cp platform/wasm/Vau.html site/index.html
           cp platform/wasm/vau_worker.js site/
           cp build-wasm/Vau-wasm.js build-wasm/Vau-wasm.wasm site/
-          gzip -9 -c build-wasm/Vau-wasm.data > site/Vau-wasm.data.gz
+          cp build-wasm/vau-files.json site/
+          cp -r build-wasm/pkg site/pkg
           touch site/.nojekyll
           ls -l site
+          ls site/pkg | wc -l
+          ls -l site/pkg/*.pack.gz
           du -sh site
 
       - uses: actions/upload-pages-artifact@v4

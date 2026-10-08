@@ -1,0 +1,11 @@
+# The files which Vau reads when it starts and typesets a plain document
+# (in addition to the groups of devel/package.py): they go in the boot
+# package. The worker lists the files read so far (vau.filesRead () in the
+# console of the page); see README.md.
+/Vau/fonts/truetype/lm/latinmodern-math.otf
+/Vau/fonts/truetype/lm/lmmono10-regular.otf
+/Vau/fonts/truetype/lm/lmroman10-bold.otf
+/Vau/fonts/truetype/lm/lmroman10-italic.otf
+/Vau/fonts/truetype/lm/lmroman10-regular.otf
+/Vau/fonts/truetype/lm/lmsans10-regular.otf
+/Vau/langs/natural/hyphen/hyphen.us

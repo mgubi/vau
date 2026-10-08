@@ -2,7 +2,7 @@
 
 # Vau
 
-**Try it in the browser: <https://mgubi.github.io/vau/>** (a viewer of TeXmacs documents; the first load fetches about 75 MB).
+**Try it in the browser: <https://mgubi.github.io/vau/>** (a viewer of TeXmacs documents).
 
 **Vau** is an experiment/exercise over the TeXmacs codebase, to learn more about it. The initial goal is to extract enough machinery to be able to read and typeset arbitrary TeXmacs files. So **Vau** will be initially a viewer. This will allow me to understand the code dependencies and extract a minimal typesetting core, abstracted from the UI and the wider organization of the editor. In the meanwhile I plan to experiment about various refactorings.
 
@@ -66,24 +66,35 @@ emmake make -j8
 ```
 `MUPDF_SOURCE_DIR` may point to sources of MuPDF built elsewhere in the same way (`build/wasm/slim`, or another directory given with `-DMUPDF_WASM_BUILD=`). Freetype and zlib are those which MuPDF carries.
 
-The build gives `Vau-wasm.js`, `Vau-wasm.wasm` and `Vau-wasm.data` (the resources, without the icons of the interface and the tests), and copies the page next to them. To try it:
+The build gives `Vau-wasm.js` and `Vau-wasm.wasm`, the resources as packages (`vau-files.json` and `pkg/`, see below), and copies the page next to them. To try it:
 ```
 node test-node.mjs    # without a browser: typesets a document, writes vau-test.png and vau-test.pdf
 node serve.mjs 8080   # then open http://localhost:8080/
 ```
+Under node the test reads the resources of the source tree, mounted as `/Vau`.
+
+### The resources in the browser
+
+`devel/package.py` (run by the build) writes the resources, without the icons of the interface and the tests, as packages, with a manifest `vau-files.json` which gives for each file its package, offset and size. `platform/wasm/vau_packages.js`, which is part of the program, makes the whole tree of `/Vau` before Vau starts, every file as a placeholder of its size, and fills it:
+
+- the boot package (2.2 MB compressed) before Vau starts: the Scheme code, the styles, the encodings, and the files of `platform/wasm/boot-files.txt`, those which Vau reads to start and typeset a plain document (the main Latin Modern fonts, the English hyphenation);
+- the other packages (the languages, the patterns..., 10 MB) one after the other in the background once Vau runs; a file read before its package has come brings the whole package at once, with a synchronous request (Vau reads its files synchronously, and such requests are allowed in a worker);
+- the fonts and the example documents (65 MB) are in no package: each is a file of its own, fetched when Vau first reads it. A font which is never used is never fetched.
+
+The names of the packages and of these files carry a digest of their contents, for the cache of the browser. `vau.packageStats ()` in the console of the page tells what came and how, `vau.filesRead ()` lists the files read so far, which is how the boot list is made, and `Vau.html?no-background` leaves all the packages to the demand.
 
 The files of `platform/wasm`:
 
 - `Vau.html`, the viewer: it opens the documents which come with Vau, or a `.tm` file of yours (button or drop), shows a page at a time (wheel, arrows, Page Up/Down, Home/End), zooms (`+`, `-`, `W` for the width, `0` for the whole page, Ctrl+wheel) and exports the PDF. `Vau.html?doc=/Vau/...` opens a document of the library, `Vau.html?log` sends its output to the console.
-- `vau_worker.js`, the worker in which the library runs: the page sends `[method, id, args]` and gets the result back, the pixmaps as transferred buffers. Its methods (`openDocument`, `openBuffer`, `pageCount`, `pageSize`, `getPagePixmap`, `getViewPixmap`, `exportPdf`, `evalScheme`) are functions of the object `vau` of the page which return promises.
-- `mylib.js`, what the library calls in JavaScript.
+- `vau_worker.js`, the worker in which the library runs: the page sends `[method, id, args]` and gets the result back, the pixmaps as transferred buffers. Its methods (`openDocument`, `openBuffer`, `pageCount`, `pageSize`, `getPagePixmap`, `getViewPixmap`, `exportPdf`, `evalScheme`, `filesRead`, `packageStats`) are functions of the object `vau` of the page which return promises.
+- `mylib.js`, what the library calls in JavaScript, and `vau_packages.js`, which brings the resources (above).
 - `serve.mjs` and `test-node.mjs`, the server and the test above.
 
 The library exports the functions `wasm_*` of `src/Vau/vau_lib.cpp`.
 
 ### The live page
 
-The workflow `.github/workflows/pages.yml` builds the WebAssembly version at each push to `main` (MuPDF is cached), runs `test-node.mjs` and publishes the viewer at <https://mgubi.github.io/vau/> with GitHub Pages (which is set to be built by GitHub Actions in the settings of the repository). There the resources are served as a gzip copy, `Vau-wasm.data.gz`, which the worker fetches and decompresses when it is there.
+The workflow `.github/workflows/pages.yml` builds the WebAssembly version at each push to `main` (MuPDF is cached), runs `test-node.mjs` and publishes the viewer at <https://mgubi.github.io/vau/> with GitHub Pages (which is set to be built by GitHub Actions in the settings of the repository). The packages are fetched as their gzip copies, which the program decompresses (Pages does not compress such files itself).
 
 Screenshot:
 

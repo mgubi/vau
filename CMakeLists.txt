@@ -577,13 +577,10 @@ if (EMSCRIPTEN)
     "SHELL:-sMODULARIZE=1"
     "SHELL:-sEXPORT_NAME=libvau"
     "SHELL:-sENVIRONMENT=web,worker,node"
-    # the resources, without what a viewer does not need (the icons of the
-    # interface and the tests of the Scheme code)
-    "SHELL:--preload-file ${Vau_SOURCE_DIR}/resources@/Vau"
-    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/misc/pixmaps"
-    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/misc/images"
-    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/progs/check"
-    "SHELL:--exclude-file *.DS_Store"
+    # the resources come in packages (see below): in the browser they are
+    # fetched by vau_packages.js, under node the tests mount the source tree
+    "SHELL:--pre-js ${Vau_SOURCE_DIR}/platform/wasm/vau_packages.js"
+    "SHELL:-lnodefs.js"
     "SHELL:-sALLOW_MEMORY_GROWTH=1"
     "SHELL:-sINITIAL_MEMORY=268435456"
     "SHELL:-sSTACK_SIZE=16777216"
@@ -631,6 +628,20 @@ if (EMSCRIPTEN)
     configure_file (${Vau_SOURCE_DIR}/platform/wasm/${F}
                     ${Vau_BINARY_DIR}/${F} COPYONLY)
   endforeach ()
+  set_property (TARGET Vau APPEND PROPERTY LINK_DEPENDS
+    ${Vau_SOURCE_DIR}/platform/wasm/vau_packages.js
+    ${Vau_SOURCE_DIR}/platform/wasm/mylib.js)
+  # where the tests under node find the resources
+  file (WRITE ${Vau_BINARY_DIR}/vau-build.json
+        "{\"resources\": \"${Vau_SOURCE_DIR}/resources\"}\n")
+  # the resources as packages, with their manifest vau-files.json (the
+  # script does nothing when they are up to date)
+  find_package (Python3 REQUIRED COMPONENTS Interpreter)
+  add_custom_target (packages ALL
+    COMMAND ${Python3_EXECUTABLE} ${Vau_SOURCE_DIR}/devel/package.py
+            ${Vau_SOURCE_DIR}/resources ${Vau_BINARY_DIR}
+            ${Vau_SOURCE_DIR}/platform/wasm/boot-files.txt
+    VERBATIM)
 endif (EMSCRIPTEN)
 
 

@@ -75,6 +75,15 @@ methods.evalScheme = function (code) {
 	return call("wasm_eval_to_string", "string", ["string"], [code]);
 };
 
+// the files read so far (for the boot list, platform/wasm/boot-files.txt)
+// and the state of the loading of the packages
+methods.filesRead = function () {
+	return vau.vauPackages ? vau.vauPackages.filesRead() : [];
+};
+methods.packageStats = function () {
+	return vau.vauPackages ? Object.assign({}, vau.vauPackages.stats) : null;
+};
+
 function transferables(value) {
 	if (value instanceof ArrayBuffer) return [value];
 	if (value && value.data && value.data.buffer instanceof ArrayBuffer)
@@ -94,49 +103,16 @@ onmessage = async function (event) {
 	}
 };
 
-// The resources of the library (Vau-wasm.data) are large: a site may serve
-// a gzip copy of them, Vau-wasm.data.gz, which is taken when it is there
-// and decompressed here (GitHub Pages does not compress such files itself).
-async function compressedResources() {
-	if (!self.DecompressionStream) return null;
-	try {
-		const response = await fetch("Vau-wasm.data.gz");
-		if (!response.ok) return null;
-		const total = Number(response.headers.get("Content-Length")) || 0;
-		const reader = response.body.getReader();
-		const chunks = [];
-		let received = 0, shown = 0;
-		for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			chunks.push(value);
-			received += value.length;
-			if (received - shown > 1 << 20) {
-				shown = received;
-				const mb = n => (n / 1048576).toFixed(0);
-				postMessage(["STATUS", total ? `Loading Vau… ${mb(received)} of ${mb(total)} MB`
-					: `Loading Vau… ${mb(received)} MB`]);
-			}
-		}
-		const blob = new Blob(chunks);
-		// a server may have sent the file with Content-Encoding: gzip, and
-		// then it is decompressed already
-		const head = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
-		if (head[0] !== 0x1f || head[1] !== 0x8b) return await blob.arrayBuffer();
-		postMessage(["STATUS", "Unpacking Vau…"]);
-		const stream = blob.stream().pipeThrough(new DecompressionStream("gzip"));
-		return await new Response(stream).arrayBuffer();
-	} catch (error) {
-		return null;
-	}
-}
+// The resources of the library come in packages (vau_packages.js, in the
+// program): the boot package before it starts, the others in the
+// background, the fonts and the examples when they are first read.
 
-const ready = compressedResources().then(data => libvau({
-	...(data ? { getPreloadedPackage: () => data } : {}),
+const ready = libvau({
 	print: text => postMessage(["LOG", text]),
 	printErr: text => postMessage(["LOG", text]),
-	setStatus: text => { if (text) postMessage(["STATUS", text]); }
-})).then(module => {
+	setStatus: text => { if (text) postMessage(["STATUS", text]); },
+	onAbort: what => postMessage(["FAILED", String(what)])
+}).then(module => {
 	vau = module;
 	vau._wasm_init_vau();
 	postMessage(["READY", Object.keys(methods)]);

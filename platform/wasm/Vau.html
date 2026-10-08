@@ -159,7 +159,8 @@ input[type=number] {
 // becomes a function of `vau` which returns a promise.
 
 const vau = {};
-const worker = new Worker("vau_worker.js");
+// the query of the page goes to the worker too (?no-background)
+const worker = new Worker("vau_worker.js" + location.search);
 const pending = new Map();
 let lastId = 0;
 // the output of the library goes to the console: Vau.html?log shows it all
