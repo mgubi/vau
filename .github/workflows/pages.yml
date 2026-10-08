@@ -1,0 +1,99 @@
+# Vau in the browser: the WebAssembly build (see "Build and run Vau/Wasm" in
+# README.md), tested under node and published on GitHub Pages,
+#
+#   https://<owner>.github.io/<repository>/
+#
+# It builds the slim MuPDF (cached), Vau, runs platform/wasm/test-node.mjs
+# and makes the site of the viewer (platform/wasm/Vau.html). The site is
+# published from the branch main only; a run started by hand on another
+# branch builds and tests, and keeps the site as an artifact of the run.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  EMSCRIPTEN_VERSION: 6.0.10
+  MUPDF_VERSION: 1.28.5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSCRIPTEN_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      # MuPDF for WebAssembly: built again only when its script, its version
+      # or Emscripten change
+      - name: Cache of MuPDF
+        uses: actions/cache@v4
+        with:
+          path: build-wasm/mupdf-${{ env.MUPDF_VERSION }}-source
+          key: mupdf-${{ env.MUPDF_VERSION }}-emscripten-${{ env.EMSCRIPTEN_VERSION }}-${{ hashFiles('devel/build-mupdf-wasm.sh') }}
+
+      - name: MuPDF
+        run: |
+          test -f build-wasm/mupdf-$MUPDF_VERSION-source/build/wasm/slim/libmupdf.a ||
+            sh devel/build-mupdf-wasm.sh build-wasm $MUPDF_VERSION
+
+      - name: Vau
+        run: |
+          cd build-wasm
+          emcmake cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DMUPDF_SOURCE_DIR=$PWD/mupdf-$MUPDF_VERSION-source
+          emmake make -j"$(nproc)"
+
+      - name: Test (node)
+        run: |
+          cd build-wasm
+          # a hang must not take the whole run (it takes seconds)
+          timeout 300 node test-node.mjs
+          ls -l vau-test.png vau-test.pdf
+
+      # the site: the viewer as index.html, the worker, the program, and the
+      # resources as a gzip copy, which the worker decompresses (Pages does
+      # not compress such files itself)
+      - name: The site
+        run: |
+          mkdir site
+          cp platform/wasm/Vau.html site/index.html
+          cp platform/wasm/vau_worker.js site/
+          cp build-wasm/Vau-wasm.js build-wasm/Vau-wasm.wasm site/
+          gzip -9 -c build-wasm/Vau-wasm.data > site/Vau-wasm.data.gz
+          touch site/.nojekyll
+          ls -l site
+          du -sh site
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

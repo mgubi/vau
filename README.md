@@ -2,6 +2,8 @@
 
 # Vau
 
+**Try it in the browser: <https://mgubi.github.io/vau/>** (a viewer of TeXmacs documents; the first load fetches about 75 MB).
+
 **Vau** is an experiment/exercise over the TeXmacs codebase, to learn more about it. The initial goal is to extract enough machinery to be able to read and typeset arbitrary TeXmacs files. So **Vau** will be initially a viewer. This will allow me to understand the code dependencies and extract a minimal typesetting core, abstracted from the UI and the wider organization of the editor. In the meanwhile I plan to experiment about various refactorings.
 
 ### Glue code refactoring
@@ -74,6 +76,10 @@ The files of `platform/wasm`:
 - `serve.mjs` and `test-node.mjs`, the server and the test above.
 
 The library exports the functions `wasm_*` of `src/Vau/vau_lib.cpp`.
+
+### The live page
+
+The workflow `.github/workflows/pages.yml` builds the WebAssembly version at each push to `main` (MuPDF is cached), runs `test-node.mjs` and publishes the viewer at <https://mgubi.github.io/vau/> with GitHub Pages (which is set to be built by GitHub Actions in the settings of the repository). There the resources are served as a gzip copy, `Vau-wasm.data.gz`, which the worker fetches and decompresses when it is there.
 
 Screenshot:
 
