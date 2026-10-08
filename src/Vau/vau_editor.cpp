@@ -1149,7 +1149,7 @@ editor_rep::typeset_document (string image_dpi) {
 picture
 editor_rep::get_page_picture (int page) {
   box the_box= eb;
-  page= min(N(the_box[0]), max (0, page-1));
+  page= min(N(the_box[0])-1, max (0, page-1));
   {
     box b=  the_box[0][page];
     double zoomf= 5.0;
@@ -1180,10 +1180,32 @@ editor_rep::get_page_picture (int page) {
   }
 }
 
+int
+editor_rep::get_nr_pages () {
+  if (is_nil (eb) || N(eb) == 0) return 0;
+  return N(eb[0]);
+}
+
+void
+editor_rep::get_page_size (int page, double zoomf, int& pxw, int& pxh) {
+  // size in pixels of a page (numbered from 1) at a given zoom factor
+  pxw= pxh= 0;
+  int n= get_nr_pages ();
+  if (n == 0) return;
+  box b= eb[0][min (n-1, max (0, page-1))];
+  SI pixel= 5*PIXEL;
+  pxw= ((SI) round (zoomf * (b->x4 - b->x3)) + pixel - 1) / pixel;
+  pxh= ((SI) round (zoomf * (b->y4 - b->y3)) + pixel - 1) / pixel;
+}
+
 picture
-editor_rep::get_view_picture (int page, int width, int height, double zoomf) {
+editor_rep::get_view_picture (int page, int width, int height, double zoomf,
+                              int scroll_x, int scroll_y) {
+  // the part of a page (numbered from 1) seen through a view of
+  // width x height pixels; a page smaller than the view is centered, a
+  // larger one is scrolled by (scroll_x, scroll_y) pixels
   box the_box= eb;
-  page= min(N(the_box[0]), max (0, page-1));
+  page= min(N(the_box[0])-1, max (0, page-1));
   {
     box b=  the_box[0][page];
     
@@ -1194,8 +1216,9 @@ editor_rep::get_view_picture (int page, int width, int height, double zoomf) {
     SI hh= (SI) round (zoomf * h);
     int pxw= (ww+pixel-1)/pixel;
     int pxh= (hh+pixel-1)/pixel;
-    cout << pxw << "," << pxh << "   " << width << "," << height << LF;
-    picture pic= native_picture (width, height, max ((width-pxw)/2, 0), -max ((height-pxh)/2, 0));
+    int ox= pxw <= width ? (width-pxw)/2 : -max (0, min (scroll_x, pxw-width));
+    int oy= pxh <= height? (height-pxh)/2: -max (0, min (scroll_y, pxh-height));
+    picture pic= native_picture (width, height, ox, -oy);
     renderer ren= picture_renderer (pic, zoomf);
     {
       tree bg= env->read (BG_COLOR);

@@ -1,154 +1,108 @@
-
+// The worker which runs Vau: the page (Vau.html) sends [method, id, args]
+// and gets ["RESULT", id, value] or ["ERROR", id, error] back; once the
+// library has started it sends ["READY", names of the methods].
 
 "use strict";
 
-// Import the WASM module
-// We do additional fetches to these paths to have better error messages in case
-// they're missing because the user forgot to compile them.
-checkPath("Vau-wasm.wasm");
-checkPath("Vau-wasm.js");
 importScripts("Vau-wasm.js");
-//importScripts("lib/mupdf.js");
 
-function checkPath(path) {
-	fetch(path, { method: "HEAD" }).then(response => {
-		if (!response.ok)
-			postMessage(["ERROR", `Failed to load ${path}: Status ${response.status}. This likely indicates that Vau wasn't compiled to wasm.`]);
-	});
+let vau = null;        // the module, once instantiated
+const methods = {};
+
+// call a function of the library with strings among its arguments
+function call(name, ret, types, args) {
+	return vau.ccall(name, ret, types, args);
 }
 
-
-// A list of RegExp objects to check function names against
-let logFilters = [];
-
-function logCall(id, funcName, args) {
-	for (const filter of logFilters) {
-		if (filter.test(funcName)) {
-			console.log(`(${id}) CALL ${funcName}:`, args);
-			return;
-		}
-	}
+// the pixmap left by the library (mylib.js), to be transferred to the page
+function takePixmap() {
+	const pix = vau.vauPixmap;
+	vau.vauPixmap = null;
+	return pix;
 }
 
-function logReturn(id, funcName, value) {
-	for (const filter of logFilters) {
-		if (filter.test(funcName)) {
-			console.log(`(${id}) RETURN ${funcName}:`, value);
-			return;
-		}
-	}
+// load and typeset a document of the file system of the library, return
+// { pages }; pages is 0 when the document could not be opened
+methods.openDocument = function (path) {
+	return { pages: call("wasm_open_document", "number", ["string"], [path]) };
+};
+
+// write a document sent by the page (an ArrayBuffer) and open it
+methods.openBuffer = function (buffer, name) {
+	const dir = "/work";
+	if (!vau.FS.analyzePath(dir).exists) vau.FS.mkdir(dir);
+	const path = dir + "/" + name.replace(/[^A-Za-z0-9._-]/g, "_");
+	vau.FS.writeFile(path, new Uint8Array(buffer));
+	return methods.openDocument(path);
+};
+
+methods.pageCount = function () {
+	return vau._wasm_get_nr_pages();
+};
+
+// the size in pixels of a page at a zoom factor
+methods.pageSize = function (page, zoom) {
+	return {
+		width: vau._wasm_get_page_width(page, zoom),
+		height: vau._wasm_get_page_height(page, zoom)
+	};
+};
+
+// a whole page, at the resolution the document was typeset for
+methods.getPagePixmap = function (page) {
+	vau._wasm_get_page_pixmap(page);
+	return takePixmap();
+};
+
+// the part of a page seen in a view of width x height pixels
+methods.getViewPixmap = function (page, width, height, zoom, scrollX, scrollY) {
+	vau._wasm_get_view_pixmap(page, width, height, zoom, scrollX | 0, scrollY | 0);
+	return takePixmap();
+};
+
+// the document as a PDF file (an ArrayBuffer), or null
+methods.exportPdf = function () {
+	const path = "/tmp/vau-export.pdf";
+	if (!vau.FS.analyzePath("/tmp").exists) vau.FS.mkdir("/tmp");
+	if (!call("wasm_export_pdf", "number", ["string"], [path])) return null;
+	const data = vau.FS.readFile(path);
+	vau.FS.unlink(path);
+	return data.buffer;
+};
+
+// evaluate a Scheme expression, return its value as written by Scheme
+methods.evalScheme = function (code) {
+	return call("wasm_eval_to_string", "string", ["string"], [code]);
+};
+
+function transferables(value) {
+	if (value instanceof ArrayBuffer) return [value];
+	if (value && value.data && value.data.buffer instanceof ArrayBuffer)
+		return [value.data.buffer];
+	return [];
 }
 
 onmessage = async function (event) {
-	let [ func, id, args ] = event.data;
-	await vau_ready;
-
+	const [func, id, args] = event.data;
 	try {
-		logCall(id, func, args);
-		let result = workerMethods[func](...args);
-		logReturn(id, func, result);
-		postMessage(["RESULT", id, result]);
+		await ready;
+		const result = methods[func](...args);
+		postMessage(["RESULT", id, result], transferables(result));
 	} catch (error) {
-		if (error instanceof VauTryLaterError) {
-			trylaterQueue.push(event);
-		} else {
-			postMessage(["ERROR", id, {name: error.name, message: error.message, stack: error.stack}]);
-		}
+		postMessage(["ERROR", id,
+			{ name: error.name, message: String(error.message || error), stack: error.stack }]);
 	}
 };
 
-let trylaterScheduled = false;
-let trylaterQueue = [];
-var onFetchCompleted = function (_id) {
-	if (!trylaterScheduled) {
-		trylaterScheduled = true;
-
-		setTimeout(() => {
-			trylaterScheduled = false;
-			let currentQueue = trylaterQueue;
-			trylaterQueue = [];
-			currentQueue.forEach(onmessage);
-		}, 0);
-	}
-};
-
-class VauError extends Error {
-	constructor(message) {
-		super(message);
-		this.name = "MupdfError";
-	}
-}
-
-class VauTryLaterError extends VauError {
-	constructor(message) {
-		super(message);
-		this.name = "MupdfTryLaterError";
-	}
-}
-
-
-const workerMethods = {};
-
-
-function allocateUTF8(str) {
-	var size = libvau.lengthBytesUTF8(str) + 1;
-	var pointer = libvau._malloc(size);
-	libvau.stringToUTF8(str, pointer, size);
-	return pointer;
-}
-
-workerMethods.openDocument = function (str) {
-//	console.log(`Typesetting ${str} ...`);
-	var p= allocateUTF8(str);
-	libvau._wasm_open_document(p);
-	libvau._free(p)
-}
-
-workerMethods.getPagePixmap = function (page) {
-    libvau._wasm_get_page_pixmap (page);
-    return VAUJSPIXMAP;
-};
-
-workerMethods.getViewPixmap = function (page, width, height, zoomf) {
-    libvau._wasm_get_view_pixmap (page, width, height, zoomf);
-    return VAUJSPIXMAP;
-};
-
-workerMethods.evalScheme = function (str) {
-	var p= allocateUTF8(str);
-	libvau._wasm_eval(p);
-	libvau._free(p);
-};
-
-var vau_ready = libvau({}).then(m => {
-	libvau = m;
-	libvau._wasm_init_vau();
-
-	if (!globalThis.crossOriginIsolated) {
-		console.warn("Vau: The current page is running in a non-isolated context. This means SharedArrayBuffer is not available. See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer for details.");
-		return { sharedBuffer: null };
-	}
-	if (globalThis.SharedArrayBuffer == null) {
-		console.warn("Vau: You browser does not implement SharedArrayBuffer.");
-		return { sharedBuffer: null };
-	}
-/*    
-	if (libvau.wasmMemory == null) {
-        console.error(libvau);
-		console.error("Vau internal error: emscripten does not export wasmMemory");
-		return { sharedBuffer: null };
-	}
-	if (!(libvau.wasmMemory instanceof WebAssembly.Memory) || !(libvau.wasmMemory.buffer instanceof SharedArrayBuffer)) {
-		console.error("Vau internal error: wasmMemory exported by emscripten is not a valid instance of WebAssembly.Memory");
-		return { sharedBuffer: null };
-	}
-	console.log("Vau: WASM module running in cross-origin isolated context")
-	return { sharedBuffer: libvau.wasmMemory.buffer }
-    */
-	return { sharedBuffer: null };
+const ready = libvau({
+	print: text => postMessage(["LOG", text]),
+	printErr: text => postMessage(["LOG", text]),
+	setStatus: text => { if (text) postMessage(["STATUS", text]); }
+}).then(module => {
+	vau = module;
+	vau._wasm_init_vau();
+	postMessage(["READY", Object.keys(methods)]);
+}).catch(error => {
+	postMessage(["FAILED", String(error && error.message || error)]);
+	throw error;
 });
-
-vau_ready
-	.then(result => postMessage(["READY", result.sharedBuffer, Object.keys(workerMethods)]))
-	.catch(error => postMessage(["ERROR", error]));
-

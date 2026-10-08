@@ -90,7 +90,15 @@ if (EMSCRIPTEN)
   set (CONFIG_OS_SUFFIX "wasm")
   set (CONFIG_HOST_OS "wasm-emscripten")
   set (Vau_WORD_SIZE 8) # 32 bit pointers, but we want 8 bytes alignment
+  # wasm32: the checks of the sizes do not run when cross-compiling
+  set (SIZEOF_VOID_P 4)
+  set (SIZEOF_INT 4)
+  set (SIZEOF_LONG 4)
+  set (SIZEOF_LONG_LONG 8)
+  set (SIZEOF_SHORT 2)
   set (HAVE_TIME_T TRUE)
+  set (HAVE_INTPTR_T TRUE)
+  set (HAVE_FILE TRUE)
 elseif (APPLE)
   set (CONFIG_OS "MACOS")
   set (OS_MACOS 1)
@@ -126,7 +134,21 @@ endif ()
 ### --------------------------------------------------------------------
 
 if (EMSCRIPTEN)
-
+  # MuPDF built for WebAssembly from its sources (devel/build-mupdf-wasm.sh).
+  # Freetype and zlib are those which MuPDF carries.
+  set (MUPDF_SOURCE_DIR "" CACHE PATH "Sources of MuPDF, built for wasm")
+  set (MUPDF_WASM_BUILD "build/wasm/slim" CACHE STRING
+       "Build directory of the wasm libraries in the sources of MuPDF")
+  if (MUPDF_SOURCE_DIR)
+    set (MUPDF_INCLUDE_DIR "${MUPDF_SOURCE_DIR}/include")
+    set (MUPDF_LIBRARY
+         "${MUPDF_SOURCE_DIR}/${MUPDF_WASM_BUILD}/libmupdf.a")
+    set (MUPDF_THIRD_LIBRARY
+         "${MUPDF_SOURCE_DIR}/${MUPDF_WASM_BUILD}/libmupdf-third.a")
+    set (Vau_Wasm_Include_Dirs
+         "${MUPDF_SOURCE_DIR}/thirdparty/freetype/include"
+         "${MUPDF_SOURCE_DIR}/thirdparty/zlib")
+  endif ()
 else (EMSCRIPTEN)
 #  find_package (PkgConfig REQUIRED)
   find_package (PNG)
@@ -150,7 +172,11 @@ find_package (MuPDF REQUIRED)
 set (DEBUG_ASSERT 1)
 set (USE_S7 1)
 set (USE_MUPDF 1)
-set (PDF_RENDERER 1)
+if (NOT EMSCRIPTEN)
+  # PDF Hummus; in the browser the PDF is written by the MuPDF plugin
+  # (Hummus needs parts of Freetype which the one of MuPDF lacks)
+  set (PDF_RENDERER 1)
+endif ()
 set (STDC_HEADERS 1)
 set (STD_SETENV 1)
 
@@ -531,6 +557,10 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
 #  "${Vau_SOURCE_DIR}/src/Plugins/Updater/*.cpp"
 )
 
+if (EMSCRIPTEN)
+  list (FILTER Vau_Std_Plugins_SRCS EXCLUDE REGEX "/src/Plugins/Pdf/")
+endif ()
+
 # the handling of PDF attachments depends on the buffer management of TeXmacs
 list (FILTER Vau_Std_Plugins_SRCS EXCLUDE REGEX "attachment")
 
@@ -539,7 +569,6 @@ set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 if (NOT EMSCRIPTEN)
   set (Vau_All_SRCS ${Vau_All_SRCS} "${Vau_SOURCE_DIR}/src/Vau/vau_main.cpp")
 else (NOT EMSCRIPTEN)
-#  set (Vau_All_SRCS ${Vau_All_SRCS} "${Vau_SOURCE_DIR}/src/Vau/vau_js.cpp")
 endif (NOT EMSCRIPTEN)
 
 add_executable (Vau)
@@ -553,36 +582,39 @@ if (EMSCRIPTEN)
   set_target_properties (Vau
         PROPERTIES
         OUTPUT_NAME Vau-wasm)
-  target_compile_options (Vau
-    PRIVATE
-    "SHELL:-include ${Vau_BINARY_DIR}/src/System/config.h"
-    "SHELL:-sUSE_FREETYPE=1" "SHELL:-sUSE_ZLIB=1" "SHELL:-sUSE_LIBPNG=1"
-  )
+  target_include_directories (Vau PRIVATE ${Vau_Wasm_Include_Dirs})
+  # the model of exceptions and of setjmp/longjmp must be that of MuPDF
+  set (Vau_Wasm_EH "-fwasm-exceptions" "SHELL:-sSUPPORT_LONGJMP=wasm")
+  target_compile_options (Vau PRIVATE ${Vau_Wasm_EH} -w)
   target_link_options (Vau
     PRIVATE
+    ${Vau_Wasm_EH}
     "SHELL:--no-entry"
     "SHELL:-sMODULARIZE=1"
-    "SHELL:--source-map-base /" 
-#   "SHELL:-sDISABLE_EXCEPTION_CATCHING=0"
-    "SHELL:-sUSE_FREETYPE=1" "SHELL:-s USE_ZLIB=1" "SHELL:-s USE_LIBPNG=1"
+    "SHELL:-sEXPORT_NAME=libvau"
+    "SHELL:-sENVIRONMENT=web,worker,node"
+    # the resources, without what a viewer does not need (the icons of the
+    # interface and the tests of the Scheme code)
     "SHELL:--preload-file ${Vau_SOURCE_DIR}/resources@/Vau"
-    "SHELL:--preload-file ${Vau_SOURCE_DIR}/vau_home@/Vau_Home"
-#    "SHELL:--emrun"
+    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/misc/pixmaps"
+    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/misc/images"
+    "SHELL:--exclude-file ${Vau_SOURCE_DIR}/resources/progs/check"
+    "SHELL:--exclude-file *.DS_Store"
     "SHELL:-sALLOW_MEMORY_GROWTH=1"
-    "SHELL:-sSTACK_SIZE=300000"
-    "SHELL:-sASSERTIONS=1"
+    "SHELL:-sINITIAL_MEMORY=268435456"
+    "SHELL:-sSTACK_SIZE=16777216"
+    "SHELL:-sEXIT_RUNTIME=0"
+    "SHELL:-sFORCE_FILESYSTEM=1"
     "SHELL:--js-library ${Vau_SOURCE_DIR}/platform/wasm/mylib.js"
-    "SHELL:-l embind"
-    -sNO_EXIT_RUNTIME
-    -sEXPORT_NAME='libvau'
-    -sEXPORTED_RUNTIME_METHODS=[ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,wasmMemory]
-#    "-sEXPORTED_FUNCTIONS=[_main,_malloc,_free,_wasm_open_document,_wasm_get_page_png]"
+    "SHELL:-sEXPORTED_RUNTIME_METHODS=ccall,cwrap,UTF8ToString,lengthBytesUTF8,stringToUTF8,HEAPU8,FS"
+    "SHELL:-sEXPORTED_FUNCTIONS=_malloc,_free"
   )
   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options (Vau PRIVATE 
-      "SHELL:-s ASSERTIONS=1" "SHELL:-s DEMANGLE_SUPPORT=1" "-g3")
-    add_link_options (Vau PRIVATE 
-      "SHELL:-s ASSERTIONS=1" "SHELL:-s DEMANGLE_SUPPORT=1"  "-g3" "-gsource-map")
+    target_compile_options (Vau PRIVATE -g)
+    target_link_options (Vau PRIVATE "SHELL:-sASSERTIONS=1" -g)
+  else ()
+    target_compile_options (Vau PRIVATE -O2)
+    target_link_options (Vau PRIVATE -O2)
   endif()
 else (EMSCRIPTEN)
   set_target_properties (Vau
@@ -611,10 +643,11 @@ else (EMSCRIPTEN)
 endif (EMSCRIPTEN)
 
 if (EMSCRIPTEN)
-  install (FILES ${Vau_SOURCE_DIR}/platform/wasm/Vau.html
-    DESTINATION ${Vau_BINARY_DIR}
-    PERMISSIONS OWNER_WRITE OWNER_READ
-       GROUP_READ WORLD_READ)
+  # the page and its scripts go next to the program
+  foreach (F Vau.html vau_worker.js serve.mjs test-node.mjs)
+    configure_file (${Vau_SOURCE_DIR}/platform/wasm/${F}
+                    ${Vau_BINARY_DIR}/${F} COPYONLY)
+  endforeach ()
 endif (EMSCRIPTEN)
 
 

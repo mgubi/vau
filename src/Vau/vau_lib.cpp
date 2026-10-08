@@ -295,10 +295,26 @@ init_vau_lib (int argc, char **argv) {
 
 picture cur_pic;
 
+/******************************************************************************
+* The interface of the library: what the page (platform/wasm) and the tests
+* call. Pages are numbered from 1; a zoom factor of 5 is one pixel per PIXEL.
+******************************************************************************/
+
 extern "C" {
 
 // implemented in platform/wasm/mylib.js
 extern void vaujs_set_pixmap (unsigned char* p, unsigned int s, int w, int h);
+
+static void
+publish_pixmap () {
+  // hand the RGBA samples of cur_pic over to JavaScript
+#ifdef __EMSCRIPTEN__
+  mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
+  unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
+  vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n,
+                    pp->get_width(), pp->get_height());
+#endif
+}
 
 EMSCRIPTEN_KEEPALIVE
 void
@@ -307,50 +323,60 @@ wasm_init_vau () {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void
+int
 wasm_open_document (const char *name) {
+  // load and typeset a document, return its number of pages (0: failure)
   string s(name);
   cout << "wasm_open_document " << s << LF;
+  url u= s;
+  if (!exists (u)) return 0;
   vau_buffer buf= concrete_buffer_insist (s);
   set_current_editor (new_editor (buf));
   current_editor ()->typeset_document ("300");
+  return current_editor ()->get_nr_pages ();
 }
 
 EMSCRIPTEN_KEEPALIVE
-void
-wasm_get_page_png (int page) {
-  cout << "wasm_get_page_png " << page << LF;
-  picture pic= current_editor ()->get_page_picture (page);
-  save_picture ("$HOME/vau-test.png", pic);
+int
+wasm_get_nr_pages () {
+  if (is_nil (current_editor ())) return 0;
+  return current_editor ()->get_nr_pages ();
+}
+
+EMSCRIPTEN_KEEPALIVE
+int
+wasm_get_page_width (int page, double zoomf) {
+  int w= 0, h= 0;
+  if (!is_nil (current_editor ()))
+    current_editor ()->get_page_size (page, zoomf, w, h);
+  return w;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int
+wasm_get_page_height (int page, double zoomf) {
+  int w= 0, h= 0;
+  if (!is_nil (current_editor ()))
+    current_editor ()->get_page_size (page, zoomf, w, h);
+  return h;
 }
 
 EMSCRIPTEN_KEEPALIVE
 void
 wasm_get_page_pixmap (int page) {
-  cout << "wasm_get_page_pixmap " << page << LF;
   cur_pic= as_native_picture (current_editor ()->get_page_picture (page));
-#ifdef __EMSCRIPTEN__
-  mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
-  unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
-  vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n, pp->get_width(), pp->get_height());
-#endif
-//  save_picture ("$HOME/cur_pic.png", cur_pic);
+  publish_pixmap ();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void
-wasm_get_view_pixmap (int page, int width, int height, double zoomf) {
-  cout << "wasm_get_view_pixmap " << page << ", " << width << ", " << height << ", " << zoomf  << LF;
-  cur_pic= as_native_picture (current_editor ()->get_view_picture (page, width, height, zoomf));
-#ifdef __EMSCRIPTEN__
-  mupdf_picture_rep *pp= (mupdf_picture_rep*)(cur_pic->get_handle());
-  unsigned char* samples= fz_pixmap_samples (mupdf_context(), pp->pix);
-  vaujs_set_pixmap (samples, pp->pix->w*pp->pix->h*pp->pix->n, pp->get_width(), pp->get_height());
-#endif
-//  save_picture ("$HOME/cur_pic.png", cur_pic);
+wasm_get_view_pixmap (int page, int width, int height, double zoomf,
+                      int scroll_x, int scroll_y) {
+  cur_pic= as_native_picture (
+    current_editor ()->get_view_picture (page, width, height, zoomf,
+                                         scroll_x, scroll_y));
+  publish_pixmap ();
 }
-
-
 
 EMSCRIPTEN_KEEPALIVE
 unsigned int
@@ -366,13 +392,42 @@ wasm_get_page_pixmap_height () {
 
 EMSCRIPTEN_KEEPALIVE
 void
+wasm_save_page_png (int page, const char *name) {
+  picture pic= current_editor ()->get_page_picture (page);
+  save_picture (url_system (string (name)), pic);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int
+wasm_export_pdf (const char *name) {
+  // print the document to a PDF file, return 1 if the file is there
+  url u= url_system (string (name));
+  current_editor ()->print_to_file (u);
+  return exists (u)? 1: 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void
 wasm_eval (const char *s) {
   eval (s);
+}
+
+EMSCRIPTEN_KEEPALIVE
+const char*
+wasm_eval_to_string (const char *s) {
+  // evaluate a Scheme expression, return its value as written by Scheme
+  // (the string belongs to the library and lasts until the next call)
+  static char* r= NULL;
+  if (r != NULL) tm_delete_array (r);
+  r= as_charp (object_to_string (eval (s)));
+  return r;
 }
 
 } // extern "C"
 
 
+
+#ifndef __EMSCRIPTEN__
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -558,3 +613,5 @@ void test_vau() {
   gezira_Window_loop(&win);
   gezira_Window_fini(&win);
 }
+
+#endif // !defined __EMSCRIPTEN__

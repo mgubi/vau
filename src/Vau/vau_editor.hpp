@@ -169,7 +169,10 @@ public:
   // interface
   void get_page_image (url name, int page, string image_dpi);
   picture get_page_picture (int page);
-  picture get_view_picture (int page, int width, int height, double zoomf);
+  picture get_view_picture (int page, int width, int height, double zoomf,
+                            int scroll_x= 0, int scroll_y= 0);
+  int get_nr_pages ();
+  void get_page_size (int page, double zoomf, int& w, int& h);
   void typeset_document (string image_dpi);
   
   friend class editor;

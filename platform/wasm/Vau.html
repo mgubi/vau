@@ -1,186 +1,463 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vau</title>
 <style>
-html {
-	background-color: #6e6e91;
+:root {
+	--bg: #6e6e91;
+	--bar: #f3f3f6;
+	--bar-text: #22222c;
+	--bar-border: #c9c9d4;
+	--button: #ffffff;
+	--button-hover: #e6e6ee;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #2b2b3a;
+		--bar: #1d1d27;
+		--bar-text: #e4e4ec;
+		--bar-border: #3a3a4b;
+		--button: #2a2a38;
+		--button-hover: #38384a;
+	}
+}
+html, body {
 	height: 100%;
-	width: 100%;
-	margin: 0px;
+	margin: 0;
+	background: var(--bg);
+	font: 13px/1.3 system-ui, sans-serif;
+	color: var(--bar-text);
 }
 body {
-	height: 100%;
-	width: 100%;
-	margin: 0px;
 	display: flex;
 	flex-direction: column;
 }
+#bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	background: var(--bar);
+	border-bottom: 1px solid var(--bar-border);
+}
+#bar .group {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+#bar .sep {
+	width: 1px;
+	height: 20px;
+	background: var(--bar-border);
+	margin: 0 4px;
+}
+button, select, input[type=number] {
+	font: inherit;
+	color: inherit;
+	background: var(--button);
+	border: 1px solid var(--bar-border);
+	border-radius: 5px;
+	padding: 3px 8px;
+	height: 26px;
+	box-sizing: border-box;
+}
+button:hover:not(:disabled), select:hover:not(:disabled) {
+	background: var(--button-hover);
+}
+button:disabled, select:disabled, input:disabled {
+	opacity: 0.45;
+}
+input[type=number] {
+	width: 56px;
+	text-align: right;
+}
+#zoom {
+	min-width: 44px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
 #status {
-	height: 30px;
-	line-height: 30px;
-	padding: 5px;
-	padding-left: 10px;
+	margin-left: auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	opacity: 0.8;
+}
+#view {
+	flex: 1;
+	min-height: 0;
+	position: relative;
 }
 #canvas {
-  flex-grow: 1;
-  height: 100%;
-  width: 100%;
-  margin: 0px;
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	outline: none;
+}
+#view.drop::after {
+	content: "Drop a TeXmacs document";
+	position: absolute;
+	inset: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	color: #fff;
+	background: rgba(40, 40, 70, 0.6);
+	border: 2px dashed #fff;
+	border-radius: 10px;
 }
 </style>
-<script type='text/javascript'>
-
-"use strict";
-
-var vauView = {};
-
-var page=1;
-var zoom=1;
-var scroolX=0;
-var scroolY=0;
-
-const worker = new Worker("vau_worker.js");
-const messagePromises = new Map();
-let lastPromiseId = 0;
-
-vauView.ready = new Promise((resolve, reject) => {
-	worker.onmessage = function (event) {
-		let type = event.data[0];
-		if (type === "READY") {
-			vauView.wasmMemory = event.data[1];
-			let methodNames = event.data[2];
-			for (let method of methodNames)
-			  vauView[method] = wrap(method);
-			worker.onmessage = onWorkerMessage;
-			resolve();
-		} else if (type === "ERROR") {
-			let error = event.data[1];
-			reject(new Error(error));
-		} else {
-			reject(new Error(`Unexpected first message: ${event.data}`));
-		}
-	};
-});
-
-function onWorkerMessage(event) {
-	let [ type, id, result ] = event.data;
-	if (type === "RESULT")
-		messagePromises.get(id).resolve(result);
-	else if (type === "READY")
-		messagePromises.get(id).reject(new Error("Unexpected READY message"));
-	else if (type === "ERROR") {
-		let error = new Error(result.message);
-		error.name = result.name;
-		error.stack = result.stack;
-		messagePromises.get(id).reject(error);
-	}
-	else
-		messagePromises.get(id).reject(new Error(`Unexpected result type '${type}'`));
-
-	messagePromises.delete(id);
-}
-
-// TODO - Add cancelation for trylater queues
-function wrap(func) {
-	return function(...args) {
-		return new Promise(function (resolve, reject) {
-			let id = lastPromiseId++;
-			messagePromises.set(id, { resolve, reject });
-			if (args[0] instanceof ArrayBuffer)
-				worker.postMessage([func, id, args], [args[0]]);
-			else
-				worker.postMessage([func, id, args]);
-		});
-	};
-}
-
-function openDocument(str) {
-	var status = document.getElementById("status");
-	status.innerHTML = `Typesetting ${str} ...`;
-	console.log(`Typesetting ${str} ...`);
-	vauView.openDocument(str).then( () => {
-   	  	console.log(`Typesetting ${str} DONE`);
-		status.innerHTML = `DONE Typesetting ${str}`;	
-	} );
-}
-
-function updateImage() { 
-	var doc = FS.readFile("/vau-test.png");
-	var img = document.getElementById("image");
-	img.src = URL.createObjectURL(new Blob([doc], { type: "image/png" }));
-}
-
-function showPage () {
-	var dpr= 2;
-	var canvas = document.getElementById('canvas');
-    vauView.getViewPixmap(page, dpr*canvas.offsetWidth, dpr*canvas.offsetHeight, zoom*5.0).then( (pix) => {
-	  var ctx = canvas.getContext('2d');
-	  ctx.canvas.width = dpr*canvas.clientWidth;
-   	  ctx.canvas.height = dpr*canvas.clientHeight;
-	  ctx.putImageData(pix, 0, 0);
-	  updateStatus();
-	});
-}
-
-</script>
 </head>
 <body>
-<div id="status">LOADING...</div>
-<canvas id="canvas"></canvas>
-</body>
+<div id="bar">
+	<div class="group">
+		<button id="open" disabled>Open…</button>
+		<input id="file" type="file" accept=".tm,.ts" hidden>
+		<select id="examples" disabled title="Documents which come with Vau">
+			<option value="">Examples…</option>
+			<option value="/Vau/vau-tests/grassmann-sq-example.tm">Grassmannian stochastic analysis</option>
+			<option value="/Vau/vau-tests/ibp-exponential-example.tm">Exponential stochastic quantization</option>
+			<option value="/Vau/vau-tests/elliptic-stochastic-quant-example.tm">Elliptic stochastic quantization</option>
+			<option value="/Vau/vau-tests/variational-qft-example.tm">Variational method for QFT</option>
+			<option value="/Vau/vau-tests/talk-iamp-2022.tm">Talk (IAMP 2022)</option>
+			<option value="/Vau/examples/texts/bracket-test.tm">Bracket test</option>
+		</select>
+	</div>
+	<div class="sep"></div>
+	<div class="group">
+		<button id="prev" disabled title="Previous page (Page Up)">◀</button>
+		<input id="page" type="number" min="1" value="1" disabled aria-label="Page">
+		<span id="pages">/ –</span>
+		<button id="next" disabled title="Next page (Page Down)">▶</button>
+	</div>
+	<div class="sep"></div>
+	<div class="group">
+		<button id="zoomout" disabled title="Zoom out (-)">−</button>
+		<span id="zoom">100%</span>
+		<button id="zoomin" disabled title="Zoom in (+)">+</button>
+		<button id="fitwidth" disabled title="Fit the width of the page (W)">Width</button>
+		<button id="fitpage" disabled title="Fit the whole page (0)">Page</button>
+	</div>
+	<div class="sep"></div>
+	<div class="group">
+		<button id="pdf" disabled title="Export the document as PDF">PDF</button>
+	</div>
+	<div id="status">Loading Vau…</div>
+</div>
+<div id="view"><canvas id="canvas" tabindex="0"></canvas></div>
+
 <script>
+"use strict";
 
-function updateStatus() {
-	var status = document.getElementById("status");
-	status.innerHTML = `Page ${page} | Zoom ${Math.round(zoom*100)/100}`;
-}
+// The library runs in a worker (vau_worker.js); every method of the worker
+// becomes a function of `vau` which returns a promise.
 
-function runViewer() {
-	// add resize observer to sync canvas size
-    new ResizeObserver(showPage).observe(document.getElementById('canvas'));
+const vau = {};
+const worker = new Worker("vau_worker.js");
+const pending = new Map();
+let lastId = 0;
+// the output of the library goes to the console: Vau.html?log shows it all
+const verbose = new URLSearchParams(location.search).has("log");
 
-	openDocument("$TEXMACS_PATH/vau-tests/ibp-exponential-example.tm");
-
-//	openDocument("$TEXMACS_PATH/examples/texts/bracket-test.tm");
-	
-	showPage();
-
-	window.addEventListener('wheel', e => {
-		console.log(`wheel event ${e.deltaX} ${e.deltaY}`);
-	})
-
-	window.addEventListener("keydown", function (event) {
-		console.log(event);
-		if (event.key == "PageDown") {
-			console.log("PAGEDOWN");
-			page = page+1;
-		    showPage();
-			event.preventDefault();
+vau.ready = new Promise((resolve, reject) => {
+	worker.onmessage = event => {
+		const [type, a, b] = event.data;
+		if (type === "READY") {
+			for (const name of a) vau[name] = (...args) => request(name, args);
+			resolve();
+		} else if (type === "FAILED") {
+			reject(new Error(a));
+		} else if (type === "RESULT") {
+			pending.get(a).resolve(b); pending.delete(a);
+		} else if (type === "ERROR") {
+			const error = new Error(b.message);
+			error.name = b.name; error.stack = b.stack;
+			pending.get(a).reject(error); pending.delete(a);
+		} else if (type === "STATUS") {
+			if (!state.started) setStatus(a);
+		} else if (type === "LOG") {
+			if (verbose) console.log(a);
 		}
-		if (event.key == "PageUp") {
-			console.log("PAGEUP");
-			if (page > 1) {
-				page= page-1;
-		    	showPage();
-			}
-			event.preventDefault();
-		}
-		if (event.key == "+") {
-			console.log("ZOOMIN");
-			zoom = zoom*1.2;
-		    showPage();
-			event.preventDefault();
-		}
-		if (event.key == "-") {
-			console.log("ZOOMOUT");
-			zoom = zoom/1.2;
-		    showPage();
-			event.preventDefault();
-		}
+	};
+	worker.onerror = event => reject(new Error(event.message || "the worker failed"));
+});
+
+function request(func, args) {
+	return new Promise((resolve, reject) => {
+		const id = ++lastId;
+		pending.set(id, { resolve, reject });
+		const transfer = args.filter(x => x instanceof ArrayBuffer);
+		worker.postMessage([func, id, args], transfer);
 	});
 }
 
-vauView.ready.then(() => {runViewer()});
+// The view: a page of the document at a zoom, scrolled when it is larger
+// than the canvas. Sizes are in pixels of the device.
 
+const $ = id => document.getElementById(id);
+const canvas = $("canvas");
+const context = canvas.getContext("2d");
+
+// zoom factor of the library for 100%: it draws 300 dpi at a factor of 5,
+// and a page of the browser has 96 CSS pixels per inch
+const BASE_ZOOM = 5 * 96 / 300;
+
+const state = {
+	started: false,
+	name: "",
+	pages: 0,
+	page: 1,
+	zoom: 1,          // 1 is 100%
+	fit: "width",     // "width", "page" or null: how the zoom follows the size
+	scrollX: 0,
+	scrollY: 0,
+	pageWidth: 0,     // of the current page at the current zoom
+	pageHeight: 0,
+	rendering: false,
+	dirty: false
+};
+
+const ratio = () => window.devicePixelRatio || 1;
+const libZoom = () => BASE_ZOOM * state.zoom * ratio();
+
+function setStatus(text) { $("status").textContent = text; }
+
+function updateControls() {
+	const open = state.pages > 0;
+	$("open").disabled = $("examples").disabled = !state.started;
+	for (const id of ["page", "zoomout", "zoomin", "fitwidth", "fitpage", "pdf"])
+		$(id).disabled = !open;
+	$("prev").disabled = !open || state.page <= 1;
+	$("next").disabled = !open || state.page >= state.pages;
+	$("page").max = Math.max(1, state.pages);
+	$("page").value = state.page;
+	$("pages").textContent = "/ " + (open ? state.pages : "–");
+	$("zoom").textContent = Math.round(state.zoom * 100) + "%";
+}
+
+function clampScroll() {
+	state.scrollX = Math.max(0, Math.min(state.scrollX, state.pageWidth - canvas.width));
+	state.scrollY = Math.max(0, Math.min(state.scrollY, state.pageHeight - canvas.height));
+}
+
+// the zoom which fits the page, from its size at 100%
+async function applyFit() {
+	if (!state.fit || !state.pages) return;
+	const size = await vau.pageSize(state.page, BASE_ZOOM * ratio());
+	if (!size.width || !size.height) return;
+	const margin = 16 * ratio();
+	let zoom = (canvas.width - margin) / size.width;
+	if (state.fit === "page")
+		zoom = Math.min(zoom, (canvas.height - margin) / size.height);
+	state.zoom = Math.max(0.1, Math.min(zoom, 8));
+}
+
+// Draw the view. Requests which come while one is drawn are merged: only
+// the last state is drawn.
+async function render() {
+	if (!state.pages) return;
+	if (state.rendering) { state.dirty = true; return; }
+	state.rendering = true;
+	try {
+		do {
+			state.dirty = false;
+			const width = Math.max(1, Math.round(canvas.clientWidth * ratio()));
+			const height = Math.max(1, Math.round(canvas.clientHeight * ratio()));
+			if (canvas.width !== width || canvas.height !== height) {
+				canvas.width = width; canvas.height = height;
+				state.dirty = false;
+			}
+			await applyFit();
+			const size = await vau.pageSize(state.page, libZoom());
+			state.pageWidth = size.width; state.pageHeight = size.height;
+			clampScroll();
+			const pix = await vau.getViewPixmap(state.page, width, height, libZoom(),
+				state.scrollX, state.scrollY);
+			if (pix && pix.width === canvas.width && pix.height === canvas.height)
+				context.putImageData(new ImageData(pix.data, pix.width, pix.height), 0, 0);
+			updateControls();
+		} while (state.dirty);
+	} catch (error) {
+		setStatus("Error: " + error.message);
+		console.error(error);
+	} finally {
+		state.rendering = false;
+	}
+}
+
+function goToPage(page, where) {
+	page = Math.max(1, Math.min(page | 0, state.pages));
+	if (page === state.page && !where) return;
+	state.page = page;
+	state.scrollY = where === "end" ? Number.MAX_SAFE_INTEGER : 0;
+	render();
+}
+
+function setZoom(zoom, fit) {
+	state.fit = fit || null;
+	if (!fit) {
+		// keep the middle of the view where it is
+		const old = state.zoom;
+		state.zoom = Math.max(0.1, Math.min(zoom, 8));
+		const k = state.zoom / old;
+		state.scrollX = (state.scrollX + canvas.width / 2) * k - canvas.width / 2;
+		state.scrollY = (state.scrollY + canvas.height / 2) * k - canvas.height / 2;
+	}
+	render();
+}
+
+// scroll in the page; at its end a further step goes to the next page
+let lastFlip = 0;
+function scrollBy(dx, dy) {
+	const maxY = Math.max(0, state.pageHeight - canvas.height);
+	const now = performance.now();
+	if (dy > 0 && state.scrollY >= maxY) {
+		if (now - lastFlip > 300 && state.page < state.pages) { lastFlip = now; goToPage(state.page + 1); }
+		return;
+	}
+	if (dy < 0 && state.scrollY <= 0) {
+		if (now - lastFlip > 300 && state.page > 1) { lastFlip = now; goToPage(state.page - 1, "end"); }
+		return;
+	}
+	if (dy !== 0) lastFlip = now;
+	state.scrollX += dx; state.scrollY += dy;
+	render();
+}
+
+async function opened(result, name, started) {
+	if (!result.pages) {
+		setStatus(`Could not open ${name}`);
+		return;
+	}
+	state.name = name;
+	state.pages = result.pages;
+	state.page = 1;
+	state.scrollX = state.scrollY = 0;
+	state.fit = "width";
+	document.title = `${name} – Vau`;
+	await render();
+	setStatus(`${name}: ${result.pages} ${result.pages === 1 ? "page" : "pages"}, typeset in ${((performance.now() - started) / 1000).toFixed(1)} s`);
+}
+
+async function openPath(path) {
+	const name = path.split("/").pop();
+	setStatus(`Typesetting ${name}…`);
+	const started = performance.now();
+	try { await opened(await vau.openDocument(path), name, started); }
+	catch (error) { setStatus("Error: " + error.message); console.error(error); }
+}
+
+async function openFile(file) {
+	setStatus(`Typesetting ${file.name}…`);
+	const started = performance.now();
+	try {
+		const buffer = await file.arrayBuffer();
+		await opened(await vau.openBuffer(buffer, file.name), file.name, started);
+	} catch (error) { setStatus("Error: " + error.message); console.error(error); }
+}
+
+async function exportPdf() {
+	setStatus("Writing the PDF…");
+	$("pdf").disabled = true;
+	try {
+		const buffer = await vau.exportPdf();
+		if (!buffer) { setStatus("The PDF could not be written"); return; }
+		const link = document.createElement("a");
+		link.href = URL.createObjectURL(new Blob([buffer], { type: "application/pdf" }));
+		link.download = state.name.replace(/\.t[ms]$/, "") + ".pdf";
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+		setStatus(`PDF written (${(buffer.byteLength / 1024).toFixed(0)} KB)`);
+	} catch (error) { setStatus("Error: " + error.message); console.error(error); }
+	finally { updateControls(); }
+}
+
+// Controls
+
+$("open").onclick = () => $("file").click();
+$("file").onchange = event => {
+	if (event.target.files[0]) openFile(event.target.files[0]);
+	event.target.value = "";
+};
+$("examples").onchange = event => {
+	if (event.target.value) openPath(event.target.value);
+	event.target.value = "";
+	canvas.focus();
+};
+$("prev").onclick = () => goToPage(state.page - 1);
+$("next").onclick = () => goToPage(state.page + 1);
+$("page").onchange = event => goToPage(Number(event.target.value) || 1);
+$("zoomout").onclick = () => setZoom(state.zoom / 1.2);
+$("zoomin").onclick = () => setZoom(state.zoom * 1.2);
+$("fitwidth").onclick = () => setZoom(0, "width");
+$("fitpage").onclick = () => setZoom(0, "page");
+$("pdf").onclick = exportPdf;
+
+canvas.addEventListener("wheel", event => {
+	event.preventDefault();
+	if (!state.pages) return;
+	if (event.ctrlKey || event.metaKey) {
+		setZoom(state.zoom * Math.exp(-event.deltaY / 300));
+		return;
+	}
+	const unit = event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+	scrollBy(event.deltaX * unit * ratio(), event.deltaY * unit * ratio());
+}, { passive: false });
+
+window.addEventListener("keydown", event => {
+	if (!state.pages || event.target.tagName === "INPUT" || event.target.tagName === "SELECT") return;
+	if (event.ctrlKey || event.metaKey || event.altKey) return;
+	const step = 60 * ratio();
+	const actions = {
+		"PageDown": () => goToPage(state.page + 1),
+		"PageUp": () => goToPage(state.page - 1),
+		"Home": () => goToPage(1, "start"),
+		"End": () => goToPage(state.pages, "start"),
+		"ArrowDown": () => scrollBy(0, step),
+		"ArrowUp": () => scrollBy(0, -step),
+		"ArrowRight": () => scrollBy(step, 0),
+		"ArrowLeft": () => scrollBy(-step, 0),
+		" ": () => scrollBy(0, (event.shiftKey ? -0.9 : 0.9) * canvas.height),
+		"+": () => setZoom(state.zoom * 1.2),
+		"=": () => setZoom(state.zoom * 1.2),
+		"-": () => setZoom(state.zoom / 1.2),
+		"w": () => setZoom(0, "width"),
+		"0": () => setZoom(0, "page")
+	};
+	const action = actions[event.key];
+	if (action) { action(); event.preventDefault(); }
+});
+
+const view = $("view");
+view.addEventListener("dragover", event => { event.preventDefault(); view.classList.add("drop"); });
+view.addEventListener("dragleave", () => view.classList.remove("drop"));
+view.addEventListener("drop", event => {
+	event.preventDefault();
+	view.classList.remove("drop");
+	const file = event.dataTransfer.files[0];
+	if (file && state.started) openFile(file);
+});
+
+new ResizeObserver(() => render()).observe(canvas);
+window.matchMedia("(resolution: 1dppx)").addEventListener?.("change", () => render());
+
+vau.ready.then(() => {
+	state.started = true;
+	updateControls();
+	canvas.focus();
+	// Vau.html?doc=/Vau/... opens another document of the library
+	const doc = new URLSearchParams(location.search).get("doc");
+	return openPath(doc || "/Vau/vau-tests/grassmann-sq-example.tm");
+}).catch(error => {
+	setStatus("Vau could not start: " + error.message);
+	console.error(error);
+});
 </script>
+</body>
 </html>
