@@ -17,6 +17,9 @@
 #include "analyze.hpp"
 #include "Concat/canvas_properties.hpp"
 
+box surround (edit_env env, box b, path ip,
+              array<line_item> l, array<line_item> r, format fm);
+
 /******************************************************************************
 * Canvases
 ******************************************************************************/
@@ -69,7 +72,7 @@ lazy_canvas_rep::query (lazy_type request, format fm) {
       SI pad = props->bar_padding;
       SI bor = props->border;
       if (ends (type, "w") || ends (type, "e"))
-	delta= max (0, w + pad);
+	delta= max (w + pad, 0);
       delta += 2 * bor + 2 * hpad;
     }
     return make_format_width (x2 - x1 + delta);
@@ -89,7 +92,7 @@ lazy_canvas_rep::produce (lazy_type request, format fm) {
       SI pad = props->bar_padding;
       SI bor = props->border;
       if (ends (type, "w") || ends (type, "e"))
-	delta= max (0, w + pad);
+	delta= max (w + pad, 0);
       delta += 2 * bor + 2 * hpad;
     }
     format bfm= fm;
@@ -191,6 +194,10 @@ lazy_ornament_rep::produce (lazy_type request, format fm) {
     hb= move_box (decorate (ip), hb, 1, 0);
     hb= move_box (decorate (ip), hb, -1, 0);
     // End dirty hack
+    if (fm->type == FORMAT_VSTREAM) {
+      format_vstream fs= (format_vstream) fm;
+      hb= surround (env, hb, ip, fs->before, fs->after, bfm);
+    }
     if (request == LAZY_BOX) return make_lazy_box (hb);
     else {
       array<page_item> l;
@@ -261,6 +268,10 @@ lazy_art_box_rep::produce (lazy_type request, format fm) {
     hb= move_box (decorate (ip), hb, 1, 0);
     hb= move_box (decorate (ip), hb, -1, 0);
     // End dirty hack
+    if (fm->type == FORMAT_VSTREAM) {
+      format_vstream fs= (format_vstream) fm;
+      hb= surround (env, hb, ip, fs->before, fs->after, bfm);
+    }
     if (request == LAZY_BOX) return make_lazy_box (hb);
     else {
       array<page_item> l;

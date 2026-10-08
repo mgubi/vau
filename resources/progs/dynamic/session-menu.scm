@@ -93,17 +93,28 @@
 ;; Inserting sessions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(tm-menu (supported-session-item name)
+  (let* ((menu-name (session-name name))
+         (l (local-connection-variants name)))
+    (assuming (nnull? l)
+      (assuming (== l (list "default"))
+        ((eval menu-name) (make-session name "default")))
+      (assuming (!= l (list "default"))
+        (-> (eval menu-name)
+            (for (variant l)
+              ((eval variant) (make-session name variant))))))))
+
+;; the sessions of a group (set-session-group!) in its submenu
 (tm-menu (supported-sessions-menu)
-  (for (name (session-list))
-    (let* ((menu-name (session-name name))
-           (l (local-connection-variants name)))
-      (assuming (nnull? l)
-        (assuming (== l (list "default"))
-          ((eval menu-name) (make-session name "default")))
-        (assuming (!= l (list "default"))
-          (-> (eval menu-name)
-              (for (variant l)
-                ((eval variant) (make-session name variant)))))))))
+  (for (x (session-menu-entries
+           (list-filter (session-list)
+                        (lambda (n) (nnull? (local-connection-variants n))))))
+    (assuming (string? x)
+      (dynamic (supported-session-item x)))
+    (assuming (pair? x)
+      (-> (eval (car x))
+          (for (name (cdr x))
+            (dynamic (supported-session-item name)))))))
 
 (menu-bind insert-session-menu
   (when (and (style-has? "std-dtd") (in-text?))
@@ -115,14 +126,22 @@
                "Start remote session"
                (lambda (x) (apply make-session x))))
     ("Other" (interactive make-session))
+    ---
+    (assuming (nnull? (plugins-with-preferences))
+      ("Preferences" (open-plugins-preferences)))
     (assuming (or (os-mingw?) (os-win32?) (os-macos?))
-      ("Manual path" (interactive set-manual-path)))))
+      ("Manual path" (interactive set-manual-path)))
+    ("Manual key" (interactive set-manual-key))
+    ("Redetect" (reinit-plugin-cache))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Submenus of the Sessions menu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (menu-bind session-input-menu
+  (when (or (connection-cmdline? (get-env "prog-language"))
+	    (connection-request? (get-env "prog-language")))
+    ("Textual input" (toggle-session-text-input)))
   (when (in-plugin-with-converters?)
     ("Mathematical input" (toggle-session-math-input)))
   ("Multiline input" (toggle-session-multiline-input)))

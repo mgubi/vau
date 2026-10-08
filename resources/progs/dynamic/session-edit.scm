@@ -23,14 +23,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-define (set-manual-path p)
-  (:argument p "Path to plug-in binaries")
+  (:synopsis* "Set path to plug-in binaries")
+  (:argument p "Path")
   (:proposals p (if (cpp-has-preference? "manual path")
                     (list (get-preference "manual path"))
                     (list)))
-  (if (== p "")
-      (reset-preference "manual path")
-      (set-preference "manual path" p))
-  (restart-message))
+  (with old (get-preference "manual path")
+    (if (== old "default") (set! old ""))
+    (when (!= p (or old ""))
+      (when (cpp-has-preference? "manual path")
+        (with cur (getenv "PATH")
+          (when (string-starts? cur (string-append old ":"))
+            (setenv "PATH" (string-drop cur (+ (string-length old) 1))))))
+      (if (== p "")
+          (reset-preference "manual path")
+          (begin
+            (set-preference "manual path" p)
+            (setenv "PATH" (string-append p ":" (getenv "PATH")))))
+      (reinit-plugin-cache))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Define API keys
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(tm-define (set-manual-key k v)
+  (:synopsis "Set API key to remote plug-in")
+  (:argument k "Key name")
+  (:argument v "Key value")
+  (set-preference (string-append k " api key") v)
+  (reinit-plugin-cache))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Style package rules for sessions
@@ -49,6 +70,7 @@
 ;; Switches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define session-text-input (make-ahash-table))
 (define session-math-input (make-ahash-table))
 
 (define (session-key)
@@ -56,14 +78,32 @@
 	 (ses (get-env "prog-session")))
     (cons lan ses)))
 
+(tm-define (session-text-input? . opts)
+  (with key (if (< (length opts) 2) (session-key)
+                (cons (car opts) (cadr opts)))
+    (if (ahash-get-handle session-text-input key)
+        (ahash-ref session-text-input key)
+        (get-boolean-preference (string-append (car key) "-text-input")))))
+
 (tm-define (session-math-input? . opts)
   (with key (if (< (length opts) 2) (session-key)
                 (cons (car opts) (cadr opts)))
-    (ahash-ref session-math-input key)))
+    (if (ahash-get-handle session-math-input key)
+        (ahash-ref session-math-input key)
+        (get-boolean-preference (string-append (car key) "-math-input")))))
+
+(tm-define (toggle-session-text-input)
+  (:synopsis "Toggle mathematical input in sessions")
+  (:check-mark "v" session-text-input?)
+  (ahash-set! session-math-input (session-key) #f)
+  (ahash-set! session-text-input (session-key) (not (session-text-input?)))
+  (with-innermost t field-context?
+    (field-update-text t)))
 
 (tm-define (toggle-session-math-input)
-  (:synopsis "Toggle mathematical input in sessions.")
+  (:synopsis "Toggle mathematical input in sessions")
   (:check-mark "v" session-math-input?)
+  (ahash-set! session-text-input (session-key) #f)
   (ahash-set! session-math-input (session-key) (not (session-math-input?)))
   (with-innermost t field-context?
     (field-update-math t)))
@@ -77,7 +117,7 @@
   (ahash-set! session-multiline-input (cons lan ses) set?))
 
 (tm-define (toggle-session-multiline-input)
-  (:synopsis "Toggle multi-line input in sessions.")
+  (:synopsis "Toggle multi-line input in sessions")
   (:check-mark "v" session-multiline-input?)
   (ahash-set! session-multiline-input (session-key)
               (not (session-multiline-input?))))
@@ -88,7 +128,7 @@
   (ahash-ref session-output-timings (session-key)))
 
 (tm-define (toggle-session-output-timings)
-  (:synopsis "Toggle output of evaluation timings.")
+  (:synopsis "Toggle output of evaluation timings")
   (:check-mark "v" session-output-timings?)
   (ahash-set! session-output-timings (session-key)
               (not (session-output-timings?))))
@@ -103,7 +143,7 @@
   session-scheme-trees)
 
 (tm-define (toggle-session-scheme-trees)
-  (:synopsis "Toggle pretty tree output in scheme sessions.")
+  (:synopsis "Toggle pretty tree output in scheme sessions")
   (:check-mark "v" session-scheme-trees?)
   (set! session-scheme-trees (not session-scheme-trees)))
 
@@ -113,7 +153,7 @@
   session-scheme-strees)
 
 (tm-define (toggle-session-scheme-strees)
-  (:synopsis "Toggle pretty scheme tree output in scheme sessions.")
+  (:synopsis "Toggle pretty scheme tree output in scheme sessions")
   (:check-mark "v" session-scheme-strees?)
   (set! session-scheme-strees (not session-scheme-strees)))
 
@@ -123,7 +163,7 @@
   session-scheme-math)
 
 (tm-define (toggle-session-scheme-math)
-  (:synopsis "Toggle pretty math output in scheme sessions.")
+  (:synopsis "Toggle pretty math output in scheme sessions")
   (:check-mark "v" session-scheme-math?)
   (set! session-scheme-math (not session-scheme-math)))
 
@@ -249,14 +289,40 @@
 	  (tree-insert! t i '((errput (document)))))
       (session-output (tree-ref t i 0) u))))
 
+;; The channel "progress" (a request whose answer comes in pieces: see
+;; connection_rep::listen) gives the text of the answer so far: it is shown,
+;; in grey, before the busy sign, in place of the text given before, until
+;; the output or an error comes.
+(define (session-remove-progress t)
+  (when (tm-func? t 'document)
+    (for (i (reverse (.. 0 (tree-arity t))))
+      (with x (tree-ref t i)
+        (when (and (tm-func? x 'with 3)
+                   (tm-equal? (tree-ref x 0) "session-progress"))
+          (tree-remove! t i 1))))))
+
+(define (session-show-progress t u)
+  (when (tm-func? t 'document)
+    (session-remove-progress t)
+    (with i (tree-arity t)
+      (if (and (> i 0) (tm-func? (tree-ref t (- i 1)) 'script-busy))
+	  (set! i (- i 1)))
+      (tree-insert! t i
+                    (list `(with "session-progress" "true"
+                             (with "color" "dark grey" ,(tm->stree u))))))))
+
 (define (session-notify lan ses ch t)
   ;;(display* "Session notify " lan ", " ses ", " ch ", " t "\n")
   (with l (pending-ref lan ses)
     (with (in out next opts) (session-decode (car l))
       (when (session-coherent? out next)
-	(cond ((== ch "output")
+	(cond ((== ch "progress")
+	       (session-show-progress out t))
+	      ((== ch "output")
+	       (session-remove-progress out)
 	       (session-output out t))
 	      ((== ch "error")
+	       (session-remove-progress out)
 	       (session-errput out t))
 	      ((== ch "prompt")
 	       (if (and (== (length l) 1) (tree-empty? (tree-ref next 1)))
@@ -297,7 +363,9 @@
 	   (== (tree-index t) 1))))
 
 (tm-define field-tags
-  '(input unfolded-io folded-io input-math unfolded-io-math folded-io-math))
+  '(input unfolded-io folded-io
+          input-text unfolded-io-text folded-io-text
+          input-math unfolded-io-math folded-io-math))
 
 (tm-define (field-context? t)
   (and (tm? t)
@@ -310,15 +378,19 @@
        (tm-func? (tree-ref t :up) 'document)))
 
 (tm-define (field-folded-context? t)
-  (and (tree-in? t '(folded-io folded-io-math))
+  (and (tree-in? t '(folded-io folded-io-text folded-io-math))
        (tm-func? (tree-ref t :up) 'document)))
 
 (tm-define (field-unfolded-context? t)
-  (and (tree-in? t '(unfolded-io unfolded-io-math))
+  (and (tree-in? t '(unfolded-io unfolded-io-text unfolded-io-math))
        (tm-func? (tree-ref t :up) 'document)))
 
 (tm-define (field-prog-context? t)
   (and (tree-in? t '(input folded-io unfolded-io))
+       (tm-func? (tree-ref t :up) 'document)))
+
+(tm-define (field-text-context? t)
+  (and (tree-in? t '(input-text folded-io-text unfolded-io-text))
        (tm-func? (tree-ref t :up) 'document)))
 
 (tm-define (field-math-context? t)
@@ -420,6 +492,9 @@
   (cond ((tm-func? t 'input)
 	 (tree-insert! t 2 (list '(document)))
 	 (tree-assign-node! t 'unfolded-io))
+	((tm-func? t 'input-text)
+	 (tree-insert! t 2 (list '(document)))
+	 (tree-assign-node! t 'unfolded-io-text))
 	((tm-func? t 'input-math)
 	 (tree-insert! t 2 (list '(document)))
 	 (tree-assign-node! t 'unfolded-io-math))))
@@ -427,6 +502,9 @@
 (define (field-remove-output t)
   (cond ((or (tm-func? t 'folded-io) (tm-func? t 'unfolded-io))
 	 (tree-assign-node! t 'input)
+	 (tree-remove! t 2 1))
+	((or (tm-func? t 'folded-io-text) (tm-func? t 'unfolded-io-text))
+	 (tree-assign-node! t 'input-text)
 	 (tree-remove! t 2 1))
 	((or (tm-func? t 'folded-io-math) (tm-func? t 'unfolded-io-math))
 	 (tree-assign-node! t 'input-math)
@@ -436,10 +514,25 @@
 	   (when (tree-is? p 'document)
 	     (tree-remove! p (tree-index t) 1))))))
 
+(define (field-update-text t)
+  (if (session-text-input?)
+      (when (or (field-prog-context? t) (field-math-context? t))
+	(if (or (tm-func? t 'input) (tm-func? t 'input-math))
+	    (tree-assign-node! t 'input-text)
+	    (begin
+	      (tree-assign-node! t 'folded-io-text)
+	      (tree-assign (tree-ref t 1) '(document "")))))
+      (when (field-text-context? t)
+	(if (tm-func? t 'input-text)
+	    (tree-assign-node! t 'input)
+	    (begin
+	      (tree-assign-node! t 'folded-io)
+	      (tree-assign (tree-ref t 1) '(document "")))))))
+
 (define (field-update-math t)
   (if (session-math-input?)
-      (when (field-prog-context? t)
-	(if (tm-func? t 'input)
+      (when (or (field-prog-context? t) (field-text-context? t))
+	(if (or (tm-func? t 'input) (tm-func? t 'input-text))
 	    (tree-assign-node! t 'input-math)
 	    (begin
 	      (tree-assign-node! t 'folded-io-math)
@@ -454,7 +547,9 @@
 (define (field-create t p forward?)
   (let* ((d (tree-ref t :up))
 	 (i (+ (tree-index t) (if forward? 1 0)))
-	 (l (if (session-math-input?) 'input-math 'input))
+	 (l (cond ((session-text-input?) 'input-text)
+                  ((session-math-input?) 'input-math)
+                  (else 'input)))
 	 (b `(,l ,p (document ""))))
     (tree-insert d i (list b))
     (tree-ref d i)))
@@ -476,8 +571,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-define (make-session lan ses)
+  (:synopsis "Insert session")
+  (:argument lan "Language")
+  (:argument ses "Session identifier")
   (let* ((ban `(output (document "")))
-	 (l (if (session-math-input? lan ses) 'input-math 'input))
+	 (l (cond ((session-text-input? lan ses) 'input-text)
+                  ((session-math-input? lan ses) 'input-math)
+                  (else 'input)))
 	 (p (plugin-prompt lan ses))
 	 (in `(,l (document ,p) (document "")))
 	 (s `(session ,lan ,ses (document ,ban ,in))))
@@ -500,6 +600,8 @@
     (field-insert-output t)
     (cond ((tm-func? t 'folded-io)
 	   (tree-assign-node! t 'unfolded-io))
+	  ((tm-func? t 'folded-io-text)
+	   (tree-assign-node! t 'unfolded-io-text))
 	  ((tm-func? t 'folded-io-math)
 	   (tree-assign-node! t 'unfolded-io-math)))
     (let* ((lan (get-env "prog-language"))
@@ -784,7 +886,7 @@
 	(tree-split! v j 1)
 	(tree-insert (tree-ref v j) 0 `(,lan ,ses))
 	(tree-insert (tree-ref v (+ j 1)) 0 `(,lan ,ses))
-	(tree-insert v (+ j 1) '((document "")))
+	(tree-insert v (+ j 1) '(""))
 	(tree-go-to v (+ j 1) :end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

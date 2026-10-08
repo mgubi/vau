@@ -41,6 +41,12 @@ struct concat_box_rep: public composite_box_rep {
   SI        lsup_correction ();
   SI        rsub_correction ();
   SI        rsup_correction ();
+  SI        lsub_correction_at (SI h);
+  SI        lsup_correction_at (SI h);
+  SI        rsub_correction_at (SI h);
+  SI        rsup_correction_at (SI h);
+  bool      extended_shape ();
+  bool      top_accent (SI& x);
   SI        sub_lo_base (int level);
   SI        sub_hi_lim  (int level);
   SI        sup_lo_lim  (int level);
@@ -268,6 +274,46 @@ concat_box_rep::rsup_correction () {
 }
 
 SI
+concat_box_rep::lsub_correction_at (SI h) {
+  int i= get_first ();
+  if (i<N(bs)) return bs[i]->lsub_correction_at (h);
+  return 0;
+}
+
+SI
+concat_box_rep::lsup_correction_at (SI h) {
+  int i= get_first ();
+  if (i<N(bs)) return bs[i]->lsup_correction_at (h);
+  return 0;
+}
+
+SI
+concat_box_rep::rsub_correction_at (SI h) {
+  int i= get_last ();
+  if (i>=0) return bs[i]->rsub_correction_at (h);
+  return 0;
+}
+
+SI
+concat_box_rep::rsup_correction_at (SI h) {
+  int i= get_last ();
+  if (i>=0) return bs[i]->rsup_correction_at (h);
+  return 0;
+}
+
+bool
+concat_box_rep::extended_shape () {
+  if (N(bs) == 1) return bs[0]->extended_shape ();
+  return true;
+}
+
+bool
+concat_box_rep::top_accent (SI& x) {
+  if (N(bs) == 1 && bs[0]->top_accent (x)) { x += sx (0); return true; }
+  return false;
+}
+
+SI
 concat_box_rep::sub_lo_base (int level) {
   int i=0, n=N(bs);
   SI  y= y2;
@@ -438,14 +484,14 @@ concat_box_rep::find_accessible_child (SI x, SI y, SI delta, SI& delta_out) {
 
 int
 concat_box_rep::find_child (SI x, SI y, SI delta, bool force) {
-  int delta_out;
+  SI delta_out;
   if (force) return find_any_child (x, y, delta, delta_out);
   else return find_accessible_child (x, y, delta, delta_out);
 }
 
 path
 concat_box_rep::find_box_path (SI x, SI y, SI delta, bool force, bool& found) {
-  int delta_out, m;
+  SI delta_out; int m;
   if (force) m= find_any_child (x, y, delta, delta_out);
   else m= find_accessible_child (x, y, delta, delta_out);
   int i, n= subnr();
@@ -562,7 +608,8 @@ concat_box_rep::find_selection (path lbp, path rbp) {
 
 tree
 concat_box_rep::message (tree t, SI x, SI y, rectangles& rs) {
-  int delta_out, m= find_any_child (x, y, 0, delta_out);
+  SI delta_out;
+  int m= find_any_child (x, y, 0, delta_out);
   if (m == -1) return "";
   SI xx= x- sx(m), yy= y- sy(m);
   rectangles xtra;
@@ -575,7 +622,8 @@ void
 concat_box_rep::loci (SI x, SI y, SI delta,
 		      list<string>& ids, rectangles& rs)
 {
-  int delta_out, m= find_any_child (x, y, delta, delta_out);
+  SI delta_out;
+  int m= find_any_child (x, y, delta, delta_out);
   if (m == -1) box_rep::loci (x, y, delta, ids, rs);
   else {
     SI xx= x- sx(m), yy= y- sy(m);
@@ -658,6 +706,13 @@ phrase_box_rep::display (renderer ren) {
 /******************************************************************************
 * box construction routines
 ******************************************************************************/
+
+box
+concat_box (path ip, array<box> bs) {
+  array<SI> spc;
+  for (int i=0; i<N(bs); i++) spc << ((SI) 0);
+  return tm_new<concat_box_rep> (ip, bs, spc, false);
+}
 
 box
 concat_box (path ip, array<box> bs, array<SI> spc, bool indent) {

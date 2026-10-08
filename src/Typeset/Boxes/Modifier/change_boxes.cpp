@@ -14,6 +14,7 @@
 #include "scheme.hpp"
 #include "gui.hpp"
 #include "effect.hpp"
+#include "analyze.hpp"
 
 /******************************************************************************
 * changing the behaviour of a box
@@ -61,6 +62,19 @@ SI change_box_rep::rsub_correction () {
   return big_flag? bs[0]->rsub_correction(): box_rep::rsub_correction(); }
 SI change_box_rep::rsup_correction () {
   return big_flag? bs[0]->rsup_correction(): box_rep::rsup_correction(); }
+SI change_box_rep::lsub_correction_at (SI h) {
+  return big_flag? bs[0]->lsub_correction_at (h): box_rep::lsub_correction_at (h); }
+SI change_box_rep::lsup_correction_at (SI h) {
+  return big_flag? bs[0]->lsup_correction_at (h): box_rep::lsup_correction_at (h); }
+SI change_box_rep::rsub_correction_at (SI h) {
+  return big_flag? bs[0]->rsub_correction_at (h): box_rep::rsub_correction_at (h); }
+SI change_box_rep::rsup_correction_at (SI h) {
+  return big_flag? bs[0]->rsup_correction_at (h): box_rep::rsup_correction_at (h); }
+bool change_box_rep::extended_shape () {
+  return big_flag? bs[0]->extended_shape (): box_rep::extended_shape (); }
+bool change_box_rep::top_accent (SI& x) {
+  if (bs[0]->top_accent (x)) { x += sx (0); return true; }
+  return false; }
 SI change_box_rep::sub_lo_base (int l) {
   return big_flag? bs[0]->sub_lo_base (l): box_rep::sub_lo_base (l); }
 SI change_box_rep::sub_hi_lim  (int l) {
@@ -912,6 +926,48 @@ text_at_box_rep::graphical_select (SI x, SI y, SI dist) {
 }
 
 /******************************************************************************
+* Relay boxes
+******************************************************************************/
+
+struct relay_box_rep: public change_box_rep {
+  array<tree> args;
+  relay_box_rep (path ip, box b, array<tree> a);
+  operator tree ();
+  tree message (tree type, SI x, SI y, rectangles& rs);
+};
+
+relay_box_rep::relay_box_rep (path ip, box b, array<tree> a):
+  change_box_rep (ip, false), args (a)
+{
+  insert (b, 0, 0);
+  position ();
+  left_justify ();
+  finalize ();
+}
+
+relay_box_rep::operator tree () {
+  tree r= tuple ("relay", (tree) bs[0]);
+  for (int i=0; i<N(args); i++) r << args[i];
+  return r;
+}
+
+tree
+relay_box_rep::message (tree type, SI x, SI y, rectangles& rs) {
+  if (N(args) == 0 || args[0] == "" || !is_atomic (args[0])) return "";
+  array<object> objs;
+  objs << symbol_object (args[0]->label);
+  objs << object (type) << object ((int) x) << object ((int) y);
+  for (int i=1; i<N(args); i++) objs << object (args[i]);
+  object cmd= as_list_object (objs);
+  object r= call ("secure-eval", cmd);
+  if (!is_bool (r) || as_bool (r))
+    rs << rectangle (x3, y3, x4, y4);
+  if (is_string (r)) return as_string (r);
+  if (is_tree (r)) return as_tree (r);
+  return "";
+}
+
+/******************************************************************************
 * box construction routines
 ******************************************************************************/
 
@@ -1009,4 +1065,9 @@ note_box (path ip, box b, box note, SI nx, SI ny) {
 box
 text_at_box (path ip, box b, SI x, SI y, SI hx, SI hy, SI axis, SI pad) {
   return tm_new<text_at_box_rep> (ip, b, x, y, hx, hy, axis, pad);
+}
+
+box
+relay_box (path ip, box b, array<tree> args) {
+  return tm_new<relay_box_rep> (ip, b, args);
 }

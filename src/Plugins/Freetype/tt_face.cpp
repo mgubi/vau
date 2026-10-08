@@ -14,6 +14,7 @@
 #include "tt_face.hpp"
 #include "tt_file.hpp"
 #include "tm_timer.hpp"
+#include "sys_utils.hpp"
 
 #ifdef USE_FREETYPE
 
@@ -43,10 +44,86 @@ tt_face_rep::tt_face_rep (string name): rep<tt_face> (name) {
     debug_fonts << "Loading True Type font " << name << "\n";
   url u= tt_font_find (name);
   if (is_none (u)) return;
-  c_string _name (concretize (u));
-  if (ft_new_face (ft_library, _name, 0, &ft_face)) {  return; }
+
+  FILE *font_file = texmacs_fopen (concretize (u), "r");
+  if (!font_file) {
+    debug_fonts << "Can't load " << name << LF;
+    return;
+  }
+  ssize_t fsize = texmacs_fsize (font_file);
+  if (fsize <= 0) {
+    texmacs_fclose (font_file);
+    debug_fonts << "Can't load " << name << LF; 
+    return;
+  }
+
+  buffer = (FT_Byte*) malloc (fsize);
+  ssize_t readed = texmacs_fread ((char*)buffer, fsize, font_file);
+  if (readed != fsize) {
+    free (buffer);
+    buffer = nullptr;
+    texmacs_fclose (font_file);
+    debug_fonts << "Can't read " << name << LF;
+    return;
+  }
+  texmacs_fclose(font_file);
+
+  if (ft_new_memory_face (ft_library, buffer, fsize, 0, &ft_face)) {  
+    debug_fonts << "Can't load font " << name << LF;
+    free (buffer);
+    buffer = nullptr;
+    return; 
+  }
   ft_select_charmap (ft_face, ft_encoding_adobe_custom);
   bad_face= false;
+  buffer_size= (int) fsize;
+
+  // the font file may contain an OpenType MATH table;
+  // parse it from the buffer that we already hold in memory
+  math_table= parse_mathtable (string ((const char*) buffer, (int) fsize));
+  if (!is_nil (math_table) && DEBUG_VERBOSE) {
+    debug_fonts << "Found MATH table for font " << name << "\n";
+    dump_mathtable (debug_fonts, math_table);
+  }
+}
+
+ot_gsub_map&
+tt_face_rep::gsub_feature (string tag) {
+  if (!gsub_features->contains (tag)) {
+    ot_gsub_map m;
+    if (buffer != nullptr)
+      m= parse_gsub_feature (string ((const char*) buffer, buffer_size), tag);
+    gsub_features (tag)= m;
+  }
+  return gsub_features (tag);
+}
+
+array<string>
+tt_face_rep::gsub_tags () {
+  if (!gsub_tags_ready) {
+    if (buffer != nullptr)
+      gsub_tag_list=
+        parse_gsub_tags (string ((const char*) buffer, buffer_size));
+    gsub_tags_ready= true;
+  }
+  return gsub_tag_list;
+}
+
+ot_gpos_kern
+tt_face_rep::gpos_kern () {
+  if (!gpos_kern_ready) {
+    if (buffer != nullptr)
+      gpos_kern_table=
+        parse_gpos_kern (string ((const char*) buffer, buffer_size));
+    gpos_kern_ready= true;
+  }
+  return gpos_kern_table;
+}
+
+tt_face_rep::~tt_face_rep () {
+  std_warning << "tt_face_rep should not be deleted\n";
+  if (ft_face) ft_done_face (ft_face);
+  if (buffer) free (buffer);
 }
 
 tt_face
@@ -124,13 +201,32 @@ tt_font_metric_rep::get (int i) {
   return *((metric*) ((void*) fnm [i]));
 }
 
+// FT_MulFix: multiply by a 16.16 fixed point scale, rounding to nearest
+static long
+mul_fix (long a, long b) {
+  int sign= 1;
+  if (a < 0) { a= -a; sign= -sign; }
+  if (b < 0) { b= -b; sign= -sign; }
+  long long c= (((long long) a) * b + 0x8000) >> 16;
+  return (sign > 0)? ((long) c): (-((long) c));
+}
+
 SI
 tt_font_metric_rep::kerning (int left, int right) {
-  if (face->bad_face || !FT_HAS_KERNING (face->ft_face)) return 0;
-  FT_Vector k;
+  if (face->bad_face) return 0;
   FT_UInt l= decode_index (face->ft_face, left);
   FT_UInt r= decode_index (face->ft_face, right);
   ft_set_char_size (face->ft_face, 0, size<<6, hdpi, vdpi);
+  // OpenType fonts keep their kerning in GPOS and usually have no legacy
+  // 'kern' table, which is the only one FreeType exposes
+  ot_gpos_kern gk= face->gpos_kern ();
+  if (!is_nil (gk) && !gk->empty ()) {
+    int du= gk->get ((unsigned int) l, (unsigned int) r);
+    if (du == 0) return 0;
+    return tt_si ((int) mul_fix (du, face->ft_face->size->metrics.x_scale));
+  }
+  if (!FT_HAS_KERNING (face->ft_face)) return 0;
+  FT_Vector k;
   if (ft_get_kerning (face->ft_face, l, r, FT_KERNING_DEFAULT, &k)) return 0;
   return tt_si (k.x);
 }
@@ -158,6 +254,91 @@ tt_font_glyphs_rep::tt_font_glyphs_rep (
   bad_font_glyphs= face->bad_face ||
     ft_set_char_size (face->ft_face, 0, size<<6, hdpi, vdpi);
   if (bad_font_glyphs) return;
+}
+
+/******************************************************************************
+* Outlines of glyphs, for the renderers which rasterize them themselves (the
+* Cocoa port, with Core Graphics): the glyph of get, unhinted, at its size
+* and resolution, as a path whose commands are 0 move, 1 line, 2 quadratic
+* (a control point and the end), 3 cubic (two controls and the end) and
+* 4 close, with their points, in pixels of the font (y up, the origin of the
+* glyph at 0)
+******************************************************************************/
+
+bool
+tt_glyph_outline (font_glyphs fng, int i, array<int>& cmds, array<double>& pts) {
+  tt_font_glyphs_rep* g= dynamic_cast<tt_font_glyphs_rep*> (fng.operator-> ());
+  if (g == NULL || g->face->bad_face) return false;
+  FT_Face face= g->face->ft_face;
+  ft_set_char_size (face, 0, g->size<<6, g->hdpi, g->vdpi);
+  FT_UInt glyph_index= decode_index (face, i);
+  if (ft_load_glyph (face, glyph_index, FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP))
+    return false;
+  FT_GlyphSlot slot= face->glyph;
+  if (slot->format != FT_GLYPH_FORMAT_OUTLINE) return false;
+  FT_Outline& o= slot->outline;
+  cmds= array<int> ();
+  pts= array<double> ();
+  auto add= [&] (int c, const FT_Vector* v, int n) {
+    cmds << c;
+    for (int k= 0; k < n; k++) pts << (v[k].x / 64.0) << (v[k].y / 64.0);
+  };
+  auto tag= [&] (int k) { return FT_CURVE_TAG (o.tags[k]); };
+  int first= 0;
+  for (int n= 0; n < o.n_contours; n++) {
+    int last= o.contours[n], limit= last;
+    if (last < first) return false;
+    FT_Vector v_start= o.points[first], v_last= o.points[last];
+    int p= first;
+    if (tag (first) == FT_CURVE_TAG_CUBIC) return false;
+    if (tag (first) == FT_CURVE_TAG_CONIC) {
+      // a contour which starts off the curve: from its last point if that
+      // one is on it, else from the middle of the two
+      if (tag (last) == FT_CURVE_TAG_ON) { v_start= v_last; limit--; }
+      else {
+        v_start.x= (v_start.x + v_last.x) / 2;
+        v_start.y= (v_start.y + v_last.y) / 2;
+      }
+      p--;   // the first point is then a control point
+    }
+    add (0, &v_start, 1);
+    bool closed= false;
+    while (p < limit && !closed) {
+      p++;
+      int t= tag (p);
+      if (t == FT_CURVE_TAG_ON) { add (1, &o.points[p], 1); continue; }
+      if (t == FT_CURVE_TAG_CONIC) {
+        FT_Vector control= o.points[p];
+        while (true) {
+          if (p < limit) {
+            p++;
+            FT_Vector v= o.points[p];
+            int t2= tag (p);
+            if (t2 == FT_CURVE_TAG_ON) {
+              FT_Vector q[2]= { control, v }; add (2, q, 2); break; }
+            if (t2 != FT_CURVE_TAG_CONIC) return false;
+            FT_Vector mid= { (control.x + v.x) / 2, (control.y + v.y) / 2 };
+            FT_Vector q[2]= { control, mid }; add (2, q, 2);
+            control= v;
+            continue;
+          }
+          FT_Vector q[2]= { control, v_start }; add (2, q, 2);
+          closed= true;
+          break;
+        }
+        continue;
+      }
+      // cubic: two control points
+      if (p + 1 > limit || tag (p + 1) != FT_CURVE_TAG_CUBIC) return false;
+      FT_Vector c1= o.points[p], c2= o.points[p + 1];
+      p += 2;
+      if (p <= limit) { FT_Vector q[3]= { c1, c2, o.points[p] }; add (3, q, 3); }
+      else { FT_Vector q[3]= { c1, c2, v_start }; add (3, q, 3); closed= true; }
+    }
+    cmds << 4;
+    first= last + 1;
+  }
+  return true;
 }
 
 glyph&

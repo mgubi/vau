@@ -26,6 +26,9 @@
 #ifdef PDF_RENDERER
 #include "Pdf/pdf_hummus_renderer.hpp"
 #endif
+#ifdef MUPDF_RENDERER
+#include "MuPDF/mupdf_pdf_renderer.hpp"
+#endif
 
 string PS_CLIP_PUSH ("gsave");
 string PS_CLIP_POP ("grestore");
@@ -406,20 +409,20 @@ find_ps_font_name (string name, string s) {
 
 #define HEX_PER_LINE 30
 
-static SI parse_length (string pfb, int& pos) {
-  QN c4= (QN) pfb[pos++];
-  QN c3= (QN) pfb[pos++];
-  QN c2= (QN) pfb[pos++];
-  QI c1= (QI) pfb[pos++];
-  return (((((((SI) c1)<<8)+ ((SI) c2))<<8)+ ((SI) c3))<<8)+ c4;
+static Z32 parse_length (string pfb, int& pos) {
+  N8 c4= (N8) pfb[pos++];
+  N8 c3= (N8) pfb[pos++];
+  N8 c2= (N8) pfb[pos++];
+  Z8 c1= (Z8) pfb[pos++];
+  return (((((((Z32) c1)<<8)+ ((Z32) c2))<<8)+ ((Z32) c3))<<8)+ c4;
 }
 
 static string pfb_to_pfa (url file) {
   //cout << "pfb_to_pfa :" << file << LF;
   string pfb, pfa;
-  QN magic, type = 0;
-  SI length;
-  
+  N8 magic, type = 0;
+  Z32 length;
+
   (void) load_string (file, pfb, true);
   int pos = 0, size = N(pfb);
   while ((pos < size) && (type != 3)) {
@@ -437,8 +440,8 @@ static string pfb_to_pfa (url file) {
         length = parse_length (pfb, pos);
         // parse (pfb, pos, length);
         //cout << "plain text of size " << length << LF;
-        for (int i=0; i <length; i++) {
-          QI ch;
+        for (int i=0; i < ((int) length); i++) {
+          Z8 ch;
           parse(pfb, pos, ch);
           if (ch == '\r') pfa << "\n";
           else pfa << ch;
@@ -450,8 +453,8 @@ static string pfb_to_pfa (url file) {
         length = parse_length (pfb, pos);
         //        parse (pfb, pos, length);
         //cout << "binary data of size " << length << LF;
-        for (int i=0; i <length; i++) {
-          QI ch;
+        for (int i=0; i < ((int) length); i++) {
+          Z8 ch;
           parse(pfb, pos, ch);
           pfa << as_hexadecimal (ch, 2);
           if ((i+1) % HEX_PER_LINE == 0) pfa << "\n"; 
@@ -990,7 +993,16 @@ printer_rep::href (string label, SI x1, SI y1, SI x2, SI y2) {
 
 void
 printer_rep::toc_entry (string kind, string title, SI x, SI y) {
-  decode (x, y);
+  // The outline is written after the last page (generate_toc), where the
+  // coordinates are those of PDF, points from the bottom left corner of the
+  // page, and not those of dvips inside a page, pixels from a margin of an
+  // inch, y downwards (print (SI, SI)): written in the second, an entry
+  // pointed far below its page -- y 2542 on a page 842 high. The place is
+  // a little above the heading, as the PDF renderers put it.
+  y += 20*pixel;
+  decode (x, y);     // pixels from the top left corner of the page
+  double f = 72.0 / dpi;
+  double ph= 72.0 * paper_h / 2.54;
   string ls= "1";
   if (kind == "toc-strong-1") ls= "1";
   if (kind == "toc-strong-2") ls= "2";
@@ -1000,8 +1012,12 @@ printer_rep::toc_entry (string kind, string title, SI x, SI y) {
   if (kind == "toc-4") ls= "6";
   if (kind == "toc-5") ls= "7";
   string ps= as_string (cur_page);
-  string xs= as_string (x-dpi);
-  string ys= as_string (y-dpi);
+  // A landscape page is drawn by dvips a quarter turned on portrait paper
+  // (@landscape, tex.pro), and the PDF says /Rotate 90 to turn it back:
+  // the place is in the coordinates of the paper, where the distance from
+  // the top of the page as it is read runs along the first axis
+  string xs= as_string (landscape? y * f: x * f);
+  string ys= as_string (landscape? x * f: ph - y * f);
   toc << tuple (title, ls, ps, xs, ys);
 }
 
@@ -1082,10 +1098,17 @@ printer_rep::generate_metadata () {
 
 bool use_pdf ();
 bool use_ps ();
+bool use_mupdf_pdf ();
 
 renderer
 printer (url ps_file_name, int dpi, int nr_pages,
 	 string page_type, bool landscape, double paper_w, double paper_h) {
+#ifdef MUPDF_RENDERER
+  // the PDF writer on MuPDF (see docs/pdf-output-with-mupdf.md)
+  if (use_mupdf_pdf () && (suffix (ps_file_name) == "pdf" || !use_ps ()))
+    return mupdf_pdf_renderer (ps_file_name, dpi, nr_pages,
+                               page_type, landscape, paper_w, paper_h);
+#endif
 #ifdef PDF_RENDERER
   if (use_pdf () && (suffix (ps_file_name) == "pdf" || !use_ps ()))
     return pdf_hummus_renderer (ps_file_name, dpi, nr_pages,

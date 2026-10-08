@@ -107,6 +107,7 @@ class pdf_hummus_renderer_rep : public renderer_rep {
   hashmap<string,PDFUsedFont*> native_fonts;
   hashset<string> not_native_fonts;
   hashset<string> EuropeanComputerModern_fonts;
+  hashset<string> T2A_fonts;
   hashmap<string,pdf_raw_image> pdf_glyphs;
   hashmap<tree,pdf_image> image_pool;
   hashmap<tree,pdf_image> pattern_image_pool;
@@ -235,6 +236,9 @@ public:
   void  set_brush (brush b2);
   void  set_background (brush b2);
 
+  void  clear_device (SI x1, SI y1, SI x2, SI y2) {
+    (void) x1; (void) y1; (void) x2; (void) y2; };
+
   void  draw (int char_code, font_glyphs fn, SI x, SI y);
   void  line (SI x1, SI y1, SI x2, SI y2);
   void  lines (array<SI> x, array<SI> y);
@@ -310,7 +314,11 @@ pdf_hummus_renderer_rep::pdf_hummus_renderer_rep (
 
   EStatusCode status;
   ePDFVersion= ePDFVersion14; // PDF 1.4 for alpha
+#ifdef USE_GS
+  string version= pdf_version ();
+#else
   string version= "1.4";
+#endif
   if (version == "1.5") ePDFVersion= ePDFVersion15;
   if (version == "1.6") ePDFVersion= ePDFVersion16;
   if (version == "1.7") ePDFVersion= ePDFVersion17;
@@ -684,6 +692,8 @@ pdf_hummus_renderer_rep::register_pattern_image (brush br, SI pixel) {
   else {
 #if 0 //FIXME: improve!
     // debug_convert << "Insert pattern image\n";
+    url temp= url_temp (".png");
+#ifdef QTTEXMACS
     QImage* pim = get_image (u, w, h, eff, pixel);
     if (pim == NULL) {
       convert_error << "Cannot read image file '" << u << "'"
@@ -695,8 +705,17 @@ pdf_hummus_renderer_rep::register_pattern_image (brush br, SI pixel) {
 		    << " after get_image" << LF;
       return;
     }
-    url temp= url_temp (".png");
     pim->save (utf8_to_qstring (concretize (temp)), "PNG");
+#else
+    // the tile through the pictures of the interface (Cocoa)
+    picture pic= load_picture (u, w, h, eff, pixel);
+    if (is_nil (pic) || pic->get_width () != w || pic->get_height () != h) {
+      convert_error << "Cannot read image file '" << u << "'"
+		    << " with load_picture" << LF;
+      return;
+    }
+    save_picture (temp, pic);
+#endif
     temp_images << temp;
     ObjectIDType image_id= pdfWriter.GetObjectsContext()
       .GetInDirectObjectsRegistry().AllocateNewObjectID();
@@ -849,10 +868,10 @@ pdf_hummus_renderer_rep::set_brush (brush br) {
   // debug_convert << "set_brush\n";
   fgb= br;
   pen= pencil (br);
-  set_pencil (pen);  // FIXME ???
+  //set_pencil (pen);  // FIXME ???
   if (is_nil (br)) return;
   if (br->get_type () == brush_none) {
-    pen = pencil ();
+    //pen = pencil ();
     fgb = brush ();
   }
   else {
@@ -1125,6 +1144,10 @@ t3font_rep::write_char (glyph gl, ObjectIDType inCharID) {
   if (is_nil (gl)) {
     // write d0 command
     data  << "0 0 d0\r\n";
+  } else if (cwidth <= 0 || cheight <= 0) {
+    // a glyph without ink: its advance only, since an image of width or
+    // height 0 is not valid PDF
+    data << as_string (lwidth) << " 0 d0\r\n";
   } else {
     update_bbox (llx, lly, urx, ury);
     data << as_string (lwidth) << " 0 ";
@@ -1137,12 +1160,12 @@ t3font_rep::write_char (glyph gl, ObjectIDType inCharID) {
 	  << as_string ((double)(lly)) << " cm\r\n";
     data << "BI\r\n/W " << as_string (cwidth)
 	 << "\r\n/H " << as_string (cheight) << "\r\n";
-    data << "/CS /G /BPC 1 /F /AHx /D [0.0 1.0] /IM true\r\nID\r\n";
+    data << "/BPC 1 /F /AHx /D [0.0 1.0] /IM true\r\nID\r\n";
     static const char* hex_string= "0123456789ABCDEF";
     string hex_code;
     int i, j, count= 0, cur= 0;
     for (j= 0; j < cheight; j++)
-      for ( i= 0; i < ((cwidth+7) & (-8)); i++) {
+      for (i= 0; i < ((cwidth+7) & (-8)); i++) {
 	cur= cur << 1;
 	if ((i < cwidth) && (gl->get_x(i,j) == 0)) cur++;
 	count++;
@@ -1190,7 +1213,7 @@ t3font_rep::write_definition (int& registry_id) {
     charIds << temp;
     write_char (gl, temp);
   }
-  ObjectIDType tounicodeId;
+  ObjectIDType tounicodeId = 0;
   // create font dictionary
   string dict;
   dict << "<<\r\n";
@@ -1338,6 +1361,50 @@ no_font_issues (url u) {
   return !pdf_font_issues ()->contains (h);
 }
 
+// The Unicode character of the glyph at position ch of a TeX font in the
+// Cork encoding (the EC fonts) or the T2A encoding (the Cyrillic fonts),
+// for the text layer: the positions are not Unicode code points, and
+// differ from Latin-1 for some letters (oe at 0xF7, sharp s at 0xFF)
+static int
+tex_glyph_unicode (int ch, bool t2a) {
+  static int cork_table[256], t2a_table[256];
+  static bool done= false;
+  if (!done) {
+    for (int c=0; c<256; c++) {
+      string s (1);
+      s[0]= (char) c;
+      for (int k=0; k<2; k++) {
+        string u= (k == 0? cork_to_utf8 (s): t2a_to_utf8 (s));
+        int i= 0;
+        unsigned int code= (N(u) == 0? c: decode_from_utf8 (u, i));
+        // a position without a single character keeps its number
+        if (N(u) == 0 || i != N(u)) code= c;
+        (k == 0? cork_table: t2a_table)[c]= (int) code;
+      }
+    }
+    done= true;
+  }
+  if (ch < 0 || ch > 255) return ch;
+  return t2a? t2a_table[ch]: cork_table[ch];
+}
+
+// Whether the font file u is a Cyrillic TeX font in the T2A encoding: the LH
+// fonts of TeXmacs (fonts/type1/la) and the T2A fonts of cm-super are named
+// la + two letters for the shape + the size in hundredths of a point
+// (larm1000, larm700, labx1728, larm0500). Other TeX fonts begin with la
+// too: lasy10 and lasyb10 (the LaTeX symbols), which are not in T2A.
+static bool
+is_t2a_font_file (url u) {
+  if (suffix (u) != "pfb") return false;
+  string s= basename (u);
+  int n= N(s);
+  if (n < 7 || n > 8 || !starts (s, "la")) return false;
+  if (!is_alpha (s[2]) || !is_alpha (s[3])) return false;
+  for (int i= 4; i < n; i++)
+    if (!is_digit (s[i])) return false;
+  return true;
+}
+
 void
 pdf_hummus_renderer_rep::make_pdf_font (string fontname)
 {
@@ -1368,6 +1435,8 @@ pdf_hummus_renderer_rep::make_pdf_font (string fontname)
       string ps_name (_ps_name.c_str ());
       if (starts (ps_name, "EuropeanComputerModern"))
 	EuropeanComputerModern_fonts->insert (fontname);
+      if (is_t2a_font_file (u))
+	T2A_fonts->insert (fontname);
       return;
     }
     else {
@@ -1557,7 +1626,12 @@ pdf_hummus_renderer_rep::draw (int ch, font_glyphs fn, SI x, SI y) {
   }
   else {
     if (cfid != NULL) {
-      glyphs.push_back (GlyphUnicodeMapping (gl_index, ch));
+      int uc= ch;
+      if (EuropeanComputerModern_fonts->contains (cfn))
+        uc= tex_glyph_unicode (ch, false);
+      else if (T2A_fonts->contains (cfn))
+        uc= tex_glyph_unicode (ch, true);
+      glyphs.push_back (GlyphUnicodeMapping (gl_index, uc));
       contentContext->Tj(glyphs);
     }
     else {
@@ -1733,22 +1807,21 @@ pdf_image_rep::flush (PDFWriter& pdfw)
     // 		      << v << "." << LF
     // 		      << "But current PDF version has been set to " << ((double) ePDFVersion)/10
     // 		      << " (see the preference menu)." << LF;
-#if 0 //FIXME: improve!
     if (get_preference ("texmacs->pdf:distill inclusion") == "on") {
       temp= url_temp (".pdf");
+#ifdef USE_GS
       if (!gs_PDF_EmbedAllFonts (name, temp)) {
 	temp= name;
 	name= url_none ();
       }
-    } else
 #endif
-    {
+    }
+    else {
       temp= name;
       name= url_none ();
     }
   } 
   else {
-    temp= url_temp (".pdf");
     // first try to work out inclusion using our own tools
     // note that we have to return since flush_raster and flush_jpg
     // already build the appopriate Form XObject into the PDF
@@ -1759,14 +1832,30 @@ pdf_image_rep::flush (PDFWriter& pdfw)
     if (s == "png")
       if (flush_png(pdfw, name)) return;
 #endif
-    // other formats we generate a pdf (with available converters) that we'll embbed
-  //FIXME:  image_to_pdf (name, temp, w, h, 300);
+    // other formats we generate a either pdf or png that we'll embbed
+    temp= url_temp (".pdf");
+  //FIXME:  image_to_pdf (name, temp, w, h, 300, false);
     // the 300 dpi setting is the maximum dpi of raster images that will be generated:
     // images that are to dense will de downsampled to keep file small
     // (other are not up-sampled) 
     // dpi DOES NOT apply for vector images that we know how to handle : eps, svg(if inkscape present)
     // 
     // TODO: make the max dpi setting smarter (printer resolution, preference ...)
+    if (! exists(temp)) {
+#ifndef PDFHUMMUS_NO_PNG
+        // nothing worked for pdf, then embed png (if we could display the image, we can use png)
+        url temp_png= url_temp (".png");
+        image_to_png (name, temp_png, w, h);
+        bool done= flush_png (pdfw, temp_png);
+        remove (temp_png);
+        if (done) return;
+#endif
+        // the png route failed too: include the placeholder
+        convert_error << "pdf_hummus, failed converting " << name << LF;
+        copy ("$TEXMACS_PATH/misc/pixmaps/unknown.pdf", temp);
+        inform_about_dependencies ();
+    }
+
   }
   EStatusCode status = PDFHummus::eFailure;
   DocumentContext& dc = pdfw.GetDocumentContext();
@@ -1893,6 +1982,37 @@ pdf_image_info (url image, int& w, int& h, PDFRectangle& cropBox, double (&tMat)
     << "dx,dy={"<<tMat[4]<< ", "<<tMat[5] <<"}"<< LF;
 }
 
+#ifndef QTTEXMACS
+// the pixels of an image (RGB, and the alpha as a mask), from the top row,
+// through the pictures of the interface (Cocoa), as qt_image_data below
+static void
+picture_image_data (url image, int& w, int&h, string& data, string& mask) {
+  picture pic= load_picture (image, 0, 0, tree (""), PIXEL);
+  if (is_nil (pic) || pic->get_width () <= 0 || pic->get_height () <= 0) {
+    convert_error << "Cannot read image file '" << image << "'"
+    << " in picture_image_data" << LF;
+    return;
+  }
+  w= pic->get_width ();
+  h= pic->get_height ();
+  data= string ((w*h)*3);
+  mask= string (w*h);
+  int k= 0, l= 0;
+  for (int j= 0; j < h; j++)
+    for (int i= 0; i < w; i++) {
+      // the rows of a picture go up from its bottom
+      int r, g, b, a;
+      get_rgb_color (pic->get_pixel (i - pic->get_origin_x (),
+                                     h - 1 - j - pic->get_origin_y ()),
+                     r, g, b, a);
+      data[l++]= (char) r;
+      data[l++]= (char) g;
+      data[l++]= (char) b;
+      mask[k++]= (char) a;
+    }
+}
+#endif
+
 #ifdef QTTEXMACS
 void
 qt_image_data (url image, int& w, int&h, string& data, string& mask) {
@@ -1927,8 +2047,7 @@ pdf_image_rep::flush_for_pattern (PDFWriter& pdfw) {
 #ifdef QTTEXMACS
   qt_image_data (u, iw, ih, data, smask);
 #else
-  convert_error << "pdf_image_rep::flush_for_pattern: cannot export pattern "
-		<< u << "  to PDF" << LF;
+  picture_image_data (u, iw, ih, data, smask);
 #endif
   if ((iw==0)||(ih==0)) return false;
   
@@ -2100,6 +2219,7 @@ pdf_hummus_renderer_rep::image (
 		      0, ((double)h) / ((double)im->h),
 		      to_x (x), to_y (y));
   std::string pdfFormName = page->GetResourcesDictionary().AddFormXObjectMapping(im->id);
+  contentContext->RG(0, 0, 0);
   select_alpha((1000 * alpha) / 255);
   contentContext->Do(pdfFormName);
   //contentContext->re(0,0,im->w,im->h);
@@ -2138,8 +2258,10 @@ pdf_hummus_renderer_rep::draw_picture (picture p, SI x, SI y, int alpha) {
     pict->pict.save (utf8_to_qstring (concretize (temp)), "PNG");
     temp_images << temp;	
 #else
-    convert_error << "pdf renderer, draw_picture: "
-      << "cannot export picture " << p->get_name() << LF;
+    // through the pictures of the interface (Cocoa)
+    temp= url_temp (".png");
+    save_picture (temp, p);
+    temp_images << temp;
 #endif
     picture_cache (key)= temp;
   }

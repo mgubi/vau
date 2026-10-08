@@ -56,12 +56,13 @@ public:
   brush  bg_brush;
 
 public:
-  basic_renderer_rep (bool screen_flag, int w2 = 0, int h2 = 0):
-    renderer_rep (screen_flag), w (w2), h (h2),
+  basic_renderer_rep (bool screen_flag, double pixel_ratio,
+		      int w2 = 0, int h2 = 0):
+    renderer_rep (screen_flag, pixel_ratio), w (w2), h (h2),
     pen (black), fg_brush (black), bg_brush (white) {}
   virtual ~basic_renderer_rep () {}
   
-  virtual void get_extents (int& w, int& h);
+  virtual void get_extents (SI& w, SI& h);
   
   /***** routines from renderer.hpp ******************************************/
 
@@ -78,7 +79,6 @@ public:
 
   virtual void begin (void* handle);
   virtual void end ();
-  
   void fetch (SI x1, SI y1, SI x2, SI y2, renderer ren, SI x, SI y);
   void new_shadow (renderer& ren);
   void delete_shadow (renderer& ren);

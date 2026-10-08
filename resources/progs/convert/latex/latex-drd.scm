@@ -57,6 +57,7 @@
   (begin-alltt "alltt")
 
   (begin-tabularx "tabularx")
+  (begin-longtable "longtable")
 
   (geometry "geometry")
   (epsfig "epsfig")
@@ -91,6 +92,9 @@
   (begin-split "amsmath")
 
   (text "amsmath")
+  (cfrac "amsmath")
+  (dfrac "amsmath")
+  (tfrac "amsmath")
   (binom "amsmath")
   (dbinom "amsmath")
   (tbinom "amsmath")
@@ -107,6 +111,9 @@
   (underleftarrow "amsmath")
   (underrightarrow "amsmath")
   (underleftrightarrow "amsmath")
+  (boxed "amsmath")
+
+  (sfrac "xfrac")
 
   (underaccent "accents")
   (ring "accents")

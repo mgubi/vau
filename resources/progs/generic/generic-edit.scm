@@ -160,15 +160,31 @@
 
 (tm-define (kbd-variant t forwards?)
   (:require (and (not (supports-db?)) (bib-cite-context? t)))
+  ;; the keys of the bibliography file, and those of Zotero
   (with u (current-bib-file #t)
     (with ttxt (tree-ref t (cADr (cursor-path)))
-      (if (or (url-none? u) (not ttxt))
-          (set-message "No completions" "You must add a bibliography file")
-          (custom-complete (tm->tree (citekey-completions u ttxt)))))))
+      (if (not (and ttxt (tree-atomic? ttxt)))
+          (set-message "No completions" "complete bibliographic reference")
+          (let* ((prefix (tree->string ttxt))
+                 (local (if (url-none? u) '()
+                            (map string->tmstring (citekey-list u prefix))))
+                 (zotero (zotero-completion-suffixes prefix (null? local)))
+                 (all (list-remove-duplicates (append local zotero))))
+            (if (null? all)
+                (set-message "No completions"
+                             (if (url-none? u)
+                                 "You must add a bibliography file"
+                                 "complete bibliographic reference"))
+                (custom-complete (tm->tree `(tuple ,prefix ,@all)))))))))
 
 (tm-define (kbd-alternate-variant t forwards?)
   (and-with p (tree-outer t)
     (kbd-alternate-variant p forwards?)))
+
+(tm-define (kbd-alternate-variant t forwards?)
+  (:require (and (not (supports-db?)) (bib-cite-context? t)))
+  ;; the search window, with the BibTeX file and Zotero
+  (focus-open-search-tool t))
 
 (tm-define (kbd-alternate-variant t forwards?)
   (:require (tree-is-buffer? t))
@@ -741,6 +757,10 @@
 ;; Extra editing functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(tm-define (recenter-window)
+  (set-scroll (get-cursor-x) (get-cursor-y))
+  (refresh-window))
+
 (tm-define (kill-paragraph)
   (selection-set-start)
   (go-end-paragraph)
@@ -768,10 +788,10 @@
       (tree-go-to t (cADr p) c))))
 
 (tm-define (select-word w t col)
-  (:synopsis "Selects word @w in tree @t, more or less around column @col.")
+  (:synopsis "Selects word @w in tree @t, more or less around column @col")
   (let* ((st (tree->string t))
          (pos (- col (string-length w)))
-         (beg (string-contains st w (max 0 pos)))) ; returns index of w in st
+         (beg (string-search-forwards w (max 0 pos) st))) ; returns index of w in st
     (if beg
         (with p (tree->path t)
           (go-to (rcons p beg))
@@ -966,7 +986,7 @@
   (not (tree-innermost mini-flow-context?)))
 
 (tm-define (make-marginal-note)
-  (:synopsis "Insert a marginal note.")
+  (:synopsis "Insert a marginal note")
   (wrap-selection-small
     (insert-go-to `(inactive (marginal-note "normal" "c" "")) '(0 2 0))))
 
@@ -974,7 +994,7 @@
   (and-with t (tree-innermost 'marginal-note #t)
     (tm-equal? (tree-ref t 0) hp)))
 (tm-define (set-marginal-note-hpos hp)
-  (:synopsis "Set the horizontal position of the marginal note to @hp.")
+  (:synopsis "Set the horizontal position of the marginal note to @hp")
   (:check-mark "v" test-marginal-note-hpos?)
   (and-with t (tree-innermost 'marginal-note #t)
     (tree-set t 0 hp)))
@@ -983,13 +1003,13 @@
   (and-with t (tree-innermost 'marginal-note #t)
     (tm-equal? (tree-ref t 1) va)))
 (tm-define (set-marginal-note-valign va)
-  (:synopsis "Set the vertical alignment of the marginal note to @va.")
+  (:synopsis "Set the vertical alignment of the marginal note to @va")
   (:check-mark "v" test-marginal-note-valign?)
   (and-with t (tree-innermost 'marginal-note #t)
     (tree-set t 1 va)))
 
 (tm-define (make-insertion s)
-  (:synopsis "Make an insertion of type @s.")
+  (:synopsis "Make an insertion of type @s")
   (:applicable (in-main-flow?))
   (with pos (if (== s "float") "tbh" "")
     (insert-go-to (list 'float s pos (list 'document ""))
@@ -999,7 +1019,7 @@
   (tree-in? t '(float wide-float phantom-float)))
 
 (tm-define (insertion-positioning what flag)
-  (:synopsis "Allow/disallow the position @what for innermost float.")
+  (:synopsis "Allow/disallow the position @what for innermost float")
   (and-with t (tree-innermost any-float? #t)
     (let ((op (if flag string-union string-minus))
           (st (tree-ref t 1)))
@@ -1035,21 +1055,24 @@
   (:secure #t)
   (let* ((kind (or (tm->string type) "default"))
          (ha (or (tm->string halign) (if (== kind "mouse") "right" "left")))
-         (va (or (tm->string valign) "Bottom")))
-    (show-tooltip (or (tree->path body) (tree->stree body))
-                  body balloon ha va kind 0.833333)))
+         (va (or (tm->string valign) "Bottom"))
+         (p  (tree->path body))
+         (st (tree->stree body))
+         (id (or (list p st) st)))
+    (when (or (!= kind "keyboard") p)
+      (show-tooltip id body balloon ha va kind 0.833333))))
 
 (tm-define (make-balloon)
-  (:synopsis "Insert a balloon.")
+  (:synopsis "Insert a balloon")
   (wrap-selection-small
-    (insert-go-to `(inactive (mouse-over-balloon "" "" "left" "Bottom"))
+    (insert-go-to `(inactive (hover-balloon "" "" "left" "Bottom"))
                   '(0 0 0))))
 
 (tm-define (test-balloon-halign? ha)
   (and-with t (tree-innermost balloon-context? #t)
     (tm-equal? (tree-ref t 2) ha)))
 (tm-define (set-balloon-halign ha)
-  (:synopsis "Set the horizontal alignment of the marginal note to @ha.")
+  (:synopsis "Set the horizontal alignment of the marginal note to @ha")
   (:check-mark "v" test-balloon-halign?)
   (and-with t (tree-innermost balloon-context? #t)
     (tree-set t 2 ha)))
@@ -1058,7 +1081,7 @@
   (and-with t (tree-innermost balloon-context? #t)
     (tm-equal? (tree-ref t 3) va)))
 (tm-define (set-balloon-valign va)
-  (:synopsis "Set the vertical alignment of the marginal note to @va.")
+  (:synopsis "Set the vertical alignment of the marginal note to @va")
   (:check-mark "v" test-balloon-valign?)
   (and-with t (tree-innermost balloon-context? #t)
     (tree-set t 3 va)))
@@ -1213,3 +1236,13 @@
 (tm-define (focus-open-search-tool t)
   (:interactive #t)
   (noop))
+
+;; Without the database tool, a citation is searched in the BibTeX file of
+;; the bibliography and in Zotero (see bibtex/zotero-db.scm)
+(tm-define (focus-can-search? t)
+  (:require (and (not (supports-db?)) (bib-cite-context? t)))
+  #t)
+
+(tm-define (focus-open-search-tool t)
+  (:require (and (not (supports-db?)) (bib-cite-context? t)))
+  (zotero-open-search-tool t))

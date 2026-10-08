@@ -25,7 +25,7 @@
   (not (not (tree-innermost version-context?))))
 
 (texmacs-modes
-  (in-versioning% (inside-version?) with-versioning-tool%))
+  (in-versioning% (inside-version?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Style parameters
@@ -41,8 +41,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (selection-subtrees t p1 p2)
-  (cond ((or (null? p1) (null? p2)) '())
+  (cond ((or (null? p1) (null? p2) (== p1 p2)) '())
 	((and (== p1 (list 0)) (== p2 (list (tree-right-index t)))) (list t))
+	((and (== p1 (path-start t '())) (== p2 (path-end t '()))) (list t))
 	((tree-atomic? t) '())
 	((== p1 (list (tree-right-index t))) '())
 	((== p2 (list 0)) '())
@@ -74,19 +75,31 @@
 ;; Moving across the differences between both versions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (tree-contains-version? t)
+  (and (tree-compound? t)
+       (or (version-context? t)
+           (list-find (tree-children t) tree-contains-version?))))
+
+(tm-define (version-has-differences?)
+  (not (not (tree-contains-version? (buffer-tree)))))
+
 (tm-define (version-first-difference)
   (go-start)
-  (version-next-difference))
+  (version-next-difference)
+  (refresh-tooltips))
 
 (tm-define (version-previous-difference)
-  (go-to-previous-tag (group-resolve 'version-tag)))
+  (go-to-previous-tag (group-resolve 'version-tag))
+  (recenter-window))
 
 (tm-define (version-next-difference)
-  (go-to-next-tag (group-resolve 'version-tag)))
+  (go-to-next-tag (group-resolve 'version-tag))
+  (recenter-window))
 
 (tm-define (version-last-difference)
   (go-end)
-  (version-previous-difference))
+  (version-previous-difference)
+  (refresh-tooltips))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Switch between different visualizations
@@ -100,7 +113,19 @@
          (with t (tree-innermost version-context?)
            (variant-set t tag)))))
 
+(tm-define (version-show-paragraph tag)
+  (selection-cancel)
+  (version-show tag)
+  (with t (cursor-tree)
+    (while (and (not (tree-is-buffer? t))
+                (tree-ref t :up)
+                (not (tree-is? t :up 'document)))
+      (set! t (tree-ref t :up)))
+    (tree-replace t version-context? tag)))
+
 (tm-define (version-show-all tag)
+  (selection-cancel)
+  (version-show tag)
   (tree-replace (buffer-tree) version-context? tag))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,17 +159,23 @@
 	      (else (tree-set t '(document)))))
       (tree-set t new)))
 
+(define (version-retain-version* where which)
+  (tree-replace where version-context?
+                (lambda (t)
+                  (cond ((number? which)
+                         (retain-version t (tree-ref t which)))
+                        ((tree-is? t 'version-old)
+                         (retain-version t (tree-ref t 0)))
+                        ((and (tree-is? t 'version-both)
+                              (== which 'current-old))
+                         (retain-version t (tree-ref t 0)))
+                        (else
+                         (retain-version t (tree-ref t 1)))))))
+
 (define (version-retain-version where which)
-  (with p (if (version-context? where) (tree-up where) where)
-    (tree-replace where version-context?
-		  (lambda (t)
-		    (cond ((number? which)
-			   (retain-version t (tree-ref t which)))
-			  ((tree-is? t 'version-old)
-			   (retain-version t (tree-ref t 0)))
-			  (else
-			   (retain-version t (tree-ref t 1))))))
-    (tree-normalize p)))
+  (with w (if (version-context? where) (tree-up where) where)
+    (version-retain-version* where which)
+    (tree-normalize w)))
 
 (define (tree-go-to-start t p)
   (if (and (nnull? p) (< (car p) (tree-arity t)))
@@ -153,8 +184,17 @@
 
 (tm-define (version-retain which)
   (cond ((selection-active-any?)
-	 (for-each (lambda (u) (version-retain-version u which))
-		   (selection-trees)))
+         (let* ((sels (selection-trees))
+                (pars* (map (lambda (t)
+                             (if (version-context? t) (tree-up t) t)) sels))
+                (ps* (list-remove-duplicates (map tree->path pars*)))
+                (ps (list-filter ps* identity))
+                (pars (map path->tree ps)))
+           (for-each (lambda (u) (version-retain-version* u which)) sels)
+           (with qs (map tree->path pars)
+             (for-each (lambda (par p q)
+                         (when (== p q) (tree-normalize par)))
+                       pars ps qs))))
 	((inside-version?)
 	 (with-innermost t version-context?
 	   (with p (tree->path t)

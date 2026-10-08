@@ -1335,7 +1335,7 @@ latex_concat_to_tree (tree t, bool& new_flag) {
       else if (s == "\\end-verbatim") command_type ("!verbatim") = "false";
     }
     if (is_atomic (t[i]) && (command_type["!verbatim"] == "true")) {
-      r << tm_encode (t[i]->label);
+      r << t[i];
       continue;
     }
 
@@ -1523,13 +1523,13 @@ is_large_delimiter (tree t, int& type) {
 tree
 latex_cite_to_tree (string cite_type, string s) {
   tree r (APPLY, cite_type);
-  int i, last, n=N(s);
-  for (last=0, i=0; i<n; i++) {
+  int i= 0, n= N(s);
+  while (i<n) {
+    int start= i;
     while ((i<n) && (s[i]!=',')) i++;
-    r << s (last, i);
+    r << s (start, i);
     if (i<n) i++;
     while ((i<n) && (s[i]==' ')) i++;
-    last= i;
   }
   if (N(r) == 1) return "";
   return r;
@@ -1958,6 +1958,9 @@ latex_command_to_tree (tree t) {
       is_tuple (t, "\\begin-tmunderlined*", 1) ||
       is_tuple (t, "\\begin-tmoverlined*", 1)  ||
       is_tuple (t, "\\begin-tmbothlined*", 1)  ||
+      is_tuple (t, "\\begin-tmleftlined*", 1) ||
+      is_tuple (t, "\\begin-tmrightlined*", 1)  ||
+      is_tuple (t, "\\begin-tmverticallined*", 1)  ||
       is_tuple (t, "\\begin-tmornamented*", 1) ||
       is_tuple (t, "\\begin-tmframed*", 1)) {
         string env= as_string (t[0]);
@@ -1973,6 +1976,11 @@ latex_command_to_tree (tree t) {
                  env == "tmoverlined*") {
           dic("innerbottommargin")=  "underlined-sep";
           dic("innertopmargin")=     "overlined-sep";
+        }
+        else if (env == "tmleftlined*" || env == "tmrightlined*" ||
+                 env == "tmverticallined*") {
+          dic("innerleftmargin")=    "leftlined-sep";
+          dic("innerrightmargin")=   "rightlined-sep";
         }
         else if (env == "tmframed*") {
           dic("innertopmargin")=     "framed-vsep";
@@ -2025,6 +2033,9 @@ latex_command_to_tree (tree t) {
     }
     return tree (APPLY, "geometry", r);
   }
+  
+  if (is_tuple (t, "\\boxed", 1))
+    return compound ("boxed", l2e (t[1]));
 
   if (is_tuple (t, "\\marginpar", 1))
     return tree (APPLY, "marginal-note", "normal", "", l2e (t[1]));
@@ -2423,7 +2434,7 @@ latex_command_to_tree (tree t) {
   if (is_tuple (t, "\\raisebox", 2))
     return tree (MOVE, l2e (t[2]), "0pt", t2e (t[1]));
   if (is_tuple (t, "\\verbatim", 1))
-    return compound ("verbatim", tm_encode (t[1]));
+    return compound ("verbatim", t[1]);
   if (is_tuple (t, "\\tmcodeinline", 1) || is_tuple (t, "\\tmverbatim", 1))
     return compound ("verbatim", v2e (t[1]));
   if (is_tuple (t, "\\tmcodeinline*", 2))
@@ -2529,8 +2540,11 @@ latex_command_to_tree (tree t) {
       is_tuple (t, "\\mbox", 1) || is_tuple (t, "\\hbox", 1) ||
       is_tuple (t, "\\makebox", 1))
     return var_m2e (t, MODE, "text");
+  // FIXME: the width and position of \makebox[width][pos] are dropped
   if (is_tuple (t, "\\makebox*", 2))
     return var_m2e (tuple ("\\makebox", t[2]), MODE, "text");
+  if (is_tuple (t, "\\makebox**", 3))
+    return var_m2e (tuple ("\\makebox", t[3]), MODE, "text");
   if (is_tuple (t, "\\mathchoice", 4))
     return compound ("math-choice",
         l2e (t[1]), l2e (t[2]), l2e (t[3]), l2e (t[4]));
@@ -2554,10 +2568,13 @@ latex_command_to_tree (tree t) {
     return tree (ABOVE, l2e (t[2]), l2e (t[1]));
   if (is_tuple (t, "\\underset", 2))
     return tree (BELOW, l2e (t[2]), l2e (t[1]));
+  // (its text is text, also in a formula, as that of \text)
   if (is_tuple (t, "\\parbox", 2))
-    return compound ("mini-paragraph", v2e (t[1]), l2e (t[2]));
+    return compound ("mini-paragraph", v2e (t[1]),
+                     var_m2e (tuple ("\\text", t[2]), MODE, "text"));
   if (is_tuple (t, "\\parbox*", 3))
-    return compound ("mini-paragraph", v2e (t[2]), l2e (t[3]));
+    return compound ("mini-paragraph", v2e (t[2]),
+                     var_m2e (tuple ("\\text", t[3]), MODE, "text"));
 
   int dtype= 0;
   if (is_large_delimiter (t, dtype)) {
@@ -2711,6 +2728,9 @@ latex_command_to_tree (tree t) {
   }
   if (is_tuple (t, "\\fbox", 1)) return compound ("frame", l2e (t[1]));
   if (is_tuple (t, "\\framebox", 1)) return compound ("frame", l2e (t[1]));
+  // FIXME: the width and position of \framebox[width][pos] are dropped
+  if (is_tuple (t, "\\framebox*", 2)) return compound ("frame", l2e (t[2]));
+  if (is_tuple (t, "\\framebox**", 3)) return compound ("frame", l2e (t[3]));
   if (is_tuple (t, "\\centerline", 1)) return compound ("center", l2e (t[1]));
   if (is_tuple (t, "\\hline")) return tree (APPLY, "hline");
   if (is_tuple (t, "\\hdashline")) return "";
@@ -2821,6 +2841,13 @@ latex_command_to_tree (tree t) {
         l2e (t[1]), "default", l2e (t[3]), l2e (t[4]));
   if (is_tuple (t, "\\tmsession", 3))
     return compound ("session", l2e (t[1]), l2e (t[2]), l2e (t[3]));
+  if (is_tuple (t, "\\tminputtext", 2)) {
+    string old= command_type ["!mode"];
+    command_type ("!mode") = "text";
+    tree arg= l2e (t[2]);
+    command_type ("!mode") = old;
+    return document (compound ("input-text", l2e (t[1]), old));
+  }
   if (is_tuple (t, "\\tminputmath", 2)) {
     string old= command_type ["!mode"];
     command_type ("!mode") = "math";
@@ -2862,6 +2889,8 @@ latex_command_to_tree (tree t) {
     tag= tag (3, N(tag));
     if (tag == "foldedio")       tag= "folded-io";
     if (tag == "unfoldedio")     tag= "unfolded-io";
+    if (tag == "foldediotext")   tag= "folded-io-text";
+    if (tag == "unfoldediotext") tag= "unfolded-io-text";
     if (tag == "foldediomath")   tag= "folded-io-math";
     if (tag == "unfoldediomath") tag= "unfolded-io-math";
     string old= command_type ["!mode"];

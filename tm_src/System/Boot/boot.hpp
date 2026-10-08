@@ -18,7 +18,11 @@ extern int  install_status;
 extern bool use_which;
 extern bool use_locate;
 extern bool headless_mode;
+extern bool open_mode; // handle url opening via a single texmacs instance
+extern string open_mode_url; // url to be opened by the single instance
 
+bool   is_headless ();
+bool   is_tls_no_verify ();
 string get_setting (string var, string def= "");
 void   set_setting (string var, string val);
 void   get_old_settings (string s);
@@ -27,11 +31,13 @@ void   init_texmacs ();
 void   init_plugins ();
 void   setup_texmacs ();
 void   release_boot_lock ();
+bool   test_texmacs_path (url path, bool set_environment = true);
 
 scheme_tree plugin_list ();
 
 bool   has_user_preference (string var);
 string get_user_preference (string var, string def= "");
+void apply_icon_set (); // the icon set of the preferences, on the path of the icons
 void   set_user_preference (string var, string val);
 void   reset_user_preference (string var);
 void   load_user_preferences ();

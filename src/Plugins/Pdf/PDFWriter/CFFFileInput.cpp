@@ -335,7 +335,7 @@ EStatusCode CFFFileInput::ReadNameIndex()
 {
 	mNameIndexPosition = mPrimitivesReader.GetCurrentPosition();
 	
-	unsigned long* offsets;
+	unsigned long* offsets = nullptr;
 	EStatusCode status = ReadIndexHeader(&offsets,mFontsCount);
 	Byte* buffer;
 	
@@ -466,7 +466,7 @@ EStatusCode CFFFileInput::ReadStringIndex()
 
 		mStrings = new char*[mStringsCount];
 
-		unsigned long i;
+		long i;
 		for(i = 0; i < mStringsCount && (PDFHummus::eSuccess == status); ++i)
 		{
 			mStrings[i] = new char[offsets[i+1] - offsets[i]+1];
@@ -1152,11 +1152,11 @@ CharString* CFFFileInput::GetGlobalSubr(long inSubrIndex)
 EStatusCode CFFFileInput::Type2Endchar(const CharStringOperandList& inOperandList)
 {
 	// i'm using EndChar here to check the depracated usage, which creates
-	// dependency on another charachter. as for finalizing the intepretation, i don't
+	// dependency on another character. as for finalizing the intepretation, i don't
 	// need to do anything here, and just make sure to pop the whole dependency stack
 	// in the interpretation calling method.
 
-	if(inOperandList.size() >= 4) // meaning it's got the depracated seac usage. 2 topmost charachters on the stack are charachter codes of off StandardEncoding
+	if(inOperandList.size() >= 4) // meaning it's got the depracated seac usage. 2 topmost characters on the stack are character codes of off StandardEncoding
 	{
 		CharStringOperandList::const_reverse_iterator it = inOperandList.rbegin();
 		Byte characterCode1,characterCode2;

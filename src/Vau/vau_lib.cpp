@@ -247,6 +247,8 @@ TeXmacs_main (int argc, char** argv) {
   string tm_init_file= "$TEXMACS_PATH/progs/init-vau-s7.scm";
   if (exists (tm_init_file)) exec_file (tm_init_file);
   bench_cumul ("initialize scheme");
+  extern bool texmacs_started;
+  texmacs_started= true;
 
   //  setup_tex ();
   init_tex (); // for paths
@@ -377,10 +379,9 @@ wasm_eval (const char *s) {
 #include <SDL2/SDL.h>
 
 struct gezira_Window_ {
-    int width, height;
-    SDL_Window *win;
-    SDL_Renderer *ren;
-    SDL_Surface *surface;
+  int width, height;
+  SDL_Window *win;
+  SDL_Renderer *ren;
   int page;
   double zoomf;
 };
@@ -394,7 +395,7 @@ gezira_Window_init (gezira_Window_t *window, int width, int height)
     fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
   }
   window->width = width; window->height = height;
-  window->page = 1; window->zoomf = 2.0;
+  window->page = 1; window->zoomf = 5.0;
   window->win = SDL_CreateWindow("Hello World!", 100, 100, width, height,
                                  SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
                                  SDL_WINDOW_ALLOW_HIGHDPI);
@@ -439,36 +440,29 @@ get_surface (picture backing_store) {
 void
 gezira_Window_update (gezira_Window_t *window)
 {
-  SDL_GetWindowSize(window->win, &window->width, &window->height);
+  SDL_GetWindowSize (window->win, &window->width, &window->height);
   
   cout << "wasm_get_view_pixmap " << window->page << ", "
        << window->width << ", " << window->height << ", "
        << window->zoomf  << LF;
   cur_pic= as_native_picture (
-            current_editor ()->get_view_picture (window->page, window->width,
-                                                 window->height, window->zoomf));
-  window->surface = get_surface(cur_pic);
-
-  if (window->surface == NULL) {
-    fprintf(stderr, "SDL_CreateRGBSurfaceFrom Error: %s\n", SDL_GetError());
-    SDL_DestroyRenderer(window->ren);
-    SDL_DestroyWindow(window->win);
-  }
-  
-  SDL_Texture* tex = SDL_CreateTextureFromSurface(window->ren, window->surface);
+            current_editor ()->get_view_picture (window->page, window->width*2,
+                                                 window->height*2, window->zoomf));
+  SDL_Surface *surface= get_surface (cur_pic);
+  SDL_Texture* tex= SDL_CreateTextureFromSurface (window->ren, surface);
   SDL_SetTextureBlendMode (tex, SDL_BLENDMODE_NONE);
   SDL_Rect srcrect;
   srcrect.x= 0; srcrect.y= 0;
-  srcrect.w= window->width; srcrect.h= window->height;
+  srcrect.w= window->width*2; srcrect.h= window->height*2;
   SDL_Rect destrect;
   destrect.x= 0; destrect.y= 0;
-  destrect.w= window->width*2; destrect.h= window->height*2;
+  destrect.w= window->width; destrect.h= window->height;
   SDL_RenderClear (window->ren);
-  SDL_RenderCopy (window->ren, tex, &srcrect, &destrect);
+  SDL_RenderCopy (window->ren, tex, &srcrect, &srcrect);
   //SDL_RenderCopy (window->ren, tex, NULL, NULL);
   SDL_DestroyTexture (tex);
-  unsigned char *p= (unsigned char*)window->surface->pixels;
-  SDL_FreeSurface (window->surface);
+  unsigned char *p= (unsigned char*)surface->pixels;
+  SDL_FreeSurface (surface);
   tm_delete_array (p);
   SDL_RenderPresent (window->ren);
 }
@@ -539,7 +533,23 @@ void test_vau() {
   //  save_picture ("$HOME/vau-test.png", pic);
   //current_editor()->print_to_file ("$HOME/vau-test.pdf");
   
+  // headless test: VAU_TEST_OUTPUT=prefix [VAU_TEST_DOCUMENT=file.tm] writes
+  // prefix.png (first page) and prefix.pdf without opening a window
+  string test_out= get_env ("VAU_TEST_OUTPUT");
+  if (test_out != "") {
+    string test_doc= get_env ("VAU_TEST_DOCUMENT");
+    if (test_doc == "")
+      test_doc= "$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm";
+    c_string _test_doc (test_doc);
+    wasm_open_document (_test_doc);
+    picture pic= current_editor ()->get_page_picture (0);
+    save_picture (url_system (test_out * ".png"), pic);
+    current_editor ()->print_to_file (url_system (test_out * ".pdf"));
+    return;
+  }
+
   wasm_open_document ("$TEXMACS_PATH/vau-tests/grassmann-sq-example.tm");
+//  wasm_open_document ("$TEXMACS_PATH/vau-tests/ibp-exponential-example.tm");
   // for (int i=0; i<40; i++) wasm_get_page_pixmap (i);
   //  set_current_editor (editor ());
   gezira_Window_t win;

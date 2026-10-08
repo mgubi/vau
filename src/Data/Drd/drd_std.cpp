@@ -106,10 +106,10 @@ init_std_drd () {
   if (std_drd_initialized) return;
   std_drd_initialized=true;
 
-  init (STRING, "string", fixed (0) -> returns_string ());
+  init (TMSTRING, "string", fixed (0) -> returns_string ());
   init (UNKNOWN, "unknown", fixed (0));
   init (UNINIT, "uninit", fixed (0));
-  init (ERROR, "error", fixed (1));
+  init (_ERROR, "error", fixed (1));
   init (RAW_DATA, "raw-data", fixed (1) -> raw (0));
 
   init (DOCUMENT, "document",
@@ -329,7 +329,8 @@ init_std_drd () {
   init (COPY_THEME, "copy-theme", repeat (1, 1) -> variable (0));
   init (APPLY_THEME, "apply-theme", fixed (1) -> variable (0));
   init (SELECT_THEME, "select-theme", repeat (1, 1) -> variable (0));
-  init (MARK, "mark", fixed (2));
+  init (MARK, "mark", fixed (1, 1, BIFORM) -> accessible (1));
+  init (VAR_MARK, "mark*", fixed (1, 1, BIFORM) -> accessible (1));
   init (EXPAND_AS, "expand-as", fixed (2));
   init (EVAL, "eval", fixed (1) -> name ("evaluate"));
   init (QUOTE, "quote", fixed (1) -> regular (0));
@@ -377,7 +378,7 @@ init_std_drd () {
   init (MOD, "mod",
         fixed (2) -> returns_numeric () -> numeric (0) -> name ("modulo"));
   init (MINIMUM, "minimum",
-        repeat (2, 1) -> returns_numeric () -> numeric (0));
+        repeat (1, 1) -> returns_numeric () -> numeric (0));
   init (MAXIMUM, "maximum",
         repeat (1, 1) -> returns_numeric () -> numeric (0));
   init (MATH_SQRT, "math-sqrt",
@@ -535,7 +536,7 @@ init_std_drd () {
   init (SCRIPT, "script",
         repeat (1, 1, BIFORM) -> returns_adhoc () ->
         accessible (0) -> code (0) -> name (0, "function") ->
-        accessible (1) -> regular (1) -> name (0, "arguments"));
+        accessible (1) -> regular (1) -> name (1, "arguments"));
   init (OBSERVER, "observer",
         fixed (1, 1, BIFORM) -> returns_adhoc () ->
         accessible (0) -> identifier (0) -> name (0, "identifier") ->
@@ -552,6 +553,8 @@ init_std_drd () {
         accessible (0) -> name (0, "text") ->
         code (1) -> name (1, "function") ->
         regular (2) -> name (2, "arguments"));
+  init (RELAY, "relay",
+        repeat (1, 1) -> accessible (0));
   init (SET_BINDING, "set-binding",
         options (1, 2));                      // see env_exec.cpp
   init (GET_BINDING, "get-binding",
@@ -584,6 +587,12 @@ init_std_drd () {
         fixed (1, 1, BIFORM) ->
         string_type (0) -> name (0, "kind") ->
         string_type (1) -> name (1, "title"));
+  init (CACHE_REF, "cache-ref",
+        fixed (2, 2, DETAILED) ->
+        string_type (0) -> name (0, "hash") ->
+        string_type (1) -> name (1, "kind") ->
+        length (2) -> name (2, "width") ->
+        length (3) -> name (3, "height"));
 
   init (TUPLE, "tuple",
         repeat (0, 1) -> accessible (0));
@@ -599,7 +608,7 @@ init_std_drd () {
         fixed (2) -> binding (0));
   init (BACKUP, "backup",
         fixed (2) -> regular (0));
-  init (PATTERN, "pattern",
+  init (_PATTERN, "pattern",
         options (3, 1, DETAILED) -> returns_color () ->
         url_type (0));
   init (GRADIENT, "gradient",
@@ -960,7 +969,7 @@ init_std_drd () {
   init (OLD_MOSAIC_ITEM, "old-mosaic-item",
         repeat (1, 1) -> accessible (0));
   init (SET, "set",
-        fixed (1, 1, BIFORM) -> variable (0) -> regular (0));
+        fixed (1, 1, BIFORM) -> variable (0) -> regular (1));
   init (RESET, "reset",
         fixed (1) -> variable (0));
   init (EXPAND, "expand",
@@ -1017,6 +1026,7 @@ init_std_drd () {
   init_var (SELECTION_COLOR, TYPE_COLOR);
   init_var (TABLE_SELECTION_COLOR, TYPE_COLOR);
   init_var (MATCH_COLOR, TYPE_COLOR);
+  init_var (SPELL_ERROR_COLOR, TYPE_COLOR);
   init_var (CLICKABLE_COLOR, TYPE_COLOR);
   init_var (CORRECT_COLOR, TYPE_COLOR);
   init_var (INCORRECT_COLOR, TYPE_COLOR);
@@ -1028,13 +1038,14 @@ init_std_drd () {
   init_var (FONT_SIZE, TYPE_FONT_SIZE);
   init_var (FONT_BASE_SIZE, TYPE_NUMERIC);
   init_var (FONT_EFFECTS, TYPE_STRING);
+  init_var (FONT_FEATURES, TYPE_STRING);
   init_var (MAGNIFICATION, TYPE_NUMERIC);
   init_var (COLOR, TYPE_COLOR);
   init_var (OPACITY, TYPE_NUMERIC);
   init_var (BG_COLOR, TYPE_COLOR);
   init_var (LOCUS_COLOR, TYPE_COLOR);
   init_var (VISITED_COLOR, TYPE_COLOR);
-  init_var (NO_PATTERNS, TYPE_COLOR);
+  init_var (NO_PATTERNS, TYPE_BOOLEAN);
   init_var (LANGUAGE, TYPE_STRING);
   init_var (SPACING_POLICY, TYPE_ADHOC);
   init_var (ATOM_DECORATIONS, TYPE_ADHOC);

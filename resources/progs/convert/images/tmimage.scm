@@ -2,7 +2,7 @@
 ;;
 ;; MODULE      : tmimage.scm
 ;; DESCRIPTION : convert texmacs fragment (selection) to image formats.
-;; COPYRIGHT   : (C) 2012-2022  Philippe Joyez
+;; COPYRIGHT   : (C) 2012-2025  Philippe Joyez
 ;;
 ;; This software falls under the GNU general public license version 3 or later.
 ;; It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE
@@ -18,7 +18,7 @@
 
 (texmacs-module (convert images tmimage)
   (:use (convert tmml tmmlout)
-        (convert tmml tmtmml)))
+        (convert tmml tmtmml) (utils library cursor)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handling of image convertion preferences
@@ -42,6 +42,10 @@
 (if (not (defined? 'string-contains)) ; for s7
     (define (string-contains ss s)
        (string-position s ss)))
+       
+(define (debug . args)
+  (when (debug-get "convert")
+     (apply display* args))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; commodity functions for tree manipulations
@@ -100,7 +104,7 @@
 ;; - the tm code of equation
 ;; - style info from the original document (style, fonts, layout, ...)
 ;; - A latex fragment for compatibility with 'textext' inkscape extension
-;; - the relative position of the baseline to enable vertical alignement
+;; - the relative position of the baseline to enable vertical alignment
 ;;   in an external application
 ;; FIXME : no error checking, no return value...
 
@@ -121,8 +125,19 @@
       ;; 2: define a bunch of locations in the tree
       (buftree (buffer-get-body mybuf)) ;; the whole tree
       (svgroot (car (select buftree '(:* svg)))) ;; the <svg > node
-      (maingroup (car (select svgroot '(g))))
+      (groups (select svgroot '(g)))
+      (maingroup (if (list>1? groups)
+                     (begin
+                       (tree-insert-node! svgroot 0 '(svg))
+                       (with oldroot (tree-ref svgroot 'svg)
+                         (move-node! (tree-ref oldroot '@) 
+                                   svgroot 0)
+                         (tree-insert! oldroot 0 (list '(@)) )
+                         (tree-assign-node! oldroot 'g)
+                         oldroot))
+                     (car groups)))
       ;; the main group in the svg, containing the drawing layout
+      ;; (if more than one group, we group everything in a new group)
       (maingroup-attrib (car (select maingroup '(@))))
       ;; attributes of the main group
       (defs (select svgroot '(defs)))
@@ -154,10 +169,10 @@
         (tree-set! bgframe " stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:0.00"))
     ;; 4.2 move defs containing the glyph outlines inside main group
     ;; so that they remain together in inkscape
-    (if defs (move-node! defs maingroup 2))
+    (if defs (move-node! defs maingroup 1))
     ;; 4.3 (not optional!), add our own new attributes for re-editting equation
-    (tree-insert! maingroup-attrib 1 extra-latex-attrib) ;; for textext compatibility
-    (tree-insert! maingroup-attrib 2 extra-tm-attrib)
+    (tree-insert! maingroup-attrib 0 extra-latex-attrib) ;; for textext compatibility
+    (tree-insert! maingroup-attrib 1 extra-tm-attrib)
     
     ;; 5: finally create output
     (let* (;; convert back to stree, recreate the *TOP* node,
@@ -181,6 +196,20 @@
             
             )))
 
+(define (embbed-tm-selection-in-pdf tm-fragment fname)
+  (let ((mybuf (buffer-new)))
+         (buffer-copy (current-buffer) mybuf) ;;preserve styling of the selection
+         (buffer-set-body mybuf tm-fragment)
+         (initial-default mybuf "global-title" "global-author" "global-subject") ;anonymize
+         (with-buffer mybuf 
+           (if (== (get-env "save-aux") "true") (init-env "save-aux" "false")))
+         (buffer-save mybuf)
+         (buffer-close mybuf)
+         (pdf-make-attachments fname `(,mybuf) fname)
+         ;(display mybuf)
+         (system-remove mybuf)
+        ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public interface
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -190,8 +219,8 @@
   (:argument void "not used")
   (:returns "nothing")
   ;;the format of the graphics is set in the preferences
-  (if (not (qt-gui?))
-    (set-message "Qt GUI only, sorry. Use \"Export selection...\"" "")
+  (if (not (or (qt-gui?) (vue-gui?)))
+    (set-message "Qt and Vue GUIs only, sorry. Use \"Export selection...\"" "")
     (if (not (selection-active-any?))
       (set-message "no selection!" "")
       (let* ((format (get-preference "texmacs->image:format"))
@@ -227,7 +256,7 @@
         (let* ((sufl (string-length suffix))
               (surl (url->string myurl))
               (sl (string-length surl)))
-          (set! myurl (string->url (string-append (substring surl (- sl sufl) sl) "pdf"))))))
+          (set! myurl (string->url (string-append (substring surl 0 (- sl sufl)) "pdf"))))))
 
 ; TODO Handle when output file already exists (presently we overwritte without warning)
 
@@ -243,15 +272,15 @@
      
       (tm-fragment
         (cond
-          (issomemath  (display "selection tree is a math tag \n")
+          (issomemath  (debug "selection tree is a math tag \n")
                        (selection-tree)) 
           (inmath
              (if indisplaymath
-               (begin (display "selection tree is in display math \n" )
+               (begin (debug "selection tree is in display math \n" )
                  (stree->tree `(equation* ,(selection-tree))))
-               (begin (display "selection tree is in inline math \n" )
+               (begin (debug "selection tree is in inline math \n" )
                  (stree->tree `(math ,(selection-tree))))))
-          (else (display "selection not purely math \n") (selection-tree))))
+          (else (debug "selection not purely math \n") (selection-tree))))
 ;; is selection wider than 1par (and needs linebreaks and or hyphenation)?
       (maxwidth (length-decode "1par"))
       (partmpt (string-append (number->string maxwidth) "tmpt"))
@@ -295,8 +324,8 @@
              (tree-insert tfmt 0 '((twith "table-hmode" "min")))
              tm-fragment)
           tm-fragment))
-;because of bug #63404 we can't simply always use document-at for formating 
-      (tm-fragment-formated
+;because of bug #63404 we can't simply always use document-at for formatting 
+      (tm-fragment-formatted
         (if needbaseline
           ;; if needbaseline insert fragment in table having a background
 
@@ -327,7 +356,7 @@
 
 ;; step 2 generate output according to desired output format
 
-    (extents (print-snippet myurl (stree->tree tm-fragment-formated) #t)); scale))
+    (extents (print-snippet myurl (stree->tree tm-fragment-formatted) #t)); scale))
 ;; compute relative position of baseline from returned box dimensions  see tmhtml.scm
     (height (- (fourth extents) (second extents)))
     (relbaseline (if needbaseline (number->string (exact->inexact (/ (- (sixth extents)) height))) "0.0"))
@@ -336,9 +365,12 @@
       (system-remove tmppng)
       (if (== suffix "svg")
         (begin 
-         (display* "relbaseline= " relbaseline "\n")
+         (debug "relbaseline= " relbaseline "\n")
          (refactor-svg myurl tm-fragment relbaseline))
          ;; modify svg, embedding texmacs code
+        )
+      (if (== suffix "pdf")
+        (embbed-tm-selection-in-pdf tm-fragment myurl)
         )
 
     ))))

@@ -19,6 +19,7 @@
 
 (define (tmdoc-down level)
   (cond ((== level 'title) 'chapter)
+	((== level 'title*) 'part)
 	((== level 'part) 'chapter)
 	((== level 'tmdoc-title) 'section)
 	((== level 'tmdoc-title*) 'section)
@@ -28,6 +29,40 @@
 	((== level 'subsection) 'subsubsection)
 	((== level 'subsubsection) 'paragraph)
 	(else 'subparagraph)))
+
+;; Sectioning commands inside a page are relative to the level of the page:
+;; a section of a page which becomes a chapter is a section, a section of a
+;; page which becomes a section is a subsection, and so on.
+
+(define tmdoc-sectioning
+  '(section subsection subsubsection paragraph subparagraph))
+
+(define tmdoc-sectioning*
+  '(section* subsection* subsubsection* paragraph* subparagraph*))
+
+(define tmdoc-starred
+  '(part chapter section subsection subsubsection))
+
+(define (tmdoc-sectioning? x)
+  (and (pair? x) (or (in? (car x) tmdoc-sectioning)
+                     (in? (car x) tmdoc-sectioning*))))
+
+(define (tmdoc-heading? x)
+  (or (tmdoc-sectioning? x)
+      (and (func? x 'concat) (nnull? (cdr x))
+           (tmdoc-sectioning? (cadr x)))))
+
+(define (tmdoc-demote-level level n)
+  (if (<= n 0) level (tmdoc-demote-level (tmdoc-down level) (- n 1))))
+
+(define (tmdoc-demote tag level)
+  (let* ((star? (in? tag tmdoc-sectioning*))
+         (l (if star? tmdoc-sectioning* tmdoc-sectioning))
+         (n (- (length l) (length (memq tag l))))
+         (new (tmdoc-demote-level level (+ n 1))))
+    (if (and star? (in? new tmdoc-starred))
+        (string->symbol (string-append (symbol->string new) "*"))
+        new)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main expansions routines
@@ -79,23 +114,40 @@
          (cons (car x) (tmdoc-substitute-sub (cdr x) root cur)))
 	(else x)))
 
+(define (tmdoc-page-label rel)
+  ;; label for the page at rel (relative to the root of the book),
+  ;; with the .tm and language suffixes removed and "/" replaced by "-"
+  (let* ((s (if (string-ends? rel ".tm") (string-drop-right rel 3) rel))
+         (i (string-search-backwards "." (string-length s) s))
+         (j (string-search-backwards "/" (string-length s) s)))
+    (string-append "sec-" (string-replace (if (> i j) (substring s 0 i) s)
+                                          "/" "-"))))
+
 (define (tmdoc-rewrite-one x root cur the-level done)
   (let* ((omit? (list? the-level))
 	 (level (if omit? (car the-level) the-level)))
     (cond ((or (func? x 'tmdoc-title) (func? x 'tmdoc-title*))
 	   (cond (omit? '(document))
                  ((== level 'title) (cons level (cdr x)))
+                 ((== level 'title*) (cons 'title (cdr x)))
                  (else
-                   (let* ((name (url-basename (url-basename cur)))
-                          (lab  (string-append "sec-" (url->string name))))
+                   (let* ((rel (url->unix (url-delta root cur)))
+                          (lab (tmdoc-page-label rel)))
                      `(concat ,(cons level (cdr x)) (label ,lab))))))
           ((and (func? x 'concat)
                 (or (func? (tm-ref x 0) 'tmdoc-title)
-                    (func? (tm-ref x 0) 'tmdoc-title*)))
+                    (func? (tm-ref x 0) 'tmdoc-title*)
+                    (tmdoc-sectioning? (tm-ref x 0))))
            `(concat ,@(map (cut tmdoc-rewrite-one <> root cur the-level done)
                            (tm-children x))))
+          ((tmdoc-sectioning? x)
+           (cons (tmdoc-demote (car x) level)
+                 (tmdoc-substitute-sub (cdr x) root cur)))
 	  ((func? x 'tmdoc-license)
 	   '(document))
+	  ((func? x 'tmdoc-opening)
+	   (if (caddr x) '(document)
+	       (tmdoc-opening-heading (cadr x) level root cur)))
 	  ((func? x 'traverse)
 	   (cons 'document (tmdoc-rewrite (cdadr x) root cur level done)))
 	  ((match? x '(branch :%2))
@@ -110,11 +162,66 @@
 	   '(document))
 	  (else (tmdoc-substitute x root cur)))))
 
+(define (tmdoc-before-traverse? l)
+  ;; does a traverse come before the next heading?
+  (cond ((null? l) #f)
+        ((func? (car l) 'traverse) #t)
+        ((tmdoc-heading? (car l)) #f)
+        (else (tmdoc-before-traverse? (cdr l)))))
+
+;; In a page with branches, the headings before the branches open the
+;; chapter (or section, ...) of the page: the introduction, an overview,
+;; the list of source files.  In articles and books, a heading which
+;; directly follows the title is left out, and the other ones become
+;; unnumbered headings without entry in the table of contents, so that
+;; the numbered divisions of the page are its branches.
+
+(define (tmdoc-title-item? x)
+  (or (func? x 'tmdoc-title) (func? x 'tmdoc-title*)
+      (and (func? x 'concat) (nnull? (cdr x))
+           (or (func? (cadr x) 'tmdoc-title) (func? (cadr x) 'tmdoc-title*)))))
+
+(define (tmdoc-mark-opening l)
+  (if (not (list-or (map (cut func? <> 'traverse) l))) l
+      (let loop ((l l) (content? #f) (acc '()))
+        (cond ((null? l) (reverse acc))
+              ((func? (car l) 'traverse) (append (reverse acc) l))
+              ((and (tmdoc-heading? (car l))
+                    (not (tmdoc-before-traverse? (cdr l))))
+               (loop (cdr l) #t
+                     (cons (list 'tmdoc-opening (car l) (not content?)) acc)))
+              (else
+               (loop (cdr l) (or content? (not (tmdoc-title-item? (car l))))
+                     (cons (car l) acc)))))))
+
+(define (tmdoc-opening-heading x level root cur)
+  ;; an unnumbered heading without entry in the table of contents
+  (let* ((h (if (func? x 'concat) (cadr x) x))
+         (rest (if (func? x 'concat) (cddr x) '()))
+         (tag (tmdoc-demote (car h) level))
+         (base (symbol->string tag))
+         (base (if (string-ends? base "*")
+                   (substring base 0 (- (string-length base) 1))
+                   base))
+         (star (string->symbol (string-append base "*")))
+         (new (if (in? (string->symbol base) tmdoc-starred) star
+                  (string->symbol base)))
+         (title (tmdoc-substitute-sub (cdr h) root cur))
+         (body (cons new title)))
+    `(with ,(string-append base "-toc") (macro "name" "")
+       ,(if (null? rest) body
+            `(concat ,body ,@(tmdoc-substitute-sub rest root cur))))))
+
 (define (tmdoc-rewrite l root cur level done)
   (if (null? l) l
+      ;; a heading such as "Contents of this chapter" which introduces the
+      ;; list of branches would remain empty, since the branches become its
+      ;; siblings: leave it out
+      (if (and (tmdoc-heading? (car l)) (tmdoc-before-traverse? (cdr l)))
+          (tmdoc-rewrite (cdr l) root cur level done)
       (let ((d1 (tmdoc-rewrite-one (car l) root cur level done))
 	    (d2 (tmdoc-rewrite (cdr l) root cur level done)))
-	(if (func? d1 'document) (append (cdr d1) d2) (cons d1 d2)))))
+	(if (func? d1 'document) (append (cdr d1) d2) (cons d1 d2))))))
 
 (define (tmdoc-expand root cur level . opts)
   ;;(display* "tmdoc-expand " cur "\n")
@@ -130,7 +237,8 @@
 		'(document ""))
 	      (with u (cadr (assoc 'body (cdr t)))
 		(cons 'document
-		      (tmdoc-rewrite (cdr u) root cur level done))))))))
+		      (tmdoc-rewrite (tmdoc-mark-opening (cdr u))
+                                     root cur level done))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Make all TeXmacs hyperlinks internal to the document
@@ -147,8 +255,7 @@
        (with pos (string-search-backwards "#" (string-length dest) dest)
          (if (>= pos 0)
              (substring dest (+ pos 1) (string-length dest))
-             (with name (url-basename (url-basename dest))
-               (string-append "sec-" (url->string name)))))))
+             (tmdoc-page-label dest)))))
 
 (define (tmdoc-internal-link dest t)
   (and-with lab (tmdoc-internal-label dest)
@@ -174,6 +281,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Further subroutines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tmdoc-plugin-packages file-name)
+  ;; the style packages of a plug-in which a page uses (the markup of its
+  ;; sessions, for instance), kept in the help built from it
+  (with t (tree->stree (tree-import file-name "texmacs"))
+    (with st (and (pair? t) (assoc 'style (cdr t)))
+      (with l (cond ((not st) '())
+                    ((string? (cadr st)) (list (cadr st)))
+                    ((func? (cadr st) 'tuple) (cdadr st))
+                    (else '()))
+        (with plugins (map symbol->string (plugin-list))
+          (list-filter l (lambda (p) (and (string? p) (in? p plugins)))))))))
 
 (define (tmdoc-language file-name)
   (with t (tree-import file-name "texmacs")
@@ -210,10 +329,39 @@
 (define-preferences
   ("manual style" "tmmanual" (lambda args (noop))))
 
+(define (tmdoc-book-parts? root)
+  ;; a root document whose initial environment sets tmdoc-book-parts to
+  ;; true is compiled with parts as the top level divisions, which leaves
+  ;; more numbered levels for deeply nested documentation
+  (with t (tree->stree (tree-import root "texmacs"))
+    (and (pair? t)
+         (with init (assoc 'initial (cdr t))
+           (and init (pair? (cdr init)) (pair? (cadr init))
+                (in? '(associate "tmdoc-book-parts" "true")
+                     (cdadr init)))))))
+
+(define (help-english-file file)
+  ;; "dir/name.<lan>.tm" -> "dir/name.en.tm", or #f
+  (and (string-ends? file ".tm")
+       (let* ((s (string-drop-right file 3))
+              (i (string-search-backwards "." (string-length s) s))
+              (lan (if (< i 0) "" (substring s (+ i 1) (string-length s)))))
+         (and (>= i 0) (in? (string-length lan) '(2 3)) (!= lan "en")
+              (not (string-index lan #\/))
+              (string-append (substring s 0 (+ i 1)) "en.tm")))))
+
+(define (help-file->url file)
+  ;; fall back on the English version of untranslated pages
+  (let* ((root (tmfs-string->url file))
+         (efile (and (!= file "") (not (url-exists? root))
+                     (help-english-file file)))
+         (eroot (and efile (tmfs-string->url efile))))
+    (if (and eroot (url-exists? eroot)) eroot root)))
+
 (tmfs-permission-handler (help name type)
   (and (== type "read")
        (let* ((file (or (tmfs-cdr name) ""))
-              (root (tmfs-string->url file)))
+              (root (help-file->url file)))
          (if (or (== file "") (not (url-exists? root)))
              (in? (url-suffix root) (list "html" "tm" "tmml"))
              #t))))
@@ -221,7 +369,7 @@
 (tmfs-load-handler (help name)
   (let* ((type (or (tmfs-car name) "normal"))
          (file (or (tmfs-cdr name) ""))
-         (root (tmfs-string->url file)))
+         (root (help-file->url file)))
     (cond ((or (== file "") (not (url-exists? root)))
            `(document
               (TeXmacs ,(texmacs-version))
@@ -241,7 +389,9 @@
           ((== type "normal")
            (tm->stree (tree-import root "texmacs")))
           ((== type "book")
-           (let* ((body* (tmdoc-expand root root 'title))
+           (let* ((body* (tmdoc-expand root root
+                                       (if (tmdoc-book-parts? root)
+                                           'title* 'title)))
                   (body (tmdoc-internalize body*))
                   (lan (tmdoc-language root)))
              (tm->stree
@@ -256,7 +406,7 @@
              (tm->stree
               `(document
                  (TeXmacs ,(texmacs-version))
-                 (style (tuple "tmdoc" ,lan))
+                 (style (tuple "tmdoc" ,@(tmdoc-plugin-packages root) ,lan))
                  (body ,body))))))))
 
 (define (tmdoc-find-title-list l)
@@ -294,9 +444,9 @@
 
 (tm-define (tmdoc-expand-help-manual* root next)
   (system-wait "Generating manual" "(can be long)")
-  (tmdoc-expand-help root "book")
   (user-delayed
     (lambda ()
+      (tmdoc-expand-help root "book")
       (delayed-update "(pass 1/3)"
         (lambda ()
           (delayed-update "(pass 2/3)"
@@ -336,8 +486,14 @@
 	(else (cons (tmdoc-remove-hyper-links (car l))
 		    (tmdoc-remove-hyper-links (cdr l))))))
 
+(define (non-chapter-line? x)
+  (not (or (func? x 'chapter)
+           (and (func? x 'concat)
+                (nnull? (cdr x))
+                (func? (cadr x) 'chapter)))))
+
 (tm-define (tmdoc-include incl)
   (let* ((root (tree->string incl))
          (body (tmdoc-expand root root 'chapter))
-	 (filt (list-filter body (lambda (x) (not (func? x 'chapter))))))
+	 (filt (list-filter body non-chapter-line?)))
     (stree->tree (tmdoc-remove-hyper-links filt))))

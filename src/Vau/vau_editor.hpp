@@ -37,17 +37,12 @@ class editor_rep: concrete_struct {
 
 protected:
 
-  vau_buffer    buf;  // the underlying buffer
+  vau_buffer   buf;  // the underlying buffer
   drd_info     drd;  // the drd for the buffer
   tree&        et;   // all TeXmacs trees
   box          eb;   // box translation of tree
   path         rp;   // path to the root of the document in et
   path         tp;   // path of cursor in tree
-#ifdef EXPERIMENTAL
-  environment  ste;  // environment for style rewriting
-  tree         cct;  // clean copy of the document tree
-  memorizer    mem;  // style converted document tree
-#endif
 
 protected:
   tree the_style;                         // document style
@@ -90,9 +85,6 @@ public:
 
   void     init_update ();
   void     drd_update ();
-#ifdef EXPERIMENTAL
-  void     environment_update ();
-#endif
   tree     get_full_env ();
   bool     defined_at_cursor (string var_name);
   bool     defined_at_init (string var_name);

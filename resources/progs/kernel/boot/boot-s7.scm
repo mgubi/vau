@@ -13,9 +13,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(define (s7-scheme?) #t)
 (define has-look-and-feel? (lambda (x) (== x "emacs")))
 
-(define list? proper-list?)
+;; TeXmacs expects Guile's list?, which only holds for proper lists. Like the
+;; exported definitions (see define-public), it is bound in the rootlet
+(varlet (rootlet) 'list? proper-list?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Redirect standard output
@@ -62,17 +65,50 @@
 (define-macro (export . symbols)
     `(set! *exports* (append ',symbols *exports*)))
 
+;; s7 caches, for each symbol, the id of the let that holds its most recent
+;; local binding, and a lookup skips the lets that are newer than that; lets
+;; get increasing ids when they are created. Entering a let with with-let
+;; gives it a fresh, highest id. Call this once, right after the kernel is
+;; loaded: the user module then becomes newer than the kernel modules, where
+;; the kernel symbols are bound, so that lookups of kernel symbols skip it on
+;; their way to the rootlet. Do not enter the user module afterwards (hence
+;; eval in tm-define-macro): it would become newer than the modules loaded
+;; so far, and lookups from their code of the names bound in the user module
+;; (such as define, see compat-s7.scm) would scan their environment.
+(define (renumber-user-module!)
+  (with-let *texmacs-user-module* (curlet)))
+
 (define-macro (with-module module . body)
   `(let ((m ,module)) (with-let m
      (let-temporarily (((*texmacs-module* '*current-module*) (curlet)))
      ,@body))))
 
+;; Public definitions are made in their module and published in the rootlet,
+;; which is where the other modules find them. use-modules sees them there,
+;; with the same value, and does not copy them (import-bindings!). So the
+;; other modules share one binding of each public name, and the user module
+;; stays small; lookups of public names skip the (newer) module lets and end
+;; in the rootlet. The defining module keeps its own binding, as before: a
+;; set! of a public variable there is not seen by the other modules.
+;; With TM_PUBLISH_LOG set, publications which replace another value are
+;; reported (a name defined public by two modules, or an s7 builtin).
+(define publish-log? (getenv "TM_PUBLISH_LOG"))
+(define (publish-binding! name value)
+  (when (and publish-log?
+             (defined? name (rootlet))
+             (not (eq? ((rootlet) name) value)))
+    (format *stderr* "PUBLISH-REPLACES ~A in ~A~%" name
+            ((*texmacs-module* '*current-module*) '*module-name*)))
+  (varlet (rootlet) name value))
+
 (define-macro (define-public head . body)
+  ;; the name is the innermost car of a curried head, ((f a) b)
+  (let ((name (let loop ((h head)) (if (pair? h) (loop (car h)) h))))
     `(begin
-        (define ,head ,@body)
-        (export ,(if (pair? head) (car head) head))))
-        
-        
+       (define ,head ,@body)
+       (export ,name)
+       ,@(if (symbol? name) `((publish-binding! ',name ,name)) '()))))
+
 (define-macro (provide-public head . body)
   (if (or (and (symbol? head) (not (defined? head)))
 	  (and (pair? head) (symbol? (car head)) (not (defined? (car head)))))
@@ -80,9 +116,11 @@
       '(noop)))
 
 (define-macro (define-public-macro head . body)
+  (let ((name (if (pair? head) (car head) head)))
     `(begin
-	   (define-macro ,head ,@body)
-	   (export ,(if (pair? head) (car head) head))))
+       (define-macro ,head ,@body)
+       (export ,name)
+       ,@(if (symbol? name) `((publish-binding! ',name ,name)) '()))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Module handling
@@ -118,13 +156,30 @@
   (module-provide module)
     (hash-table-ref *modules* module))
 
+;; s7 (since version 11) refuses to varlet a symbol which is already bound
+;; in the target let, so we update existing bindings in place
+;; A binding which target already sees, with the same value, through its
+;; outlets (typically a public definition, published in the rootlet) is not
+;; copied: the copy would not change what lookups return, and it would move
+;; the symbol's cached binding into target, so that lookups from elsewhere
+;; would have to scan
+(define (import-bindings! target entries)
+  (for-each (lambda (entry)
+              (cond ((defined? (car entry) target #t)
+                     (let-set! target (car entry) (cdr entry)))
+                    ((and (defined? (car entry) target)
+                          (eq? (let-ref target (car entry)) (cdr entry)))
+                     (noop))
+                    (else
+                     (varlet target (car entry) (cdr entry)))))
+            entries))
+
 (define-macro (use-modules . modules)
   `(map (lambda (module)
     (let* ((m (resolve-module module))
            (ex (m '*exports*))
-           (exx (map (lambda (entry) (if (member (car entry) ex) entry (values))) m))
-           (en (apply inlet exx)))
-        (varlet (*texmacs-module* '*current-module*) en)))
+           (exx (map (lambda (entry) (if (member (car entry) ex) entry (values))) m)))
+        (import-bindings! (*texmacs-module* '*current-module*) exx)))
       ',modules))
 
 (define-macro (import-from . modules)
@@ -133,17 +188,24 @@
 (define-macro (re-export . symbols)
   `(export ,@symbols))
 
+;; The exports of the inherited modules are collected when the form is
+;; evaluated, not when it is expanded: macros are expanded at read time, and
+;; since s7 11 loading a file during the expansion silently ends the load of
+;; the file being read
+(define (re-export-modules! which-list)
+  (let ((cur (*texmacs-module* '*current-module*))
+        (l (apply append
+                  (map (lambda (which) ((resolve-module which) '*exports*))
+                       which-list))))
+    (let-set! cur '*exports* (append l (cur '*exports*)))))
+
 (define-macro (inherit-modules . which-list)
-  (define (module-exports which)
-    (let* ((m (resolve-module which)))
-        (m '*exports*)))
-  (let ((l (apply append (map module-exports which-list))))
-    `(begin
-       (use-modules ,@which-list)
-       (re-export ,@l))))
+  `(begin
+     (use-modules ,@which-list)
+     (re-export-modules! ',which-list)))
 
 (define-macro (texmacs-module name . options)
-  (define (transform action)
+  (#_define (transform action)
     (cond ((not (pair? action)) (noop))
 	  ((equal? (car action) :use) (cons 'use-modules (cdr action)))
 	  ((equal? (car action) :inherit) (cons 'inherit-modules (cdr action)))

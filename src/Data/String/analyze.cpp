@@ -9,6 +9,7 @@
 * in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
 ******************************************************************************/
 
+#include "config.h"
 #include "analyze.hpp"
 #include "merge_sort.hpp"
 #include "converter.hpp"
@@ -428,24 +429,24 @@ contains_unicode_char (string s) {
 * Roman and alpha numbers
 ******************************************************************************/
 
-static string ones[10]= {
-  "", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix" };
-static string tens[10]= {
-  "", "x", "xx", "xxx", "xl", "l", "lx", "lxx", "lxxx", "xc" };
-static string hundreds[10]= {
-  "", "c", "cc", "ccc", "cd", "d", "dc", "dcc", "dccc", "cm" };
+static string ones[10]    = {"",  "i",  "ii",  "iii",  "iv",
+                             "v", "vi", "vii", "viii", "ix"};
+static string tens[10]    = {"",  "x",  "xx",  "xxx",  "xl",
+                             "l", "lx", "lxx", "lxxx", "xc"};
+static string hundreds[10]= {"",  "c",  "cc",  "ccc",  "cd",
+                             "d", "dc", "dcc", "dccc", "cm"};
+static string thousands[4]= {"", "m", "mm", "mmm"};
 
 string
-roman_nr (int nr) {
-  if (nr<0) return "-" * roman_nr (-nr);
-  if (nr==0) return "o";
-  if (nr>1000) return "m" * roman_nr (nr-1000);
-  if (nr==1000) return "m";
-  if (nr==999) return "im";
-  if (nr==499) return "id";
-  if ((nr%100)==99) return hundreds[nr/100] * "ic";
-  if ((nr%100)==49) return hundreds[nr/100] * "il";
-  return hundreds[nr/100] * tens[(nr%100)/10] * ones[nr%10];
+roman_nr (int32_t nr) {
+  if (nr > 3999) return "?";
+  if (nr < -3999) return "-?";
+  if (nr < 0) return "-" * roman_nr (-nr);
+  if (nr == 0) return "o";
+  return thousands[(nr / 1000) % 10] *
+         hundreds [(nr / 100) % 10] *
+         tens     [(nr / 10) % 10] *
+         ones     [nr % 10];
 }
 
 string
@@ -489,19 +490,26 @@ fnsymbol_nr (int nr) {
 
 static const char* hex_string= "0123456789ABCDEF";
 
+static string
+as_hexadecimal_unsigned (unsigned long long u) {
+  if (u<16) return hex_string [u & 15];
+  return as_hexadecimal_unsigned (u >> 4) * hex_string [u & 15];
+}
+
+// the magnitude of a negative number as an unsigned one: -i overflows for
+// the smallest value of the type, whose magnitude has no positive form
 string
 as_hexadecimal (int i) {
-  if (i<0) return "-" * as_hexadecimal (-i);
-  if (i<16) return hex_string [i & 15];
-  return as_hexadecimal (i >> 4) * hex_string [i & 15];
+  if (i<0) return "-" * as_hexadecimal_unsigned (0ULL - (long long) i);
+  return as_hexadecimal_unsigned ((unsigned long long) i);
 }
 
 string
 as_hexadecimal (pointer ptr) {
   intptr_t i= (intptr_t) ptr;
-  if (i<0) return "-" * as_hexadecimal (-i);
-  if (i<16) return hex_string [i & 15];
-  return as_hexadecimal (i >> 4) * hex_string [i & 15];
+  if (i<0) return "-" * as_hexadecimal_unsigned
+                          (0ULL - (unsigned long long) i);
+  return as_hexadecimal_unsigned ((unsigned long long) i);
 }
 
 string
@@ -804,13 +812,13 @@ scm_unquote (string s) {
 
 string
 raw_quote (string s) {
-  // Mark the label of a STRING tree as representing a string and not a symbol.
+  // Mark the label of a TMSTRING tree as representing a string and not a symbol.
   return "\"" * s * "\"";
 }
 
 string
 raw_unquote (string s) {
-  // Get the string value of a STRING tree label representing a string.
+  // Get the string value of a TMSTRING tree label representing a string.
   if (is_quoted (s))
     return s (1, N(s)-1);
   else return s;
@@ -825,29 +833,19 @@ escape_sh (string s) {
 #ifdef OS_MINGW
   return raw_quote (s);
 #else
+  // Protect every character which is not known to be harmless, so that
+  // the result is always a single shell word with the value s
   int i, n= N(s);
   string r;
-  for (i=0; i<n; i++)
-    switch (s[i]) {
-    case '(':
-    case ')':
-    case '<':
-    case '>':
-    case '?':
-    case '&':
-    case '$':
-    case '`':
-    case '\"':
-    case '\\':
-    case ' ':
-      r << '\\' << s[i];
-      break;
-    case '\n':
-      r << "\\n";
-      break;
-    default:
-      r << s[i];
-    }
+  for (i=0; i<n; i++) {
+    char c= s[i];
+    if (is_alpha (c) || is_digit (c) || ((unsigned char) c) >= 128 ||
+        c == '_' || c == '-' || c == '.' || c == '/' || c == ',' ||
+        c == ':' || c == '+' || c == '@' || c == '%' || c == '=')
+      r << c;
+    else if (c == '\n') r << "'\n'";
+    else r << '\\' << c;
+  }
   return r;
 #endif
 }
@@ -904,14 +902,19 @@ unescape_guile (string s) {
   for (i=0; i<n; i++) {
     if (s[i] == '\\') {
       if (i+1 < n && s[i+1] == '\\') {
-        r << "\\\\\\\\";
-        i+=1;
+        // an escaped backslash, followed by text: "\\x41" is not an escape
+        r << s[i] << s[i+1];
+        i++;
       }
       else if (i+3 < n && s[i+1] == 'x'
           && is_hex_digit (s[i+2]) && is_hex_digit (s[i+3])) {
         string e= s(i+2, i+4);
         r << (unsigned char) from_hexadecimal (e);
         i+=3;
+#ifdef USE_S7
+        // s7 prints the escape as "\xHH;" and Guile as "\xHH"
+        if (i+1 < n && s[i+1] == ';') i++;
+#endif
       }
       else
         r << s[i];
@@ -1148,47 +1151,44 @@ downgrade_math_letters (string s) {
 ******************************************************************************/
 
 void
-parse (string s, int& pos, QI& ret) {
-  ret= (QI) s[pos++];
+parse (string s, int& pos, Z8& ret) {
+  ret= (Z8) s[pos++];
 }
 
 void
-parse (string s, int& pos, QN& ret) {
-  ret= (QN) s[pos++];
+parse (string s, int& pos, N8& ret) {
+  ret= (N8) s[pos++];
 }
 
 void
-parse (string s, int& pos, HI& ret) {
-  QI c1= (QI) s[pos++];
-  QN c2= (QN) s[pos++];
-  ret= (((HI) c1)<<8)+ c2;
+parse (string s, int& pos, Z16& ret) {
+  Z8 c1= (Z8) s[pos++];
+  N8 c2= (N8) s[pos++];
+  ret= (((short) c1)<<8)+ c2;
 }
 
 void
-parse (string s, int& pos, HN& ret) {
-  QN c1= (QN) s[pos++];
-  QN c2= (QN) s[pos++];
-  ret= (((HN) c1)<<8)+ c2;
+parse (string s, int& pos, N16& ret) {
+  N8 c1= (N8) s[pos++];
+  N8 c2= (N8) s[pos++];
+  ret= (((unsigned short) c1)<<8)+ c2;
 }
 
 void
-parse (string s, int& pos, SI& ret) {
-  QI c1= (QI) s[pos++];
-  QN c2= (QN) s[pos++];
-  QN c3= (QN) s[pos++];
-  QN c4= (QN) s[pos++];
-  ret= (((((((SI) c1)<<8)+ ((SI) c2))<<8)+ ((SI) c3))<<8)+ c4;
+parse (string s, int& pos, Z32& ret) {
+  Z8 c1= (Z8) s[pos++];
+  N8 c2= (N8) s[pos++];
+  N8 c3= (N8) s[pos++];
+  N8 c4= (N8) s[pos++];
+  ret= (((((((Z32) c1)<<8)+ ((Z32) c2))<<8)+ ((Z32) c3))<<8)+ c4;
 }
 
 void
-parse (string s, int& pos, SI*& a, int len) {
+parse (string s, int& pos, Z32*& a, int len) {
   int i;
-  a= tm_new_array<int> (len);
+  a= tm_new_array<Z32> (len);
   for (i=0; i<len; i++) parse (s, pos, a[i]);
 }
-
-
-
 
 /******************************************************************************
 * Searching, replacing and pattern matching
@@ -1270,6 +1270,7 @@ string
 replace (string s, string what, string by) {
   int i, n= N(s);
   string r;
+  if (N(what) == 0) return s;
   for (i=0; i<n; )
     if (test (s, i, what)) {
       r << by;
@@ -1318,6 +1319,7 @@ array<string>
 tokenize (string s, string sep) {
   int start=0;
   array<string> a;
+  if (N(sep) == 0) { a << s; return a; }
   for (int i=0; i<N(s); )
     if (test (s, i, sep)) {
       a << s (start, i);
@@ -1423,13 +1425,13 @@ static bool
 find_bracket_valid (tree t, int pos) {
   if (pos < 0 || pos >= N(t))
     return false;
-  if (L(t) == STRING || L(t) == DOCUMENT)
+  if (L(t) == TMSTRING || L(t) == DOCUMENT)
     return true;
   if (L(t) == CONCAT)
-    return L(t[pos]) == STRING || L(t[pos]) == CONCAT || L(t[pos]) == WITH;
+    return L(t[pos]) == TMSTRING || L(t[pos]) == CONCAT || L(t[pos]) == WITH;
   if (L(t) == WITH)
     return pos == N(t)-1 &&
-           (L(t[pos]) == STRING || L(t[pos]) == CONCAT || L(t[pos]) == WITH ||
+           (L(t[pos]) == TMSTRING || L(t[pos]) == CONCAT || L(t[pos]) == WITH ||
             L(t[pos]) == DOCUMENT);
   else
     return false;
@@ -1602,7 +1604,7 @@ differences (string s1, string s2) {
   int i1= 0, i2= 0, j1= n1, j2= n2;
   while (i1<j1 && i2<j2 && s1[i1] == s2[i2]) { i1++; i2++; }
   while (i1<j1 && i2<j2 && s1[j1-1] == s2[j2-1]) { j1--; j2--; }
-  if (i1 == i2 && j1 == j2) return array<int> ();
+  if (i1 == j1 && i2 == j2) return array<int> ();
   if (i1 > 0 || i2 > 0 || j1 < n1 || j2 < n2) {
     array<int> r= differences (s1 (i1, j1), s2 (i2, j2));
     for (int k=0; k<N(r); k+=4) {

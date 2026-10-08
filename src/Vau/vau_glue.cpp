@@ -557,7 +557,7 @@ command_to_tmscm (command o) {
   return blackbox_to_tmscm (close_box<command> (o));
 }
 
-static command
+command
 tmscm_to_command (tmscm o) {
   return open_box<command> (tmscm_to_blackbox (o));
 }
@@ -791,7 +791,7 @@ tmscm_to_array_int (tmscm p) {
   return a;
 }
 
-static bool
+bool
 tmscm_is_array_string (tmscm p) {
   if (tmscm_is_null (p)) return true;
   else return tmscm_is_pair (p) &&
@@ -1814,10 +1814,12 @@ DECLARE_GLUE_NAME_TYPE(resolve_pattern,"url-resolve-pattern", url (url))
 DECLARE_GLUE_NAME_TYPE(exists,"url-exists?", bool (url))
 DECLARE_GLUE_NAME_TYPE(exists_in_path,"url-exists-in-path?", bool (url))
 DECLARE_GLUE_NAME_TYPE(exists_in_tex,"url-exists-in-tex?", bool (url))
+static string glue_concretize (url u) { return concretize (u); }
+static string glue_materialize (url u, string f) { return materialize (u, f); }
 DECLARE_GLUE_NAME_TYPE(concretize_url,"url-concretize*", url (url))
-DECLARE_GLUE_NAME_TYPE(concretize,"url-concretize", string (url))
+DECLARE_GLUE_NAME_TYPE(glue_concretize,"url-concretize", string (url))
 DECLARE_GLUE_NAME_TYPE(sys_concretize,"url-sys-concretize", string (url))
-DECLARE_GLUE_NAME_TYPE(materialize,"url-materialize", string (url, string))
+DECLARE_GLUE_NAME_TYPE(glue_materialize,"url-materialize", string (url, string))
 DECLARE_GLUE_NAME_TYPE(is_of_type,"url-test?", bool (url, string))
 DECLARE_GLUE_NAME_TYPE(is_regular,"url-regular?", bool (url))
 DECLARE_GLUE_NAME_TYPE(is_directory,"url-directory?", bool (url))

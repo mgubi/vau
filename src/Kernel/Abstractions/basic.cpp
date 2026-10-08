@@ -9,6 +9,7 @@
 * in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
 ******************************************************************************/
 
+#include "basic.hpp"
 #include "string.hpp"
 #include "analyze.hpp"
 #include "scheme.hpp"
@@ -57,6 +58,8 @@ debug_set (string s, bool on) {
   else if (s == "events") debug_set (DEBUG_FLAG_EVENTS, on);
   else if (s == "std") debug_set (DEBUG_FLAG_STD, on);
   else if (s == "io") debug_set (DEBUG_FLAG_IO, on);
+  else if (s == "sockets") debug_set (DEBUG_FLAG_SOCKETS, on);
+  else if (s == "gnutls") debug_set (DEBUG_FLAG_GNUTLS, on);
   else if (s == "bench") debug_set (DEBUG_FLAG_BENCH, on);
   else if (s == "history") debug_set (DEBUG_FLAG_HISTORY, on);
   else if (s == "qt") debug_set (DEBUG_FLAG_QT, on);
@@ -69,6 +72,7 @@ debug_set (string s, bool on) {
   else if (s == "convert") debug_set (DEBUG_FLAG_CONVERT, on);
   else if (s == "remote") debug_set (DEBUG_FLAG_REMOTE, on);
   else if (s == "live") debug_set (DEBUG_FLAG_LIVE, on);
+  else if (s == "fonts") debug_set (DEBUG_FLAG_FONTS, on);
 }
 
 static bool
@@ -83,6 +87,8 @@ debug_get (string s) {
   else if (s == "events") return debug_get (DEBUG_FLAG_EVENTS);
   else if (s == "std") return debug_get (DEBUG_FLAG_STD);
   else if (s == "io") return debug_get (DEBUG_FLAG_IO);
+  else if (s == "sockets") return debug_get (DEBUG_FLAG_SOCKETS);
+  else if (s == "gnutls") return debug_get (DEBUG_FLAG_GNUTLS);
   else if (s == "bench") return debug_get (DEBUG_FLAG_BENCH);
   else if (s == "history") return debug_get (DEBUG_FLAG_HISTORY);
   else if (s == "qt") return debug_get (DEBUG_FLAG_QT);
@@ -94,6 +100,7 @@ debug_get (string s) {
   else if (s == "convert") return debug_get (DEBUG_FLAG_CONVERT);
   else if (s == "remote") return debug_get (DEBUG_FLAG_REMOTE);
   else if (s == "live") return debug_get (DEBUG_FLAG_LIVE);
+  else if (s == "fonts") return debug_get (DEBUG_FLAG_FONTS);
   else return false;
 }
 
@@ -134,6 +141,7 @@ debug_message_sub (string channel, string msg) {
       cout << msg;
     }
   }
+  cout.flush ();
 }
 
 void
@@ -256,7 +264,13 @@ operator << (tm_ostream& out, display_control ctrl) {
 
 bool
 gui_is_x () {
-#ifdef QTTEXMACS
+  // "x" here means the historical X11 look and feel, which drives a few
+  // choices in the Scheme layer (the confirmation before overwriting a
+  // file, for one). Vue is not it: it has native dialogs of its own, and
+  // neither is Cocoa, whose save panel asks before overwriting a file.
+  // Qtwk is: it uses Qt as a platform layer, but the widgets of Widkit.
+#if (defined (QTTEXMACS) && !defined (QTWKTEXMACS)) || \
+    defined (VUETEXMACS) || defined (AQUATEXMACS)
   return false;
 #else
   return true;
@@ -264,8 +278,20 @@ gui_is_x () {
 }
 
 bool
+gui_is_vue () {
+#ifdef VUETEXMACS
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool
 gui_is_qt () {
-#ifdef QTTEXMACS
+  // NOTE: the native interface of macOS implements the widgets of Qt;
+  // Qtwk does not (it draws the widgets of Widkit), although it defines
+  // QTTEXMACS for its platform layer
+#if (defined (QTTEXMACS) && !defined (QTWKTEXMACS)) || defined (AQUATEXMACS)
   return true;
 #else
   return false;
@@ -291,8 +317,25 @@ os_mingw () {
 }
 
 bool
+os_mingw64 () {
+#ifdef OS_MINGW64
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool
 os_macos () {
 #if defined (OS_MACOS)
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool os_android () {
+#if defined (OS_ANDROID)
   return true;
 #else
   return false;
@@ -313,8 +356,31 @@ use_macos_fonts () {
 #endif
 }
 
+// The keyboard shortcuts written with the symbols of a Mac (the command
+// sign...) rather than as M-x: where the fonts of the Mac are (above), and in
+// the browser of a Mac (the Vue port draws the symbols from a font of
+// TeXmacs, see layout_keys in vue_gui.cpp)
+bool
+use_macos_keys () {
+#ifdef __EMSCRIPTEN__
+  string s= get_preference ("look and feel");
+  if (s == "default") s= default_look_and_feel ();
+  return s == "macos";
+#else
+  return use_macos_fonts ();
+#endif
+}
+
 static const char*
 default_look_and_feel_impl () {
+#ifdef __EMSCRIPTEN__
+  // in the browser, that of the platform of the browser (web-pre.js), so
+  // that the shortcuts of TeXmacs and of the browser agree (Cmd+V on a Mac)
+  string web= get_env ("TEXMACS_WEB_PLATFORM");
+  if (web == "macos") return "macos";
+  if (web == "windows") return "windows";
+  return "gnome";
+#endif
   if (os_mingw () || os_win32 ()) return "windows";
   if (os_macos ()) return "macos";
   string session= get_env ("DESKTOP_SESSION");
@@ -336,3 +402,20 @@ default_look_and_feel () {
   static const char* ret= default_look_and_feel_impl ();
   return ret;
 }
+
+#ifdef QTTEXMACS
+bool qt_support_functionality (string s);
+#endif
+
+bool
+support_functionality (string functionality) {
+#ifdef QTTEXMACS
+  return qt_support_functionality (functionality);
+#endif
+  return false;
+}
+
+#ifndef QTTEXMACS
+void
+gui_set_next_window_as_popup () {}
+#endif

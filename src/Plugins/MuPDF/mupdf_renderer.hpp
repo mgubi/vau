@@ -19,6 +19,24 @@
 
 fz_context* mupdf_context ();
 
+// FreeType on the face of a MuPDF font, with MuPDF's lock held: the
+// built in ("Adobe custom") encoding of a Type 1 font selected, and the
+// glyph of a TeXmacs character index (tt_face.cpp: an index from
+// 0xc000000 on is a glyph number already)
+void mupdf_select_custom_charmap (fz_font* font);
+unsigned int mupdf_glyph_index (fz_font* font, int i);
+
+// the outline of the glyph of the character c of a TeXmacs font, as
+// quadratic curves (six numbers each: the three points) in em units, y up,
+// and the size of an em in pixels of a renderer at zoom 1; false when the
+// font has no file, whose glyphs are bitmaps (for vue_gpu.cpp)
+bool mupdf_glyph_outline (string fontname, int c, array<double>& q, double& em);
+// the same glyph rendered by MuPDF as draw renders it, its origin on a
+// pixel: its coverage (a byte a pixel, rows from the top), its size, and
+// the offset of its top left corner from the origin (pixels, y down)
+bool mupdf_glyph_bitmap (string fontname, int c, string& cov,
+                         int& w, int& h, int& x0, int& y0);
+
 /******************************************************************************
 * Graphic renderer
 ******************************************************************************/
@@ -35,6 +53,9 @@ protected:
   SI        lw;
   double    current_width;
   int       clip_level;
+  int       transform_level; // how deep in set_transformation
+  bool      fill_is_pattern; // the PDF fill color is a pattern (no direct fill)
+  bool      proxy;           // a shadow drawing into its master's pixmap
   
 //  pencil    pen;
 //  brush     bgb, fgb;
@@ -63,6 +84,7 @@ protected:
   void end_text ();
 
   void select_line_width (SI w);
+  void restored_state ();
   void select_stroke_color (color c);
   void select_fill_color (color c);
   void select_alpha (int a);
@@ -70,18 +92,33 @@ protected:
   void select_fill_pattern (brush br);
   void register_pattern (brush br, SI pixel);
 
+  // direct access to the pixels of the target pixmap (see the notes there)
+  bool device_box (SI x1, SI y1, SI x2, SI y2,
+                   int& px1, int& py1, int& px2, int& py2);
+  bool fill_direct (SI x1, SI y1, SI x2, SI y2, color c);
+  bool draw_pixmap_direct (fz_pixmap* src, SI x, SI y, int alpha,
+                           bool opaque= false);
+  bool draw_pixmap_scaled_direct (fz_pixmap* src, SI x, SI y, double s, int alpha);
+  bool tile_direct (SI x1, SI y1, SI x2, SI y2, fz_pixmap* tile);
+
+  // the text of a proxy is drawn at its end (ET): before its pixels are used
+  static void flush_proxy_text (fz_pixmap* pix);
+  void reset_proxy (fz_pixmap* pix);
+
 public:
   mupdf_renderer_rep (int w = 0, int h = 0);
   ~mupdf_renderer_rep ();
   void* get_handle ();
 
-  void set_zoom_factor (double zoom);
+  void set_zoom_factor (double zoom, bool safe= true);
+  // the device background is the pattern/color cleared by the editor itself
+  void clear_device (SI x1, SI y1, SI x2, SI y2);
 
   void begin (void* handle);
   void end ();
 
   //void set_extent (int _w, int _h) { w = _w; h = _h; }
-  void get_extents (int& w, int& h);
+  void get_extents (SI& w, SI& h);
 
   void set_transformation (frame fr);
   void reset_transformation ();
@@ -102,6 +139,9 @@ public:
   void arc (SI x1, SI y1, SI x2, SI y2, int alpha, int delta);
   void fill_arc (SI x1, SI y1, SI x2, SI y2, int alpha, int delta);
   void polygon (array<SI> x, array<SI> y, bool convex=true);
+  void rounded_rectangle (SI x1, SI y1, SI x2, SI y2,
+                          SI r_tl, SI r_tr, SI r_br, SI r_bl,
+                          bool filled);
 //  void  draw_triangle (SI x1, SI y1, SI x2, SI y2, SI x3, SI y3);
 
   void bezier_arc (SI x1, SI y1, SI x2, SI y2, int alpha, int delta, bool filled);
@@ -115,6 +155,7 @@ public:
   void fetch (SI x1, SI y1, SI x2, SI y2, renderer ren, SI x, SI y);
 
   void draw_picture (picture pict, SI x, SI y, int alpha);
+  void draw_picture_scaled (picture pict, SI x, SI y, double s, int alpha);
   
   friend class mupdf_proxy_renderer_rep;
 };
@@ -122,3 +163,4 @@ public:
 mupdf_renderer_rep* the_mupdf_renderer ();
 
 #endif // defined MUPDF_RENDERER_HPP
+void mupdf_image_gc (string name); // see image_gc in gui.hpp

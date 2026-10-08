@@ -64,6 +64,7 @@ initialize_default_env () {
   env (SELECTION_COLOR)  = "red";       // color of selections
   env (TABLE_SELECTION_COLOR)= "#b0f";  // color of selections of table cells
   env (MATCH_COLOR)      = "#eb0";      // color of search matches
+  env (SPELL_ERROR_COLOR)= "#f80";      // color of spell errors
   env (CLICKABLE_COLOR)  = "#20a060";   // color to indicate clickable loci
   env (CORRECT_COLOR)    = "#70d070";   // indicate semantical correctness
   env (INCORRECT_COLOR)  = "#d09050";   // indicate semantical incorrectness
@@ -75,6 +76,7 @@ initialize_default_env () {
   env (FONT_SIZE)        = "1";         // the font size multiplier
   env (FONT_BASE_SIZE)   = "10";        // the font base size
   env (FONT_EFFECTS)     = "";          // additional effects applied to font
+  env (FONT_FEATURES)    = "";          // OpenType features, e.g. onum,smcp
   env (MAGNIFICATION)    = "1";         // magnification (slides for instance)
   env (COLOR)            = "black";     // the color
   env (OPACITY)          = "100%";      // the opacity

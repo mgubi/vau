@@ -549,7 +549,7 @@
   (dynamic (focus-tag-customize-menu (tree-label t))))
 
 (tm-menu (focus-search-menu t)
-  ("Search in database" (focus-open-search-tool t)))
+  ("Search references" (focus-open-search-tool t)))
 
 (tm-menu (focus-tag-menu t)
   (with l (focus-variants-of t)
@@ -576,7 +576,14 @@
   (assuming (focus-has-search-menu? t)
     (-> "Search" (dynamic (focus-search-menu t))))
   (assuming (focus-can-search? t)
-    ("Search in database" (focus-open-search-tool t))))
+    ("Search references" (focus-open-search-tool t)))
+  (assuming (and (tree-in? t '(cite nocite cite-detail))
+                 (zotero-citation-entry t))
+    ("Show in Zotero" (zotero-show-item (zotero-citation-entry t))))
+  (assuming (and (tree-in? t '(cite nocite cite-detail)) (supports-db?)
+                 (zotero-can-import? (zotero-citation-entry t)))
+    ("Import into the database"
+     (zotero-import-entry (zotero-citation-entry t)))))
 
 (tm-menu (focus-move-menu t)
   ("Previous similar" (traverse-previous))
@@ -718,8 +725,12 @@
     (=> (balloon (icon "tm_focus_search.xpm") "Search")
         (dynamic (focus-search-menu t))))
   (assuming (focus-can-search? t)
-    ((balloon (icon "tm_focus_search.xpm") "Search in database")
-     (focus-open-search-tool t))))
+    ((balloon (icon "tm_focus_search.xpm") "Search references")
+     (focus-open-search-tool t)))
+  (assuming (and (tree-in? t '(cite nocite cite-detail))
+                 (zotero-citation-entry t))
+    ((balloon "Z" "Show in Zotero")
+     (zotero-show-item (zotero-citation-entry t)))))
 
 (tm-menu (focus-move-icons t)
   ((balloon (icon "tm_similar_first.xpm") "Go to first similar tag")
@@ -848,6 +859,106 @@
         (glue #f #f 3 0)
         (mini #t (group (eval (string-append name ":"))))
         (dynamic (focus-customizable-icons-item var name mode))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hook for interactive commands
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define interactive-tool-table (make-ahash-table))
+
+(tm-define (set-interactive-tool-arg win fun i val)
+  (if val
+      (ahash-set! interactive-tool-table (list win fun i) val)
+      (tool-close :any 'interactive-tool #f win)))
+
+(tm-define (get-interactive-tool-arg win fun i)
+  (ahash-ref interactive-tool-table (list win fun i)))
+
+(tm-define (interactive-retype type i)
+  (string-append "interactive-" (number->string i)))
+
+(tm-define (interactive-tool-arg win fun args i w)
+  (with (var type . vals) (list-ref args i)
+    `(item (text ,var)
+       (input (if answer
+                  (begin
+                    (set-interactive-tool-arg ',win ',fun ,i answer)
+                    (if (< (+ ,i 1) ,(length args))
+                        (keyboard-focus-on
+                         (string-append "interactive-"
+                                        (number->string (+ ,i 1))))
+                        (interactive-ok ',win ',fun ',args)))
+                  (tool-close :any 'interactive-tool #f ',win))
+              ,(interactive-retype type i)
+              ',(rcons vals "") ,w))))
+
+(tm-define (interactive-ok win fun args)
+  (let* ((get (cut get-interactive-tool-arg win fun <>))
+         (inds (.. 0 (length args)))
+         (vals (map get inds)))
+    (apply fun vals)
+    (with learn (map cons (map number->string inds) vals)
+      (learn-interactive fun learn))
+    (tool-close :any 'interactive-tool #f win)))
+
+(tm-tool (interactive-tool win fun args)
+  (:name (interactive-title fun))
+  (dynamic
+   (eval
+    (let* ((side? (tool-side? `(interactive-tool ,fun ,args) win))
+           (width (if side? "12em" "24em")))
+      (for (i (.. 0 (length args)))
+        (with (var type . vals) (list-ref args i)
+          (with default (if (null? vals) "" (car vals))
+            (set-interactive-tool-arg win fun i default))))
+      (cond ((list-1? args)
+             (with (var type . vals) (list-ref args 0)
+               `(menu-dynamic
+                  (hlist
+                    (text ,var)
+                    // //
+                    (input (begin
+                             (set-interactive-tool-arg ',win ',fun 0 answer)
+                             (when answer
+                               (interactive-ok ',win ',fun ',args)))
+                           ,(interactive-retype type 0)
+                           ',(rcons vals "") ,width)
+                    >>>))))
+            (side?
+             `(menu-dynamic
+                ===
+                (aligned
+                  ,@(map (cut interactive-tool-arg win fun args <> width)
+                         (.. 0 (length args))))
+                ===
+                (hlist >>>
+                       (division "plain"
+                         ("Ok" (interactive-ok ',win ',fun ',args))))))
+            (else
+             `(menu-dynamic
+                (hlist
+                  (vlist
+                    (aligned
+                      ,@(map (cut interactive-tool-arg win fun args <> width)
+                             (.. 0 (length args)))))
+                  // // //
+                  (vlist
+                    (glue #f #t 0 0)
+                    (division "plain"
+                      (hlist ("Ok" (interactive-ok ',win ',fun ',args)) >>>))
+                    )))))))))
+
+(tm-define (tm-interactive-new fun args)
+  ;;(display* "interactive " fun ", " args "\n")
+  (if (side-tools?)
+      (begin
+        (tool-select :transient-bottom (list 'interactive-tool fun args))
+        (delayed
+          (:pause 500)
+          (keyboard-focus-on "interactive-0")))
+      (tm-interactive fun args)))
+
+(set! tm-interactive-hook tm-interactive-new)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Immediately load document-menu

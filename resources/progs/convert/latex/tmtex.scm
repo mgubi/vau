@@ -540,28 +540,28 @@
               ((== c #\^)  (tmtex-text-sub "\\^{}" l))
               ((== c #\\)  (tmtex-text-sub '(textbackslash) l))
               ((== c #\`)  (tmtex-text-sub "`" l))
-              ((== c #\00) (tmtex-text-sub "\\`{}" l))
-              ((== c #\01) (tmtex-text-sub "\\'{}" l))
-              ((== c #\04) (tmtex-text-sub "\\\"{}" l))
-              ((== c #\05) (tmtex-text-sub "\\H{}" l))
-              ((== c #\06) (tmtex-text-sub "\\r{}" l))
-              ((== c #\07) (tmtex-text-sub "\\v{}" l))
-              ((== c #\10) (tmtex-text-sub "\\u{}" l))
-              ((== c #\11) (tmtex-text-sub "\\={}" l))
-              ((== c #\12) (tmtex-text-sub "\\.{}" l))
-              ((== c #\14) (tmtex-text-sub "\\k{}" l))
-              ((== c #\20) (tmtex-text-sub "``" l))
-              ((== c #\21) (tmtex-text-sub "''" l))
-              ((== c #\22) (tmtex-text-sub ",," l))
-              ((== c #\25) (tmtex-text-sub "--" l))
-              ((== c #\26) (tmtex-text-sub "---" l))
-              ((== c #\27) (tmtex-text-sub "{}" l))
-              ((== c #\33) (tmtex-text-sub "ff" l))
-              ((== c #\34) (tmtex-text-sub '(textbackslash) l))
-              ((== c #\35) (tmtex-text-sub "fl" l))
-              ((== c #\36) (tmtex-text-sub "ffi" l))
-              ((== c #\37) (tmtex-text-sub "ffl" l))
-              ((== c #\174) (tmtex-text-sub '(textbar) l))
+              ((== c (integer->char 0)) (tmtex-text-sub "\\`{}" l))
+              ((== c (integer->char 1)) (tmtex-text-sub "\\'{}" l))
+              ((== c (integer->char 4)) (tmtex-text-sub "\\\"{}" l))
+              ((== c (integer->char 5)) (tmtex-text-sub "\\H{}" l))
+              ((== c (integer->char 6)) (tmtex-text-sub "\\r{}" l))
+              ((== c (integer->char 7)) (tmtex-text-sub "\\v{}" l))
+              ((== c (integer->char 8)) (tmtex-text-sub "\\u{}" l))
+              ((== c (integer->char 9)) (tmtex-text-sub "\\={}" l))
+              ((== c (integer->char 10)) (tmtex-text-sub "\\.{}" l))
+              ((== c (integer->char 12)) (tmtex-text-sub "\\k{}" l))
+              ((== c (integer->char 16)) (tmtex-text-sub "``" l))
+              ((== c (integer->char 17)) (tmtex-text-sub "''" l))
+              ((== c (integer->char 18)) (tmtex-text-sub ",," l))
+              ((== c (integer->char 21)) (tmtex-text-sub "--" l))
+              ((== c (integer->char 22)) (tmtex-text-sub "---" l))
+              ((== c (integer->char 23)) (tmtex-text-sub "{}" l))
+              ((== c (integer->char 27)) (tmtex-text-sub "ff" l))
+              ((== c (integer->char 28)) (tmtex-text-sub '(textbackslash) l))
+              ((== c (integer->char 29)) (tmtex-text-sub "fl" l))
+              ((== c (integer->char 30)) (tmtex-text-sub "ffi" l))
+              ((== c (integer->char 31)) (tmtex-text-sub "ffl" l))
+              ((== c #\|) (tmtex-text-sub '(textbar) l))
               (else
                 (append
                   (if (or tmtex-use-unicode? tmtex-use-ascii?)
@@ -1856,6 +1856,16 @@
           ((in? unit '("w" "h")) (or val 0))
           (else #f))))
 
+(define (tmtex-image-sized fig hor ver)
+  ;; size the image with the width and height options of includegraphics
+  ;; rather than with resizebox, which TeXmacs does not import back
+  (let* ((w (if (== hor "!") '() (list (string-append "width=" hor))))
+         (h (if (== ver "!") '() (list (string-append "height=" ver))))
+         (opts (string-recompose (append w h) ",")))
+    (if (and (func? fig 'includegraphics 1) (!= opts ""))
+        (list 'includegraphics (list '!option opts) (cadr fig))
+        (list 'resizebox hor ver fig))))
+
 (define (tmtex-image l)
   (if (nstring? (car l))
       (tmtex-eps (cons 'image l))
@@ -1864,7 +1874,7 @@
              (ver (tmtex-image-length (caddr l)))
              (mhor (tmtex-image-mag (cadr l)))
              (mver (tmtex-image-mag (caddr l))))
-        (cond ((or (not mhor) (not mver)) (list 'resizebox hor ver fig))
+        (cond ((or (not mhor) (not mver)) (tmtex-image-sized fig hor ver))
               ((and (== mhor 0.0) (== mver 0.0)) fig)
               ((or (== mhor 1.0) (== mver 1.0)) fig)
               ((== mhor 0.0) (list 'scalebox (number->string mver) fig))
@@ -2357,8 +2367,18 @@
     ((== (cadr l) "locase") (tex-apply 'MakeLowercase (tmtex (car l))))
     (else (tmtex (car l)))))
 
+;; LaTeX's \fbox typesets its argument in text mode; a frame in a formula
+;; becomes an amsmath \boxed, which is also imported back as a formula
 (define (tmtex-frame s l)
-  `(fbox ,(car l)))
+  (if (tmtex-math-mode?)
+      `(boxed ,(tmtex (car l)))
+      `(fbox ,(tmtex (car l)))))
+
+;; \boxed is only allowed in formulas
+(define (tmtex-boxed s l)
+  (if (tmtex-math-mode?)
+      `(boxed ,(tmtex (car l)))
+      (tmtex `(math (boxed ,(car l))))))
 
 (define (tmtex-colored-frame s l)
   `(colorbox ,(tmtex-decode-color (car l)) ,(tmtex (cadr l))))
@@ -2644,7 +2664,8 @@
   '(!nbhyph))
 
 (define (tmtex-frac* s l)
-  (tex-concat (list (tmtex (car l)) "/" (tmtex (cadr l)))))
+  ;;(tex-concat (list (tmtex (car l)) "/" (tmtex (cadr l)))))
+  (list 'sfrac (tmtex (car l)) (tmtex (cadr l))))
 
 (define (tmtex-ornament-shape s)
   (if (== s "rounded") "1.7ex" "0pt"))
@@ -2681,6 +2702,8 @@
   ("padding-below"     ("skipbelow" ,tmtex-decode-length))
   ("overlined-sep"     ("innertopmargin" ,tmtex-decode-length))
   ("underlined-sep"    ("innerbottommargin" ,tmtex-decode-length))
+  ("leftlined-sep"     ("innerleftmargin" ,tmtex-decode-length))
+  ("rightlined-sep"    ("innerrightmargin" ,tmtex-decode-length))
   ("framed-hsep"       ("innerleftmargin" "innerrightmargin"
                         ,tmtex-decode-length))
   ("framed-vsep"       ("innertopmargin"  "innerbottommargin"
@@ -2696,6 +2719,15 @@
   (with tag (string->symbol (string-append "tm" (string-replace s "-" "")))
   `(,tag ,@(map tmtex l))))
 
+(define (tmtex-input-text s l)
+  (let ((tag (string->symbol (string-append "tm" (string-replace s "-" ""))))
+        (a1  (tmtex (car l)))
+        (a2  (with r (begin
+                       (tmtex-env-set "mode" "text")
+                       (tmtex (cadr l)))
+               (tmtex-env-reset "mode") r)))
+  (list tag a1 a2)))
+
 (define (tmtex-input-math s l)
   (let ((tag (string->symbol (string-append "tm" (string-replace s "-" ""))))
         (a1  (tmtex (car l)))
@@ -2704,6 +2736,16 @@
                        (tmtex (cadr l)))
                (tmtex-env-reset "mode") r)))
   (list tag a1 a2)))
+
+(define (tmtex-fold-io-text s l)
+  (let ((tag (string->symbol (string-append "tm" (string-replace s "-" ""))))
+        (a1  (tmtex (car l)))
+        (a2  (with r (begin
+                       (tmtex-env-set "mode" "text")
+                       (tmtex (cadr l)))
+               (tmtex-env-reset "mode") r))
+        (a3  (tmtex (caddr l))))
+  (list tag a1 a2 a3)))
 
 (define (tmtex-fold-io-math s l)
   (let ((tag (string->symbol (string-append "tm" (string-replace s "-" ""))))
@@ -3149,9 +3191,13 @@
         unfolded-subsession folded-subsession folded-io unfolded-io
         input output errput timing)
    (,tmtex-tm -1))
-  ((:or padded underlined overlined bothlined framed ornamented)
+  ((:or padded underlined overlined bothlined
+	leftlined rightlined verticallined
+	framed ornamented)
    (,tmtex-ornamented 1))
+  ((:or folded-io-text unfolded-io-text) (,tmtex-fold-io-text 3))
   ((:or folded-io-math unfolded-io-math) (,tmtex-fold-io-math 3))
+  (input-text (,tmtex-input-text 2))
   (input-math (,tmtex-input-math 2))
   (session (,tmtex-session 3))
   ((:or converter-input converter-output) (,tmtex-converter 3))
@@ -3219,6 +3265,7 @@
   ((:or mmx cpp scm shell scilab) (,tmtex-code-inline 1))
 
   (frame (,tmtex-frame 1))
+  (boxed (,tmtex-boxed 1))
   (colored-frame (,tmtex-colored-frame 2))
   (fcolorbox (,tmtex-fcolorbox 3))
   (rotate (,tmtex-rotate 2))

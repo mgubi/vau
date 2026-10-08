@@ -13,13 +13,12 @@
 #include "file.hpp"
 #include "tree.hpp"
 #include "parse_string.hpp"
+#include <cstring>
 
-#ifdef OS_MINGW
-#include "Qt/qt_sys_utils.hpp"
-#include "Windows/mingw_sys_utils.hpp"
-#include "Windows/win-utf8-compat.hpp"
+#ifndef OS_MINGW
+#include <poll.h>
 #else
-#include "Unix/unix_sys_utils.hpp"
+#include <winsock2.h>
 #endif
 
 int script_status = 1;
@@ -30,9 +29,13 @@ int script_status = 1;
 
 int
 system (string s, string& result, string& error) {
-#if defined (OS_MINGW)
+#if defined (OS_MINGW64)
+  int r= windows_system (s, result, error);
+#elif defined (OS_MINGW)
   int r= qt_system (s, result, error);
-#else
+#elif defined (OS_ANDROID)
+  int r= qt_system (s, result, error);
+#else 
   int r= unix_system (s, result, error);
 #endif
   return r;
@@ -40,7 +43,11 @@ system (string s, string& result, string& error) {
 
 int
 system (string s, string& result) {
-#if defined (OS_MINGW)
+#if defined (OS_MINGW64)
+  int r= windows_system (s, result); 
+#elif defined (OS_MINGW)
+  int r= qt_system (s, result);
+#elif defined (OS_ANDROID)
   int r= qt_system (s, result);
 #else
   int r= unix_system (s, result);
@@ -58,8 +65,11 @@ system (string s) {
     return r;
   }
   else {
-#if defined (OS_MINGW)
-    // if (starts (s, "convert ")) return 1;
+#if defined (OS_MINGW64)
+    return windows_system (s);
+#elif defined (OS_MINGW)
+    return qt_system (s);
+#elif defined (OS_ANDROID)
     return qt_system (s);
 #else
     return unix_system (s);
@@ -83,29 +93,18 @@ var_eval_system (string s) {
 
 string
 get_env (string var) {
-  c_string _var (var);
-  const char* _ret= getenv (_var);
-  if (_ret==NULL) {
+  string ret;
+  bool has_value = texmacs_getenv(var, ret);
+  if (!has_value) {
     if (var == "PWD") return get_env ("HOME");
     return "";
   }
-  string ret (_ret);
   return ret;
-  // do not delete _ret !
 }
 
 void
 set_env (string var, string with) {
-#if defined(STD_SETENV) && !defined(OS_MINGW)
-  c_string _var  (var);
-  c_string _with (with);
-  setenv (_var, _with, 1);
-#else
-  char* _varw= as_charp (var * "=" * with);
-  (void) putenv (_varw);
-  // do not delete _varw !!!
-  // -> known memory leak, but solution more complex than it is worth
-#endif
+  texmacs_setenv(var, with);
 }
 
 url
@@ -134,6 +133,9 @@ evaluate_system (array<string> arg,
   for (int i= 0; i < N(fd_out); i++) ptr[i]= &(out[i]);
 #ifdef OS_MINGW
   int ret= mingw_system (arg, fd_in, in, fd_out, ptr);
+#elif defined (OS_ANDROID)
+  int ret = -1;
+  //int ret= qt_system (arg, fd_in, in, fd_out, ptr);
 #else
   int ret= unix_system (arg, fd_in, in, fd_out, ptr);
 #endif
@@ -183,3 +185,368 @@ has_printing_cmd () {
   static bool has= get_printing_cmd () != "";
   return has;
 }
+
+int
+tm_poll (struct tm_pollfd* fds, int nfds, int timeout_ms) {
+#ifndef OS_MINGW
+  struct pollfd pfds[64];
+  if (nfds > 64) nfds= 64;
+  for (int i= 0; i < nfds; i++) {
+    pfds[i].fd= fds[i].fd;
+    pfds[i].events= 0;
+    if (fds[i].events & TM_POLL_READ)  pfds[i].events |= POLLIN;
+    if (fds[i].events & TM_POLL_WRITE) pfds[i].events |= POLLOUT;
+    pfds[i].revents= 0;
+  }
+  int ret= poll (pfds, nfds, timeout_ms);
+  for (int i= 0; i < nfds; i++) {
+    fds[i].revents= 0;
+    if (pfds[i].revents & POLLIN)
+      fds[i].revents |= TM_POLL_READ;
+    if (pfds[i].revents & POLLOUT)
+      fds[i].revents |= TM_POLL_WRITE;
+    if (pfds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+      fds[i].revents |= TM_POLL_ERROR;
+  }
+  return ret;
+#else
+  // Windows select() only supports sockets, not pipes or file handles
+  fd_set rfds, wfds, efds;
+  FD_ZERO (&rfds);
+  FD_ZERO (&wfds);
+  FD_ZERO (&efds);
+  for (int i= 0; i < nfds; i++) {
+    if (fds[i].events & TM_POLL_READ)  FD_SET (fds[i].fd, &rfds);
+    if (fds[i].events & TM_POLL_WRITE) FD_SET (fds[i].fd, &wfds);
+    FD_SET (fds[i].fd, &efds);
+    fds[i].revents= 0;
+  }
+  struct timeval tv;
+  struct timeval* tvp= NULL;
+  if (timeout_ms >= 0) {
+    tv.tv_sec= timeout_ms / 1000;
+    tv.tv_usec= (timeout_ms % 1000) * 1000;
+    tvp= &tv;
+  }
+  int ret= select (0, &rfds, &wfds, &efds, tvp);
+  if (ret > 0) {
+    int count= 0;
+    for (int i= 0; i < nfds; i++) {
+      if (FD_ISSET (fds[i].fd, &rfds)) fds[i].revents |= TM_POLL_READ;
+      if (FD_ISSET (fds[i].fd, &wfds)) fds[i].revents |= TM_POLL_WRITE;
+      if (FD_ISSET (fds[i].fd, &efds)) fds[i].revents |= TM_POLL_ERROR;
+      if (fds[i].revents) count++;
+    }
+    return count;
+  }
+  return ret;
+#endif
+}
+
+/******************************************************************************
+* Asynchroneous execution of commands
+******************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <string.h>
+#if defined (OS_MINGW) || defined (OS_WIN)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+#include "scheme.hpp"
+
+struct async_handle {
+  FILE*  fp;
+  bool   done;
+  char*  buf;
+  int    len;
+  int    cap;
+  pthread_mutex_t lock; // buf and len, which the reading thread changes
+  // either
+  object call_back;
+  // or
+  int*    status;
+  string* outbuf;
+  string* errbuf;
+  bool*   kill;
+  async_handle (FILE* fp2, object call_back2):
+    fp (fp2), done (false),
+    buf ((char*) malloc (4096)), len (0), cap (4096),
+    call_back (call_back2),
+    status (NULL), outbuf (NULL), errbuf (NULL), kill (NULL) {
+      pthread_mutex_init (&lock, NULL); }
+  async_handle (FILE* fp2, int& st, string& out,
+		string& err, bool& k):
+    fp (fp2), done (false),
+    buf ((char*) malloc (4096)), len (0), cap (4096),
+    status (&st), outbuf (&out), errbuf (&err), kill (&k) {
+      pthread_mutex_init (&lock, NULL); }
+  ~async_handle () { pthread_mutex_destroy (&lock); }
+};
+
+array<async_handle*> async_busy;
+
+void*
+async_read_output (void* arg) {
+  typedef FILE* FILEp;
+  typedef char* charp;
+  async_handle* handle= (async_handle*) arg;
+  FILEp& fp  = handle->fp;
+  bool&  done= handle->done;
+  charp& buf = handle->buf;
+  int&   len = handle->len;
+  int&   cap = handle->cap;
+  if (handle->kill != NULL && *(handle->kill)) {
+    pclose (fp);
+    fp  = NULL;
+    done= true;
+    return NULL;
+  }
+  // what is there is read as it comes (read, not fread, which waits for
+  // a whole buffer): a request link shows the output so far (a streamed
+  // answer, see async_eval_pending); a handle which is no longer wanted
+  // stops reading
+  while (true) {
+    char buffer[4096];
+    int bytes_read;
+    bytes_read= read (fileno (fp), buffer, sizeof (buffer));
+    if (bytes_read <= 0) break;
+    if (handle->kill != NULL && *(handle->kill)) break;
+    pthread_mutex_lock (&handle->lock);
+    while (bytes_read + len > cap) {
+      char* buf2= (char*) malloc (2 * cap);
+      for (int i=0; i<len; i++) buf2[i]= buf[i];
+      free ((void*) buf);
+      buf= buf2;
+      cap= 2 * cap;
+    }
+    for (int i=0; i<bytes_read; i++)
+      buf[len+i]= buffer[i];
+    len += bytes_read;
+    pthread_mutex_unlock (&handle->lock);
+  }
+
+  pclose (fp);
+  fp  = NULL;
+  done= true;
+  return NULL;
+}
+
+bool
+async_eval_system (string c, object call_back) {
+  string cmd = c;
+#if !defined (OS_MINGW)
+  cmd = cmd * " 2> /dev/null";
+#endif
+  int i, n= N(cmd);
+  char* cmd_= (char*) malloc (n+1);
+  for (i=0; i<n; i++) cmd_[i]= cmd[i];
+  cmd_[n]= '\0';
+
+  FILE *fp = popen (cmd_, "r");
+  if (!fp) return true;
+  async_handle* handle= tm_new<async_handle> (fp, call_back);
+  async_busy << handle;
+
+  pthread_t thread;
+  pthread_create (&thread, NULL, async_read_output, handle);
+  pthread_detach (thread);
+
+  free ((void*) cmd_);
+  return false;
+}
+
+bool
+async_eval_system (string c, int& status, string& outbuf,
+		   string& errbuf, bool& kill) {
+  string cmd = c;
+#if !defined (OS_MINGW)
+  cmd = cmd * " 2> /dev/null";
+#endif
+  int i, n= N(cmd);
+  char* cmd_= (char*) malloc (n+1);
+  for (i=0; i<n; i++) cmd_[i]= cmd[i];
+  cmd_[n]= '\0';
+
+  FILE *fp = popen (cmd_, "r");
+  if (!fp) return true;
+  async_handle* handle=
+    tm_new<async_handle> (fp, status, outbuf, errbuf, kill);
+  async_busy << handle;
+
+  pthread_t thread;
+  pthread_create (&thread, NULL, async_read_output, handle);
+  pthread_detach (thread);
+
+  free ((void*) cmd_);
+  return false;
+}
+
+/******************************************************************************
+* Asynchronous execution of commands without shell
+******************************************************************************/
+
+struct async_process {
+  int    id;
+  object call_back;
+#if defined (OS_MINGW) || defined (OS_ANDROID)
+  array<string> result;
+#else
+  unix_process_rep* rep;
+#endif
+};
+
+static array<async_process*> async_processes;
+static int async_process_counter= 0;
+
+int
+async_evaluate_system (array<string> arg, string in, object call_back) {
+  // Run arg[0] with arguments arg[i], i >= 1, without shell, sending in
+  // to its standard input.  When the command terminates, call_back is
+  // called with the list (exit-code stdout stderr).
+  // Returns an identifier for async_evaluate_cancel, or 0 on failure.
+  async_process* p= tm_new<async_process> ();
+  p->id= ++async_process_counter;
+  p->call_back= call_back;
+#if defined (OS_MINGW) || defined (OS_ANDROID)
+  array<int> fd_in;
+  array<string> str_in;
+  if (N(in) > 0) { fd_in << 0; str_in << in; }
+  array<int> fd_out;
+  fd_out << 1 << 2;
+  p->result= evaluate_system (arg, fd_in, str_in, fd_out);
+#else
+  p->rep= unix_system_start (arg, in);
+  if (p->rep == NULL) {
+    tm_delete<async_process> (p);
+    return 0;
+  }
+#endif
+  async_processes << p;
+  return p->id;
+}
+
+void
+async_evaluate_cancel (int id) {
+  // Terminate the command with identifier id; its call back will be
+  // called as usual, when it has terminated
+#if defined (OS_MINGW) || defined (OS_ANDROID)
+  (void) id;
+#else
+  for (int i=0; i<N(async_processes); i++)
+    if (async_processes[i]->id == id)
+      unix_system_kill (async_processes[i]->rep);
+#endif
+}
+
+static void
+async_evaluate_pending () {
+  array<async_process*> done;
+  array<async_process*> busy;
+  array<object> results;
+  for (int i=0; i<N(async_processes); i++) {
+    async_process* p= async_processes[i];
+#if defined (OS_MINGW) || defined (OS_ANDROID)
+    int ret= as_int (p->result[0]);
+    string out= p->result[1], err= p->result[2];
+    done << p;
+    results << list_object (object (ret), object (out), object (err));
+#else
+    int ret;
+    string out, err;
+    if (unix_system_finished (p->rep, ret, out, err)) {
+      done << p;
+      results << list_object (object (ret), object (out), object (err));
+    }
+    else busy << p;
+#endif
+  }
+  // NOTE: the call backs might start new processes
+  async_processes= busy;
+  for (int i=0; i<N(done); i++) {
+    call (done[i]->call_back, results[i]);
+    tm_delete<async_process> (done[i]);
+  }
+}
+
+#ifdef __EMSCRIPTEN__
+void web_async_pending (); // the requests of the browser (web_files.cpp)
+#endif
+
+void
+async_eval_pending () {
+#ifdef __EMSCRIPTEN__
+  web_async_pending ();
+#endif
+  if (N(async_processes) > 0) async_evaluate_pending ();
+  for (int i=0; i<N(async_busy); )
+    if (async_busy[i]->done) {
+      async_handle* handle= async_busy[i];
+      string out (handle->buf, handle->len);
+      if (handle->status == NULL)
+	call (async_busy[i]->call_back, out);
+      else {
+	*(handle->status)= 0;
+	*(handle->outbuf)= out;
+	*(handle->errbuf)= "";
+      }
+      free (handle->buf);
+      tm_delete<async_handle> (handle);
+      async_busy= append (range (async_busy, 0, i),
+                          range (async_busy, i + 1, N(async_busy)));
+    }
+    else {
+      // the output so far, for a request link (its partial answer)
+      async_handle* handle= async_busy[i];
+      if (handle->outbuf != NULL &&
+          (handle->kill == NULL || !*(handle->kill))) {
+        pthread_mutex_lock (&handle->lock);
+        if (handle->len > N(*(handle->outbuf)))
+          *(handle->outbuf)= string (handle->buf, handle->len);
+        pthread_mutex_unlock (&handle->lock);
+      }
+      i++;
+    }
+}
+
+/******************************************************************************
+* User information
+******************************************************************************/
+
+string get_user_login () {
+#ifdef OS_MINGW
+  return get_env ("USERNAME");
+#else
+  return unix_get_login ();
+#endif
+}
+
+string get_user_name () {
+#ifdef OS_MINGW
+  // the Windows entry point stores the display name (GetUserNameExW) in
+  // TEXMACS_DISPLAYNAME (see Plugins/Windows64/windows64_entrypoint.cpp)
+  string name= get_env ("TEXMACS_DISPLAYNAME");
+  return name == ""? get_env ("USERNAME"): name;
+#else // Linux and macOS
+  return unix_get_username ();
+#endif
+}
+
+/******************************************************************************
+* Driving the graphical interface from scripts (implemented for Qt)
+******************************************************************************/
+
+#ifndef QTTEXMACS
+int gui_test_snapshot (string dir) { (void) dir; return 0; }
+array<string> gui_test_buttons () { return array<string> (); }
+bool gui_test_click (string label) { (void) label; return false; }
+bool gui_test_menu (string path) { (void) path; return false; }
+array<string> gui_test_menu_entries (string path) {
+  (void) path; return array<string> (); }
+void gui_test_type (string text) { (void) text; }
+void gui_test_click_later (int ms, string dir, string label) {
+  (void) ms; (void) dir; (void) label; }
+#endif

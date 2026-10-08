@@ -160,6 +160,16 @@
 (define (latex-catcode-def key im)
   (string-append "\\catcode`\\" key "=\\active \\def" key "{" im "}\n"))
 
+(define (latex-catcode-def* key im)
+  ;; Only activate the character at the beginning of the document:
+  ;; package code read later in the preamble or at \begin{document}
+  ;; uses < and > in numeric comparisons.  In math mode, keep the
+  ;; ordinary math symbol.
+  (string-append "{\\catcode`\\" key "=\\active \\gdef" key
+                 "{\\relax\\ifmmode\\string" key "\\else"
+                 im "\\fi}}\n"
+                 "\\AtBeginDocument{\\catcode`\\" key "=\\active}\n"))
+
 (tm-define (latex-catcode-defs doc)
   (:synopsis "Return necessary catcode definitions for @doc")
   (string-append
@@ -179,11 +189,11 @@
              (keys (map car l2))
              (ims (map (lambda (x)
                          (string-append
-                           "\n\\fontencoding{T1}\\selectfont\\symbol{"
+                           "\\fontencoding{T1}\\selectfont\\symbol{"
                            (cdr x)
                            "}\\fontencoding{\\encodingdefault}"))
                        l2))
-             (l3 (map latex-catcode-def keys ims)))
+             (l3 (map latex-catcode-def* keys ims)))
         (apply string-append l3)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -199,11 +209,27 @@
        (string->symbol (string-append "begin-" (tex-env-name (cadr x)))))
       (logic-ref latex-texmacs-arity% x)))
 
-(define (latex-needs? x)
+;; latex-needs? is asked for every node of the document, often twice, and
+;; each call is a query of the logic engine; its answers only depend on the
+;; logic rules, so they are cached until new rules are added
+(define latex-needs-cache (make-ahash-table))
+(define latex-needs-cache-version -1)
+
+(define (latex-needs-uncached x)
   (if (env-begin? x)
       (latex-needs?
        (string->symbol (string-append "begin-" (tex-env-name (cadr x)))))
       (logic-ref latex-needs% x)))
+
+(define (latex-needs? x)
+  (when (!= latex-needs-cache-version (logic-rules-version))
+    (set! latex-needs-cache (make-ahash-table))
+    (set! latex-needs-cache-version (logic-rules-version)))
+  (with cached (ahash-ref latex-needs-cache x)
+    (if cached (car cached)
+        (with r (latex-needs-uncached x)
+          (ahash-set! latex-needs-cache x (list r))
+          r))))
 
 (define (latex-texmacs-option? x)
   (if (env-begin? x)

@@ -1,4 +1,4 @@
-<TeXmacs|1.99.16>
+<TeXmacs|2.1.4>
 
 <style|<tuple|source|std>>
 
@@ -168,6 +168,8 @@
   <assign|french|<macro|body|<with|language|french|<arg|body>>>>
 
   <assign|german|<macro|body|<with|language|german|<arg|body>>>>
+
+  <assign|greek|<macro|body|<with|language|greek|<arg|body>>>>
 
   <assign|hungarian|<macro|body|<with|language|hungarian|<arg|body>>>>
 
@@ -650,6 +652,8 @@
   <assign|href|<macro|body|<hlink|<with|font-family|tt|language|verbatim|<arg|body>>|<arg|body>>>>
 
   <assign|slink|<macro|body|<hlink|<with|font-family|tt|language|verbatim|<arg|body>>|<arg|body>>>>
+
+  <assign|hlink*|<macro|body|dest|title|<hlink|<arg|body>|<arg|dest>>>>
 
   <assign|square|<macro|x|<times|<arg|x>|<arg|x>>>>
 

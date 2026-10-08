@@ -38,7 +38,7 @@
   `(set! ,sym (rcons ,sym ,x)))
 
 (define-public (list-concatenate ls)
-  "Append the elements of @ls toghether."
+  "Append the elements of @ls together."
   ;; WARNING: not portable for long lists
   (apply append ls))
 
@@ -134,17 +134,18 @@
 ;; Extraction of sublists
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-public (list-head lis k)
-;  (check-arg integer? k take)
-  (let recur ((lis lis) (k k))
-    (if (zero? k) '()
-    (cons (car lis)
-          (recur (cdr lis) (- k 1))))))
+(if (s7-scheme?) ;; Guile has list-head and list-tail
+    (begin
+      (define-public (list-head lis k)
+        ;; iterative: a recursion as deep as the list overflows the stack
+        ;; (the C stack, with S7), sooner in WebAssembly
+        (let iter ((lis lis) (k k) (acc '()))
+          (if (zero? k) (reverse! acc)
+              (iter (cdr lis) (- k 1) (cons (car lis) acc)))))
 
-(define-public (list-tail lis k)
-;  (check-arg integer? k drop)
-  (let iter ((lis lis) (k k))
-    (if (zero? k) lis (iter (cdr lis) (- k 1)))))
+      (define-public (list-tail lis k)
+        (let iter ((lis lis) (k k))
+          (if (zero? k) lis (iter (cdr lis) (- k 1)))))))
 
 
 (define-public list-take list-head) ;; SRFI-1
@@ -197,14 +198,15 @@
 
 (define-public (list-fold-right kons knil clist1 . rest)
   "Fundamental list recursion operator."
+  ;; Folds the reversed lists from the left, so that long lists do not
+  ;; overflow the stack; @kons is applied to the same arguments and in the
+  ;; same order, from the last elements to the first ones.
   (if (null? rest)
-      (let f ((list1 clist1))
-	(if (null? list1) knil
-	    (kons (car list1) (f (cdr list1)))))
-      (let f ((lists (cons clist1 rest)))
-	(if (list-any null? lists) knil
-	    (apply kons (append! (map-in-order car lists)
-				 (list (f (map-in-order cdr lists)))))))))
+      (list-fold kons knil (reverse clist1))
+      (let* ((lists (cons clist1 rest))
+	     (n (apply min (map length lists))))
+	(apply list-fold kons knil
+	       (map (lambda (l) (reverse (list-head l n))) lists)))))
 
 (provide-public (pair-fold kons knil clist1 . rest)
   "Analogous to @fold but applies @kons to pairs of @clist1..."
@@ -301,7 +303,7 @@
 
 (define-public (exists? pred? l)
   (cond ((null? l) #f)
-	((pred? (car l)) #t)
+	((pred? (car l)) (pred? (car l)))
 	(else (exists? pred? (cdr l)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -323,9 +325,12 @@
 	  ((pred? (car l)) i)
 	  (else (find (cdr l) (+ i 1))))))
 
-;; Internal helper.
 (define (any1 pred? ls)
-  (if (null? ls) #f (or (pred? (car ls)) (any1 pred? (cdr ls)))))
+  ;; Internal helper.
+  (let lp ((ls ls))
+    (cond ((null? ls) #f)
+	  ((null? (cdr ls)) (pred? (car ls)))
+	  (else (or (pred? (car ls)) (lp (cdr ls)))))))
 
 (define-public (list-any pred? ls . lists)
   "Applies @pred? on elements of @ls until it evaluates to true."
@@ -338,9 +343,12 @@
 	      (else (or (apply pred? (map-in-order car lists))
 			(lp (map-in-order cdr lists))))))))
 
-;; Internal helper.
 (define (every1 pred? ls)
-  (if (null? ls) #t (and (pred? (car ls)) (every1 pred? (cdr ls)))))
+  ;; Internal helper.
+  (let lp ((ls ls))
+    (cond ((null? ls)  #t)
+	  ((null? (cdr ls)) (pred? (car ls)))
+	  (else (and (pred? (car ls)) (lp (cdr ls)))))))
 
 (define-public (list-every pred? ls . lists)
   "Applies @pred? on elements of @ls until it evaluates to @#f."
@@ -446,23 +454,9 @@
        (pair? (cdr x))
        (null? (cddr x))))
 
-(define-public (iota count . rest)
-  "Return a list containing count numbers"
-  ;; It starts from start and adding step each time.
-  ;; The default start is 0, the default step is 1.
-  (let ((start (if (pair? rest) (car rest) 0))
-        (step (if (and (pair? rest) (pair? (cdr rest))) (cadr rest) 1)))
-    (let lp ((n 0) (acc '()))
-      (if (= n count)
-        (reverse! acc)
-        (lp (+ n 1) (cons (+ start (* n step)) acc))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Operations on association lists
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-public (assoc-remove! t x)
-  (list-filter t (lambda (y) (!= x (car y)))))
 
 (define (assoc-remove-duplicates-sub t l)
   (cond ((null? l) l)

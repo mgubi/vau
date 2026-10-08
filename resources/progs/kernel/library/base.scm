@@ -36,6 +36,9 @@
 (define-public (string->float s)
   (exact->inexact (string->number s)))
 
+(define-public (string-number? s)
+  (and (string? s) (cpp-string-number? s)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Strings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,7 +55,7 @@
   ;; versions of Guile.  These erroneous versions incorrectly recognize
   ;; characters such as A0 (hexadecimal), which breaks certain routines
   ;; involving unicode or cork.
-  (in? c '(#\space #\ht #\newline #\return)))
+  (in? c (list #\space (integer->char 9) #\newline #\return)))
 
 (define-public (string-tail s n)
   "Return all but the first @n chars of @s."
@@ -103,7 +106,7 @@
   (substring s 0 n))
 
 (provide-public (string-take-right s n)
-  "Return the first @n chars of @s."
+  "Return the last @n chars of @s."
   (let ((l (string-length s)))
     (substring s (- l n) l)))
 
@@ -126,7 +129,7 @@
     tm-char-whitespace?)))
 
 (provide-public (string-concatenate ss)	; srfi-13
-  "Append the elements of @ss toghether."
+  "Append the elements of @ss together."
   ;; WARNING: not portable for long lists
   (apply string-append ss))
 
@@ -152,32 +155,48 @@
   (map list->string
        (list-fold-right string-split-lines/kons '(()) (string->list s))))
 
+;; NOTE: the pieces of a string are found from the position after the last
+;; one, not in the rest of the string copied at each piece: in linear time,
+;; and without a recursion as deep as the number of pieces (the copies of
+;; the rest of a string of 200 KB cut at its 5000 lines took 500 MB with S7,
+;; whose substrings are copies, and whose recursion is on the C stack)
+
+(define (string-pieces s sep n)
+  ;; the pieces of @s between the occurrences of the string @sep, the first
+  ;; @n of them at most (all of them when @n is #f). NOTE: with string-index
+  ;; and string-ref, not string-search-forwards, which copies @s into C++ at
+  ;; each call
+  (let* ((l (string-length sep))
+         (end (string-length s)))
+    (define (at? i)
+      ;; @sep is at @i of @s (its first character is)
+      (and (<= (+ i l) end)
+           (let loop ((k 1))
+             (or (>= k l)
+                 (and (char=? (string-ref s (+ i k)) (string-ref sep k))
+                      (loop (+ k 1)))))))
+    (define (next i)
+      ;; the first occurrence of @sep from @i, or #f
+      (with d (string-index s (string-ref sep 0) i)
+        (cond ((not d) #f)
+              ((at? d) d)
+              (else (next (+ d 1))))))
+    (let loop ((start 0) (n n) (acc '()))
+      (with d (and (> l 0) (not (and n (<= n 0))) (next start))
+        (if (not d)
+            (reverse (cons (substring s start end) acc))
+            (loop (+ d l) (and n (- n 1)) (cons (substring s start d) acc)))))))
+
 (provide-public (string-tokenize-by-char s sep)
   "Cut string @s into pieces using @sep as a separator."
-  (with d (string-index s sep)
-    (if d
-	(cons (substring s 0 d)
-	      (string-tokenize-by-char (substring s (+ 1 d) (string-length s)) sep))
-	(list s))))
+  (string-pieces s (string sep) #f))
 
 (define-public (string-tokenize-by-char-n s sep n)
   "As @string-tokenize-by-char, but only cut first @n pieces"
-  (with d (string-index s sep)
-    (if (or (= n 0) (not d))
-	(list s)
-	(cons (substring s 0 d)
-	      (string-tokenize-by-char-n
-               (substring s (+ 1 d) (string-length s))
-               sep
-               (- n 1))))))
+  (string-pieces s (string sep) n))
 
 (define-public (string-decompose s sep)
-  (with d (string-search-forwards sep 0 s)
-    (if (< d 0)
-        (list s)
-        (cons (substring s 0 d)
-              (string-decompose (substring s (+ d (string-length sep))
-                                           (string-length s)) sep)))))
+  (string-pieces s sep #f))
 
 (define-public (string-recompose l sep)
   "Turn list @l of strings into one string using @sep as separator."
@@ -322,7 +341,7 @@
   (url->unix u))
 
 (define-public (first-in-path . l)
-  (cond ((null? l) #f)
+  (cond ((null? l) "")
         ((url-exists-in-path? (car l)) (car l))
         (else (apply first-in-path (cdr l)))))
 

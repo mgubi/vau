@@ -56,7 +56,8 @@ scatter_box_rep::operator tree () {
 
 int
 scatter_box_rep::find_child (SI x, SI y, SI delta, bool force) {
-  int i, n= subnr(), d= MAX_SI, m= -1;
+  int i, n= subnr(), m= -1;
+  SI d= MAX_SI;
   for (i=0; i<n; i++)
     if (distance (i, x, y, delta)< d)
       if (bs[i]->accessible () || force) {
@@ -175,7 +176,8 @@ page_box_rep::operator tree () {
 
 int
 page_box_rep::find_child (SI x, SI y, SI delta, bool force) {
-  int i, n= subnr(), d= MAX_SI, m= -1;
+  int i, n= subnr(), m= -1;
+  SI d= MAX_SI;
   for (i=0; i<n; i++)
     if (distance (i, x, y, delta)< d)
       if (bs[i]->accessible () || force) {
@@ -374,8 +376,8 @@ crop_marks_box_rep::crop_marks_box_rep (path ip2, box pb,
   position ();
   x1 = 0; y1 = -h;
   x2 = w; y2 = 0;
-  x3 = min (0, x3); y3 = min (-h, y3);
-  x4 = max (0, x4); y4 = max (0, y4);
+  x3 = min (x3, 0); y3 = min (y3, -h);
+  x4 = max (x4, 0); y4 = max (y4, 0);
   finalize ();
 }
 

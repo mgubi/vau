@@ -81,7 +81,7 @@
 
 (menu-bind compressed-math-format-menu
   (if (new-fonts?)
-      ("Font" (interactive open-font-selector)))
+      ("Font" (open-font-selector)))
   (if (not (new-fonts?))
       (-> "Font" (link math-font-menu)))
   (when (inside? 'table)
@@ -1136,6 +1136,8 @@
       ("Left-right arrow" (make-wide-under "<wide-varleftrightarrow>"))
       ("Wide bar" (make-wide-under "<wide-bar>")))
   (-> "Symbol" (link symbol-menu))
+  ("All symbols..." (open-math-symbols))
+  ("Symbols in a side tool" (open-math-symbols-tool))
   (-> "Textual operator" (link textual-operator-menu))
   (if (== (get-preference "semantic editing") "on")
       (-> "Semantics" (link semantic-annotation-menu)))

@@ -48,7 +48,7 @@
           "Letter" "Legal" "Executive"
           *)
     (enum ("Printer dpi" "printer dpi")
-          "150" "200" "300" "400" "600" "800" "1200"
+          "150" "200" "300" "400" "600" "800" "1200" "2400"
           *)))
 
 (tm-define preferences-tree
@@ -76,6 +76,15 @@
     (enum ("Buffer management" "buffer management")
           ("Documents in separate windows" "separate")
           ("Multiple documents share window" "shared"))
+    (enum ("Interface density" "gui density")
+          ("Compact" "compact")
+          ("Normal" "normal")
+          ("Large buttons" "large"))
+    (enum ("Responsive tabs default mode" "gui:responsive tab mode")
+          ("Top tabs" "top")
+          ("Side tabs" "side")
+          ("Mobile list" "mobile")
+          ("Grid" "grid"))
     ---
     (enum ("Language" "language")
           ,@(map (lambda (lan) (list (upcase-first lan) lan))
@@ -233,7 +242,10 @@
         (toggle ("Linking tool" "linking tool"))
         (toggle ("Remote tool" "remote tool"))
         (toggle ("Source macros tool" "source tool"))
-        (toggle ("Versioning tool" "versioning tool")))
+        (-> "Versioning tool"
+            ("Automatic" (set-versioning-tool "auto"))
+            ("Always" (set-versioning-tool "on"))
+            ("Never" (set-versioning-tool "off"))))
     ---
     (enum ("Autosave" "autosave")
           ("5 s" "5")

@@ -70,17 +70,20 @@
   (with r (db-url? (current-buffer))
     (when (not r)
       (set! toolbar-db-active? #f)
-      (show-bottom-tools 0 #f)
+      (update-bottom-tools)
       r)))
 
 (tm-define (db-show-toolbar)
   (delayed
     (:idle 100)
-    (set! toolbar-db-active? #t)
-    (show-bottom-tools 0 #t)
-    (delayed
-      (:idle 250)
-      (keyboard-focus-on "db-search"))))
+    (when (db-url? (current-buffer))
+      (with change-focus? (not toolbar-db-active?)
+        (set! toolbar-db-active? #t)
+        (update-bottom-tools)
+        (when change-focus?
+          (delayed
+            (:idle 250)
+            (keyboard-focus-on "db-search")))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The database toolbar
@@ -244,6 +247,7 @@
 (menu-bind db-menu
   ("Open identities" (open-identities))
   ("Open bibliography" (load-db-buffer "tmfs://db/bib/global"))
+  ("Open AI agents" (open-ai-agents))
   (if (supports-gpg?) ("Open key manager" (open-gpg-key-manager)))
   ---
   (when (in-database?)

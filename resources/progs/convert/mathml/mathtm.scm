@@ -151,7 +151,7 @@
   `((with "color" "red" ,message)))
 
 (define (mathtm-merror env a c)
-  (matthtm-error (mathtm-mrow env a c)))
+  (mathtm-error (mathtm-args-serial env c)))
 
 ;(define (mathtm-mstyle env a c)
 ;  (let* ((attrs (mathtm-style a))
@@ -457,7 +457,7 @@
       
 (define (mathtm-annotation env a l) ;
 ;there may be more than one annotation, scan them all
-  (with  r (and (list>1? l) (mathtm-annotation env a cdr (l)))
+  (with  r (and (list>1? l) (mathtm-annotation env a (cdr l)))
     (or  r
       (let* ((an (car l))
         (enc (and (func? an 'm:annotation 2)
@@ -471,7 +471,10 @@
           ((and enc (string-starts? enc "StarMath")) ;ignore
             #f)
           (else
-            (debug-message "debug-convert" (string-append "Mathml contains an unknown annotation type \"" enc "\"\n with value: \n" (third an) "\nTeXmacs is not using it\n"))
+            (let ((val (if (and (list>1? an) (pair? (cddr an))
+                                (string? (third an)))
+                           (third an) "?")))
+              (debug-message "debug-convert" (string-append "Mathml contains an unknown annotation type \"" (or enc "?") "\"\n with value: \n" val "\nTeXmacs is not using it\n")))
             #f)          
            )))))
 
@@ -483,11 +486,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  
 (define (mathtm-globattr env a c tagproc)
-  (if (null? a)
-    (tagproc env a c)
-    (with attrs (mathtm-style a)
-      (if (null? attrs) (tagproc env a c)
-    `((with ,@attrs ,(car (tagproc env a c))))))))
+  (with res (tagproc env a c)
+    (cond 
+      ((null? res) res)
+      ((null? a) res)
+      (else 
+        (with attrs (mathtm-style a)
+          (if (null? attrs) res
+         `((with ,@attrs ,(car res)))))))))
 
 (define (mathtm-style l)
 ;note that it does not hurt handling tag-specific attributes here
@@ -507,7 +513,7 @@
 	      ((== h '(mathvariant "monospace"))
 	       (cons* "math-font-family" "mt" r))
         ((func? h 'mathsize)
-	       (cons* "font-size" (cadr h) r))
+	       (cons* "font-base-size" (cadr h) r))
         ((func? h 'scriptlevel)
           (with sl (string->number (cadr h))
             (cond 
@@ -612,5 +618,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-define (mathml->tree s)
-  (:synopsis "Convert the MathML @s into a document fragment.")
+  (:synopsis "Convert the MathML @s into a document fragment")
   (mathtm-as-serial (parse-xml s)))

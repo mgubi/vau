@@ -252,6 +252,7 @@ initialize_color_encodings () {
   language_rep::color_encoding ("operator_openclose")= 41;
   language_rep::color_encoding ("operator_field")= 42;
   language_rep::color_encoding ("operator_special")= 43;
+  language_rep::color_encoding ("operator_decoration")= 44;
   language_rep::color_encoding ("keyword")= 50;
   language_rep::color_encoding ("keyword_conditional")= 51;
   language_rep::color_encoding ("keyword_control")= 52;
@@ -294,6 +295,7 @@ initialize_color_decodings (string lan_name) {
   lan->color_decoding (41)= get_preference (pfx * "operator_openclose", "#B02020");
   lan->color_decoding (42)= get_preference (pfx * "operator_field", "#888888");
   lan->color_decoding (43)= get_preference (pfx * "operator_special", "orange");
+  lan->color_decoding (44)= get_preference (pfx * "operator_decoration", "orange");
   lan->color_decoding (50)= get_preference (pfx * "keyword", "#309090");
   lan->color_decoding (51)= get_preference (pfx * "keyword_conditional", "#309090");
   lan->color_decoding (52)= get_preference (pfx * "keyword_control", "#000080");
@@ -376,9 +378,13 @@ ad_hoc_language_rep::ad_hoc_language_rep (string nm, language lan, tree hyphs):
   language_rep (nm), base (lan), hyphens ("?")
 {
   if (is_atomic (hyphs)) {
-    string h= hyphs->label;
-    string s= replace (h, "-", "");
-    hyphens (s)= h;
+    array<string> words= tokenize (hyphs->label, " ");
+    for (int i=0; i<N(words); i++)
+      if (N(words[i]) != 0) {
+        string h= words[i];
+        string s= replace (h, "-", "");
+        hyphens (s)= h;
+      }
   }
 }
 
@@ -438,6 +444,7 @@ ad_hoc_language (language base, tree hyphs) {
 #endif
 
 static bool spell_active= false;
+static hashmap<string,bool> spell_init (false);
 static hashmap<string,bool> spell_busy (false);
 static hashmap<string,int > spell_cache (0);
 static hashmap<string,bool> spell_temp (false);
@@ -455,8 +462,21 @@ spell_done () {
     spell_done (it->next ());
 }
 
+void
+spell_initialize (string lan) {
+  if (!spell_init->contains (lan)) {
+    array<string> a= as_array_string (call ("spell-user-words", lan));
+    for (int i=0; i<N(a); i++) {
+      string key= lan * ":" * a[i];
+      spell_cache (key)= 1;
+    }
+    spell_init (lan)= true;
+  }
+}
+
 string
 spell_start (string lan) {
+  spell_initialize (lan);
   if (spell_busy->contains (lan)) return "ok";
   spell_busy (lan)= true;
   return ispell_start (lan);
@@ -522,9 +542,12 @@ check_word (string lan, string s) {
   if (val == 0) {
     tree t= spell_check (lan, s);
     if (t == "ok") val= 1;
+    else if (spell_cache[lan * ":" * s] == 1) val= 1;
     else val= -1;
     spell_cache (key)= val;
   }
+  else if (val == -1 && spell_cache[lan * ":" * s] == 1)
+    spell_cache (key)= 1;
   return val == 1;
 }
 
@@ -539,6 +562,8 @@ spell_accept (string lan, string s, bool permanent) {
   ispell_accept (lan, s);
 }
 
+void spell_clear_cache ();
+
 void
 spell_insert (string lan, string s) {
   string f= uni_Locase_all (s);
@@ -547,5 +572,15 @@ spell_insert (string lan, string s) {
   string key= lan * ":" * s;
   spell_cache (key) = 1;
   ispell_insert (lan, s);
+  spell_clear_cache ();
+}
+
+void
+spell_notify_insert (string lan, string s) {
+  spell_initialize (lan);
+  string key= lan * ":" * s;
+  spell_cache (key)= 1;
+  spell_temp->reset (key);
+  spell_clear_cache ();
 }
 #endif

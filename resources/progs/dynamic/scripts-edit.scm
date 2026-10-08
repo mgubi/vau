@@ -17,7 +17,12 @@
         (utils edit selections)
 	(utils plugins plugin-cmd)
 	(convert tools tmconcat)
-	(dynamic scripts-drd)))
+	(dynamic scripts-drd)
+        ;; loaded before: the alternate-toggle of executable folds below
+        ;; overloads its generic one, which would else win when this module
+        ;; is loaded first (as by a plugin at startup) and turn the input of
+        ;; a fold into its output without evaluating it
+        (dynamic fold-edit)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Some switches
@@ -28,13 +33,13 @@
 
 (tm-define (script-keep-input?) script-keep-input-flag?)
 (tm-define (toggle-keep-input)
-  (:synopsis "Toggle whether we keep the input of evaluations.")
+  (:synopsis "Toggle whether we keep the input of evaluations")
   (:check-mark "v" script-keep-input?)
   (toggle! script-keep-input-flag?))
 
 (tm-define (script-eval-math?) script-eval-math-flag?)
 (tm-define (toggle-eval-math)
-  (:synopsis "Toggle whether we evaluate the innermost non-selected formulas.")
+  (:synopsis "Toggle whether we evaluate the innermost non-selected formulas")
   (:check-mark "v" script-eval-math?)
   (toggle! script-eval-math-flag?))
 
@@ -81,7 +86,23 @@
         (set-message m "Evaluate")))
     (when ok?
       (tree-set! out '(script-busy))
-      (with ptr (tree->tree-pointer out)
+      (let* ((ptr (tree->tree-pointer out))
+             ;; the output so far, above the busy sign, while it comes
+             ;; (see silent-progress); out is then the new tree there
+             (progress
+              (lambda (o e)
+                (with check (tree-pointer->tree ptr)
+                  (when (== check out)
+                    (let* ((l (lambda (x) (if (tm-func? x 'document)
+                                              (filter (lambda (y) (!= y ""))
+                                                      (cdr x))
+                                              (list x))))
+                           (os (l o))
+                           (es (map (lambda (x) `(with "color" "red" ,x))
+                                    (l e))))
+                      (when (nnull? (append os es))
+                        (tree-set! out `(document ,@os ,@es (script-busy)))
+                        (set! out (tree-pointer->tree ptr)))))))))
         (with ret (lambda (r)
                     (with check (tree-pointer->tree ptr)
                       (tree-pointer-detach ptr)
@@ -95,7 +116,7 @@
                               (if (in? :declaration opts)
                                   (set! r in))
                               (insert r))))))
-          (silent-feed* lan ses in ret opts))))))
+          (silent-feed* lan ses in ret (cons progress opts)))))))
 
 (tm-define (script-eval-at where lan session in . opts)
   (script-feed lan session in where opts))

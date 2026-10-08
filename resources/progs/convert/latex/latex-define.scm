@@ -206,7 +206,7 @@
   (nospace "")
   (nocomma "")
   (noplus "")
-  (nosymbol "")
+  (nosymbol "\\ensuremath{\\mathord{}}")
   (dotminus "\\mathaccent95{-}")
   (dotpm "\\mathaccent95{\\pm}")
   (dotmp "\\mathaccent95{\\mp}")
@@ -219,6 +219,12 @@
   (longequal "{=\\!\\!=}")
   (longhookrightarrow "{\\lhook\\joinrel\\relbar\\joinrel\\rightarrow}")
   (longhookleftarrow "{\\leftarrow\\joinrel\\relbar\\joinrel\\rhook}")
+  (longtwoheadrightarrow (mathrel (!append (relbar) (joinrel) (twoheadrightarrow))))
+  (longtwoheadleftarrow (mathrel (!append (twoheadleftarrow) (joinrel) (relbar))))
+  (longrightharpoonup (mathrel (!append (relbar) (joinrel) (rightharpoonup))))
+  (longrightharpoondown (mathrel (!append (relbar) (joinrel) (rightharpoondown))))
+  (longleftharpoonup (mathrel (!append (leftharpoonup) (joinrel) (relbar))))
+  (longleftharpoondown (mathrel (!append (leftharpoondown) (joinrel) (relbar))))
   (triangleup "\\triangle")
   (tmprecdot "{\\prec\\hspace{-0.6em}\\cdot}\\;\\,")
   (preceqdot "{\\preccurlyeq\\hspace{-0.6em}\\cdot}\\;\\,")
@@ -372,7 +378,7 @@
   (tmname (textsc 1))
   (tmsamp (textsf 1))
   (tmabbr 1)
-  (tmdfn (textbf 1))
+  (tmdfn (emph 1))
   (tmkbd (texttt 1))
   (tmvar (texttt 1))
   (tmacronym (textsc 1))
@@ -856,6 +862,15 @@
   ("tmbothlined"
    (!append (newmdenv (!option "topline=true,bottomline=true,innertopmargin=1ex,innerbottommargin=1ex")
                       "tmbothlined") "\n"))
+  ("tmleftlined"
+   (!append (newmdenv (!option "leftline=true,innerleftmargin=1ex")
+                      "tmleftlined") "\n"))
+  ("tmrightlined"
+   (!append (newmdenv (!option "rightline=true,innerrightmargin=1ex")
+                      "tmrightlined") "\n"))
+  ("tmverticallined"
+   (!append (newmdenv (!option "leftline=true,rightline=true,innerleftmargin=1ex,innerrightmargin=1ex")
+                      "tmverticallined") "\n"))
   ("tmframed"
    (!append (newmdenv (!option "hidealllines=false,innertopmargin=1ex,innerbottommargin=1ex,innerleftmargin=1ex,innerrightmargin=1ex")
                       "tmframed") "\n"))

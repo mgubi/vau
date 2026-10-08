@@ -21,6 +21,7 @@ class patch;
 
 void start_scheme (int argc, char** argv, void (*call_back) (int, char**));
 void initialize_scheme ();
+string scheme_init_file (); // initialization file of the Scheme backend
 
 class object_rep : concrete_struct {
   friend class object;
@@ -60,6 +61,7 @@ object null_object ();
 object list_object (object obj1);
 object list_object (object obj1, object obj2);
 object list_object (object obj1, object obj2, object obj3);
+object as_list_object (array<object> objs);
 object symbol_object (string s);
 object cons (object obj1, object obj2);
 object car (object obj);
@@ -82,6 +84,7 @@ bool is_tree (object obj);
 bool is_path (object obj);
 bool is_url (object obj);
 bool is_array_double (object obj);
+bool is_array_string (object obj);
 bool is_modification (object obj);
 bool is_patch (object obj);
 bool is_widget (object obj);
@@ -99,6 +102,7 @@ path as_path (object obj);
 array<object> as_array_object (object obj);
 url as_url (object obj);
 array<double> as_array_double (object obj);
+array<string> as_array_string (object obj);
 modification as_modification (object obj);
 patch as_patch (object obj);
 command as_command (object obj);

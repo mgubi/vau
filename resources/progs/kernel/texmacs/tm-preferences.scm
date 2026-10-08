@@ -56,8 +56,12 @@
       (notify-preference which)
       (save-preferences))))
 
+(define (test-no-preference? which)
+  (not (cpp-has-preference? which)))
+
 (tm-define (reset-preference which)
   (:synopsis "Revert preference @which to default setting")
+  (:check-mark "*" test-no-preference?)
   ;;(display* "reset-preference " which "\n")
   (when (cpp-has-preference? which)
     (cpp-reset-preference which)
@@ -162,7 +166,8 @@
   (== (get-preference "complex actions") "menus"))
 
 (define-public (use-print-dialog?)
-  (and (qt-gui?) (== (get-preference "gui:print dialogue") "on")))
+  (and (or (qt-gui?) (vue-gui?))
+       (== (get-preference "gui:print dialogue") "on")))
 
 (set! has-look-and-feel? test-look-and-feel)
 

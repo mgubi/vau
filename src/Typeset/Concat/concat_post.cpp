@@ -95,13 +95,13 @@ concater_rep::glue_left_markers (box b, int ref, int arg) {
   while (i < ref) {
     if (a[i]->type == MARKER_ITEM) {
       bs  << a[i]->b;
-      spc << 0;
+      spc << ((SI) 0);
       a[i]->type= OBSOLETE_ITEM;
     }
     i++;
   }
   bs  << b;
-  spc << 0;
+  spc << ((SI) 0);
   return concat_box (b->ip, bs, spc);
 }
 
@@ -115,17 +115,17 @@ concater_rep::glue_right_markers (box b, int ref, int arg, bool flag) {
   if (flag) {
     for (int j=0; j<N(b); j++) {
       bs  << b[j];
-      spc << 0;
+      spc << ((SI) 0);
     }
   }
   else {
     bs  << b;
-    spc << 0;
+    spc << ((SI) 0);
   }
   while (i < arg) {
     if (a[i]->type == MARKER_ITEM) {
       bs  << a[i]->b;
-      spc << 0;
+      spc << ((SI) 0);
       a[i]->type= OBSOLETE_ITEM;
     }
     i++;
@@ -184,7 +184,9 @@ concater_rep::handle_scripts (int start, int end) {
         (a[i]->type == GLUE_LSUBS_ITEM) ||
         (a[i]->type == RSUB_ITEM) ||
         (a[i]->type == RSUP_ITEM) ||
-        (a[i]->type == GLUE_RSUBS_ITEM)) { i++; continue; }
+        (a[i]->type == GLUE_RSUBS_ITEM) ||
+	(a[i]->type == CONTROL_ITEM && L(a[i]->t) == DATOMS)) {
+      i++; continue; }
 
     path sip;
     int l= prec (i);

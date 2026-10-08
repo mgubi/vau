@@ -44,6 +44,11 @@ modifier_box_rep::display (renderer ren) {
   (void) ren;
 }
 
+void
+modifier_box_rep::broadcast (tree t, rectangles& rs) {
+  return b->broadcast (t, rs);
+}
+
 tree
 modifier_box_rep::message (tree t, SI x, SI y, rectangles& rs) {
   return b->message (t, x, y, rs);
@@ -82,6 +87,18 @@ SI modifier_box_rep::rsub_correction () {
   return b->rsub_correction (); }
 SI modifier_box_rep::rsup_correction () {
   return b->rsup_correction (); }
+SI modifier_box_rep::lsub_correction_at (SI h) {
+  return b->lsub_correction_at (h); }
+SI modifier_box_rep::lsup_correction_at (SI h) {
+  return b->lsup_correction_at (h); }
+SI modifier_box_rep::rsub_correction_at (SI h) {
+  return b->rsub_correction_at (h); }
+SI modifier_box_rep::rsup_correction_at (SI h) {
+  return b->rsup_correction_at (h); }
+bool modifier_box_rep::extended_shape () {
+  return b->extended_shape (); }
+bool modifier_box_rep::top_accent (SI& x) {
+  return b->top_accent (x); }
 SI modifier_box_rep::sub_lo_base (int level) {
   return b->sub_lo_base (level); }
 SI modifier_box_rep::sub_hi_lim  (int level) {
@@ -377,6 +394,14 @@ struct macro_box_rep: public composite_box_rep {
   SI lsup_correction () { return bs[0]->lsup_correction(); }
   SI rsub_correction () { return bs[0]->rsub_correction(); }
   SI rsup_correction () { return bs[0]->rsup_correction(); }
+  SI lsub_correction_at (SI h) { return bs[0]->lsub_correction_at (h); }
+  SI lsup_correction_at (SI h) { return bs[0]->lsup_correction_at (h); }
+  SI rsub_correction_at (SI h) { return bs[0]->rsub_correction_at (h); }
+  SI rsup_correction_at (SI h) { return bs[0]->rsup_correction_at (h); }
+  bool extended_shape () { return bs[0]->extended_shape (); }
+  bool top_accent (SI& x) {
+    if (bs[0]->top_accent (x)) { x += sx (0); return true; }
+    return false; }
   SI sub_lo_base (int l) {
     // second test separates small and large big operators
     return (!is_nil (big_fn)) && ((y2-y1) <= 3*big_fn->yx)?
@@ -440,18 +465,18 @@ struct macro_delimiter_box_rep: public macro_box_rep {
     return tree (TUPLE, "macro_delimiter", (tree) bs[0]); }
   SI sub_lo_base (int l) {
     SI fb= l<=0? big_fn->ysub_lo_base: big_fn->ysub_lo_base + big_fn->yshift;
-    fb += min (0, dy);
+    fb += min (dy, 0);
     return min (y1, max (y1 - (l>0? 0: big_fn->yshift), fb)); }
   SI sub_hi_lim (int l) {
-    return big_fn->ysub_hi_lim + min (0, dy); }
+    return big_fn->ysub_hi_lim + min (dy, 0); }
   SI sup_lo_base (int l) {
     SI fb= l>=0? big_fn->ysup_lo_base: big_fn->ysup_lo_base - big_fn->yshift;
-    fb += max (0, dy);
+    fb += max (dy, 0);
     SI ex= big_fn->yx;
     return max (y2 - ex, fb); }
   SI sup_hi_lim (int l) {
     SI fb= big_fn->ysup_hi_lim;
-    fb += max (0, dy);
+    fb += max (dy, 0);
     SI ex= big_fn->yx;
     if (fb + ex <= y2) return y2;
     if (fb + (ex>>1) <= y2) return (y2+fb)>>1;

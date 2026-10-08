@@ -236,7 +236,7 @@ max_ascent (font_metric fnm, int start, int end) {
   int m= 0;
   for (int i=start; i<=end; i++) {
     metric_struct* x= fnm->get (i);
-    m= max (m, x->y2/256);
+    m= max (m, (int) x->y2/256);
   }
   return m;
 }
@@ -246,7 +246,7 @@ max_descent (font_metric fnm, int start, int end) {
   int m= 0;
   for (int i=start; i<=end; i++) {
     metric_struct* x= fnm->get (i);
-    m= max (m, -x->y1/256);
+    m= max (m, (int) (-x->y1/256));
   }
   return m;
 }
@@ -369,7 +369,7 @@ width_trace (font_metric fnm, array<int> cs) {
   array<int> a;
   for (int i= 0; i < N(cs); i++) {
     metric_struct* m= fnm->get (cs[i]);
-    a << (m->x4 - m->x3);
+    a << (int) (m->x4 - m->x3);
   }
   return array_trace (a);
 }
@@ -379,7 +379,7 @@ height_trace (font_metric fnm, array<int> cs) {
   array<int> a;
   for (int i= 0; i < N(cs); i++) {
     metric_struct* m= fnm->get (cs[i]);
-    a << (m->y4 - m->y3);
+    a << (int) (m->y4 - m->y3);
   }
   return array_trace (a);
 }

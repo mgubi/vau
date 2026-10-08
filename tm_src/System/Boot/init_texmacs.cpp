@@ -57,6 +57,35 @@ get_env_path (string which, url def) {
   return val;
 }
 
+// the path of the icons without the set of the preferences (empty when
+// TEXMACS_PIXMAP_PATH was given, which is left alone)
+static string base_pixmap_path;
+
+// the icon set of the preferences, in front of the path of the icons: at
+// the start, and again when the preference changes (the Vue interface
+// follows it at once, see vue_follow_icon_set)
+void
+apply_icon_set () {
+  if (N(base_pixmap_path) == 0) return;
+  string icon_set= get_user_preference ("icon set", "neo-classical");
+  url pixmaps ("$TEXMACS_PATH/misc/pixmaps");
+  string icon_dir= "";
+  if (icon_set == "monochrome") icon_dir= "monochrome";
+  if (icon_set == "neo-classical") icon_dir= "neoclassical";
+  // the Lucide set has only the icons with a counterpart in Lucide: the
+  // others (symbols, tags) come from the neo-classical set, whose colours
+  // suit its pastel insides
+  if (icon_set == "lucide")
+    set_env_path ("TEXMACS_PIXMAP_PATH",
+                  pixmaps * url ("lucide") | pixmaps * url ("neoclassical") |
+                  url_system (base_pixmap_path));
+  else if (icon_dir != "")
+    set_env_path ("TEXMACS_PIXMAP_PATH",
+                  pixmaps * url (icon_dir) |
+                  url_system (base_pixmap_path));
+  else set_env ("TEXMACS_PIXMAP_PATH", base_pixmap_path);
+}
+
 static url
 plugin_path (string which) {
   url base= "$TEXMACS_HOME_PATH:/etc/TeXmacs:$TEXMACS_PATH:/usr/share/TeXmacs";
@@ -74,9 +103,14 @@ plugin_list () {
   merge_sort (a);
   int i, n= N(a);
   tree t (TUPLE);
+  bool jupyter= false;
   for (i=0; i<n; i++)
-    if ((a[i] != ".") && (a[i] != "..") && ((i==0) || (a[i] != a[i-1])))
+    if (a[i] == "jupyter") jupyter= true;
+    else if ((a[i] != ".") && (a[i] != "..") &&
+             ((i==0) || (a[i] != a[i-1])) &&
+             !ends (a[i], ".txt") && !ends (a[i], ".md"))
       t << a[i];
+  if (jupyter) t= tree (TUPLE, "jupyter") * t;
   return t;
 }
 
@@ -119,7 +153,7 @@ make_dir (url which) {
 
 static url
 url_temp_dir_sub () {
-#ifdef OS_MINGW
+#if defined(OS_MINGW) && !defined(OS_MINGW64)
   static url tmp_dir=
     url_system (main_tmp_dir) * url_system (as_string (time (NULL)));
 #else
@@ -141,9 +175,11 @@ url_temp_dir () {
 
 bool
 process_running (int pid) {
-  string cmd= "ps -p " * as_string (pid);
+  // only print the command name, without header; empty if pid is not running
+  // (the macOS bundle runs as .../MacOS/TeXmacs, hence the case folding)
+  string cmd= "ps -p " * as_string (pid) * " -o comm=";
   string ret= eval_system (cmd);
-  return occurs ("texmacs", ret) && occurs (as_string (pid), ret);
+  return occurs ("texmacs", locase_all (ret));
 }
 
 static void
@@ -198,6 +234,7 @@ init_user_dirs () {
   make_dir ("$TEXMACS_HOME_PATH/langs/natural");
   make_dir ("$TEXMACS_HOME_PATH/langs/natural/dic");
   make_dir ("$TEXMACS_HOME_PATH/langs/natural/hyphen");
+  make_dir ("$TEXMACS_HOME_PATH/langs/natural/spell");
   make_dir ("$TEXMACS_HOME_PATH/langs/programming");
   make_dir ("$TEXMACS_HOME_PATH/misc");
   make_dir ("$TEXMACS_HOME_PATH/misc/patterns");
@@ -211,11 +248,15 @@ init_user_dirs () {
   make_dir ("$TEXMACS_HOME_PATH/system");
   make_dir ("$TEXMACS_HOME_PATH/system/bib");
   make_dir ("$TEXMACS_HOME_PATH/system/cache");
+  make_dir ("$TEXMACS_HOME_PATH/system/certificates");
   make_dir ("$TEXMACS_HOME_PATH/system/database");
   make_dir ("$TEXMACS_HOME_PATH/system/database/bib");
   make_dir ("$TEXMACS_HOME_PATH/system/make");
   make_dir ("$TEXMACS_HOME_PATH/system/tmp");
+  make_dir ("$TEXMACS_HOME_PATH/system/tmp/tree_cache");
   make_dir ("$TEXMACS_HOME_PATH/texts");
+  make_dir ("$TEXMACS_HOME_PATH/texts/backup");
+  make_dir ("$TEXMACS_HOME_PATH/texts/scratch");
   make_dir ("$TEXMACS_HOME_PATH/users");
   change_mode ("$TEXMACS_HOME_PATH/server", 7 << 6);
   change_mode ("$TEXMACS_HOME_PATH/system", 7 << 6);
@@ -314,9 +355,9 @@ init_env_vars () {
   url bin_path= get_env_path ("PATH") | plugin_path ("bin");
 #if defined (OS_MINGW) || defined (OS_MACOS)
   bin_path= bin_path | url ("$TEXMACS_PATH/bin");
+#endif
   if (has_user_preference ("manual path"))
     bin_path= url_system (get_user_preference ("manual path")) | bin_path;
-#endif
 
   set_env_path ("PATH", bin_path);
   url lib_path= get_env_path ("LD_LIBRARY_PATH") | plugin_path ("lib");
@@ -357,8 +398,10 @@ init_env_vars () {
                        url ("$TEXMACS_PATH/misc/patterns") |
                        url ("$TEXMACS_PATH/misc/pictures") |
                        plugin_path ("misc/patterns"));
+  bool pixmap_path_given= (get_env ("TEXMACS_PIXMAP_PATH") != "");
   (void) get_env_path ("TEXMACS_PIXMAP_PATH",
-                       "$TEXMACS_HOME_PATH/misc/pixmaps" |
+		       url ("$TEXMACS_PATH/misc/pixmaps") |
+                       url ("$TEXMACS_HOME_PATH/misc/pixmaps") |
                        url ("$TEXMACS_PATH/misc/pixmaps/modern/32x32/settings") |
                        url ("$TEXMACS_PATH/misc/pixmaps/modern/32x32/table") |
                        url ("$TEXMACS_PATH/misc/pixmaps/modern/24x24/main") |
@@ -366,6 +409,13 @@ init_env_vars () {
                        url ("$TEXMACS_PATH/misc/pixmaps/modern/16x16/focus") |
                        url ("$TEXMACS_PATH/misc/pixmaps/traditional/--x17") |
                        plugin_path ("misc/pixmaps"));
+  // The icon set: the original icons ("classical") are those of the path
+  // above; another set, chosen in the preferences (by default the
+  // neo-classical one), is looked up first (see apply_icon_set)
+  if (!pixmap_path_given) {
+    base_pixmap_path= get_env ("TEXMACS_PIXMAP_PATH");
+    apply_icon_set ();
+  }
   (void) get_env_path ("TEXMACS_DIC_PATH",
                        "$TEXMACS_HOME_PATH/langs/natural/dic" |
                        url ("$TEXMACS_PATH/langs/natural/dic") |
@@ -412,7 +462,7 @@ init_misc () {
 static void
 init_deprecated () {
 #ifndef OS_WIN32
-  // Check for Macaulay 2
+  // Check for Macaulay2
   if (get_env ("M2HOME") == "")
     if (exists_in_path ("M2")) {
       string where= concretize (resolve_in_path ("M2"));
@@ -534,4 +584,28 @@ init_plugins () {
     install_status= exists (ch)? 2: 0;
   }
   init_tex ();
+}
+
+bool
+test_texmacs_path (url path, bool set_environment) {
+  if (!exists (path)) return false;
+  if (!exists (path * "doc")) return false;
+  if (!exists (path * "fonts")) return false;
+  if (!exists (path * "progs")) return false;
+  if (!exists (path * "styles")) return false;
+  // read path/SVNREV and check that the content is equal to ALTERNATIVE_VERSION
+  url rev_file= path * "SVNREV";
+  if (!exists (rev_file)) return false;
+  string rev;
+  if (load_string (rev_file, rev, false)) return false;
+  // remove \r\n or \n at the end of rev
+  while (N(rev) > 0 && (rev[N(rev)-1] == '\n' || rev[N(rev)-1] == '\r'))
+    rev= rev (0, N(rev)-1);
+  if (rev != ALTERNATIVE_VERSION) {
+    cout << "The directory " << path << " contains an incompatible version of TeXmacs.\n";
+    cout << "Expected version: " << ALTERNATIVE_VERSION << ", found version: " << rev << ".\n";
+    return false;
+  }
+  if (set_environment) set_env_path ("TEXMACS_PATH", path);
+  return true;
 }

@@ -15,6 +15,17 @@
   (:use (texmacs menus preferences-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Validation Macro
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (define-preference-names-and-validate pref . options)
+  (let ((allowed (map car options)))
+    `(begin
+       (define-preference-names ,pref ,@options)
+       (when (nin? (get-preference ,pref) ',allowed)
+         (reset-preference ,pref)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Wrapper
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -26,10 +37,43 @@
       (notify-restart))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Retina settings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(tm-define (get-retina-preference which)
+  (if (cpp-has-preference? which)
+      (get-preference which)
+      (cond ((== which "retina-scale")
+             (cond ((== (get-retina-scale) 1.0) "1")
+                   ((== (get-retina-scale) 2.0) "2")
+                   (else (number->string (get-retina-scale)))))
+            (else ""))))
+
+(tm-define (set-retina-preference which val)
+  (set-preference which val))
+
+(tm-define (get-retina-boolean-preference which)
+  (if (cpp-has-preference? which)
+      (preference-on? which)
+      (cond ((== which "retina-factor") (== (get-retina-factor) 2))
+            ((== which "retina-zoom") (== (get-retina-zoom) 2))
+            ((== which "retina-icons") (== (get-retina-icons) 2))
+            (else #f))))
+
+(tm-define (set-retina-boolean-preference which on?)
+  (set-retina-preference which (if on? "on" "off")))
+
+(tm-define (reset-retina-preferences)
+  (reset-preference "retina-factor")
+  (reset-preference "retina-zoom")
+  (reset-preference "retina-icons")
+  (reset-preference "retina-scale"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Appearance preferences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-preference-names "look and feel"
+(define-preference-names-and-validate "look and feel"
   ("default" "Default")
   ("emacs" "Emacs")
   ("gnome" "Gnome")
@@ -40,28 +84,57 @@
 (for (l supported-languages)
   (set-preference-name "language" l (upcase-first l)))
 
-(define-preference-names "complex actions"
+(when (nin? (get-preference "language") supported-languages)
+  (reset-preference "language"))
+
+(define-preference-names-and-validate "complex actions"
   ("menus" "Through the menus")
   ("popups" "Through popup windows"))
 
-(define-preference-names "interactive questions"
+(define-preference-names-and-validate "interactive questions"
   ("footer" "On the footer")
   ("popup" "In popup windows"))
 
-(define-preference-names "detailed menus"
-  ("simple ""Simplified menus")
+(define-preference-names-and-validate "detailed menus"
+  ("simple" "Simplified menus")
   ("detailed" "Detailed menus"))
 
-(define-preference-names "buffer management"
+(define-preference-names-and-validate "buffer management"
   ("separate" "Documents in separate windows")
   ("shared" "Multiple documents share window"))
 
-(define-preference-names "gui theme"
-  ("default" "Default")
-  ("light" "Bright")
-  ("dark" "Dark")
-  ("native-light" "Native")
-  ("" "Legacy"))
+(define-preference-names-and-validate "gui theme"
+      ("default" "Default")
+      ("light" "Bright")
+      ("dark" "Dark"))
+
+(define-preference-names-and-validate "icon set"
+  ("classical" "Classical")
+  ("monochrome" "Monochrome")
+  ("neo-classical" "Neo-classical")
+  ("lucide" "Lucide"))
+
+(define-preference-names-and-validate "icon bars"
+  ("top" "Above the document")
+  ("left" "At the left of the document"))
+
+(define-preference-names-and-validate "window tabs"
+  ("left" "In a column at the left")
+  ("top" "Above the page"))
+
+(define-preference-names-and-validate "gui density"
+  ("compact" "Compact")
+  ("normal" "Normal")
+  ("large" "Large"))
+
+(define-preference-names-and-validate "gui:responsive tab mode"
+  ("top" "Top tabs")
+  ("side" "Side tabs")
+  ("mobile" "Mobile list"))
+
+(when (not qt6-or-later-gui?)
+  (when (in? (get-preference "gui theme") '("light" "dark" "default"))
+    (set-preference "gui theme" "default")))
 
 (tm-widget (general-preferences-widget)
   (aligned
@@ -98,27 +171,71 @@
             "18em"))
     (item (text "User interface theme:")
       (enum (set-pretty-preference* "gui theme" answer)
-            '("Default" "Bright" "Dark" "Native" "Legacy" "")
+            (if qt6-or-later-gui?
+                '("Default" "Bright" "Dark" "")
+                '("Default" "Bright" "Dark" "Native" "Legacy" "")
+            )
             (get-pretty-preference "gui theme")
-            "18em"))))
+            "18em"))
+    (item (text "Icon set:")
+      (enum (set-pretty-preference "icon set" answer)
+            '("Classical" "Monochrome" "Neo-classical" "Lucide")
+            (get-pretty-preference "icon set")
+            "18em"))
+    (assuming (vue-gui?)
+      (item (text "Main and mode icon bars:")
+        (enum (set-pretty-preference "icon bars" answer)
+              '("Above the document" "At the left of the document")
+              (get-pretty-preference "icon bars")
+              "18em")))
+    (assuming (defined? 'web-javascript)
+      (item (text "Tabs of the windows:")
+        (enum (set-pretty-preference "window tabs" answer)
+              '("In a column at the left" "Above the page")
+              (get-pretty-preference "window tabs")
+              "18em")))
+    (assuming (support-functionality? "density")
+      (item (text "Interface density:")
+        (enum (set-pretty-preference "gui density" answer)
+              '("Compact" "Normal" "Large")
+              (get-pretty-preference "gui density")
+              "18em")))
+    (item (text "Responsive tabs default mode:")
+      (enum (set-pretty-preference "gui:responsive tab mode" answer)
+            '("Top tabs" "Side tabs" "Mobile list")
+            (get-pretty-preference "gui:responsive tab mode")
+            "18em"))
+    (item (text "Interface scaling:")
+      (enum (set-pretty-preference "gui scaling" answer)
+            '("default" "0.25" "0.5" "1" "2" "3")
+            (get-pretty-preference "gui scaling")
+            "18em"))
+    (assuming (qt5-gui?)
+      (meti (hlist // (text "Use retina fonts"))
+        (toggle (set-retina-boolean-preference "retina-factor" answer)
+                (get-retina-boolean-preference "retina-factor"))))
+    (assuming (qt5-gui?)
+      (meti (hlist // (text "Use retina icons"))
+        (toggle (set-retina-boolean-preference "retina-icons" answer)
+                (get-retina-boolean-preference "retina-icons"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keyboard preferences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-preference-names "text spacebar"
+(define-preference-names-and-validate "text spacebar"
   ("default" "Default")
   ("allow multiple spaces" "Allow multiple spaces")
   ("glue multiple spaces" "Glue multiple spaces")
   ("no multiple spaces" "No multiple spaces"))
 
-(define-preference-names "math spacebar"
+(define-preference-names-and-validate "math spacebar"
   ("default" "Default")
   ("allow spurious spaces" "Allow spurious spaces")
   ("avoid spurious spaces" "Avoid spurious spaces")
   ("no spurious spaces" "No spurious spaces"))
 
-(define-preference-names "automatic quotes"
+(define-preference-names-and-validate "automatic quotes"
   ("default" "Default")
   ("none" "Disabled")
   ("dutch" "Dutch")
@@ -128,12 +245,12 @@
   ("spanish" "Spanish")
   ("swiss" "Swiss"))
 
-(define-preference-names "automatic brackets"
+(define-preference-names-and-validate "automatic brackets"
   ("off" "Disabled")
   ("mathematics" "Inside mathematics" "mathematics")
   ("on" "Enabled"))
 
-(define-preference-names "cyrillic input method"
+(define-preference-names-and-validate "cyrillic input method"
   ("none" "None")
   ("translit" "Translit")
   ("jcuken" "Jcuken")
@@ -353,14 +470,15 @@
     ===
     (hlist
       (text "CSS stylesheet:") //
-      (enum (set-preference "texmacs->html:css-stylesheet" answer)
-            '("---"
-              "https://www.texmacs.org/css/web-article.css"
-              "https://www.texmacs.org/css/web-article-dark.css"
-              "https://www.texmacs.org/css/web-article-colored.css"
-              "https://www.texmacs.org/css/web-article-dark-colored.css"
-              "")
-            (get-preference "texmacs->html:css-stylesheet") "18em")))
+      (verb
+        (enum (set-preference "texmacs->html:css-stylesheet" answer)
+              '("---"
+                "https://www.texmacs.org/css/web-article.css"
+                "https://www.texmacs.org/css/web-article-dark.css"
+                "https://www.texmacs.org/css/web-article-colored.css"
+                "https://www.texmacs.org/css/web-article-dark-colored.css"
+                "")
+              (get-preference "texmacs->html:css-stylesheet") "18em"))))
   ====== ======
   (bold (text "Html -> TeXmacs"))
   ===
@@ -374,7 +492,7 @@
 
 ;; LaTeX ----------
 
-(define-preference-names "texmacs->latex:encoding"
+(define-preference-names-and-validate "texmacs->latex:encoding"
   ("ascii" "Ascii")
   ("cork"  "Cork with catcodes")
   ("utf-8" "Utf-8 with inputenc"))
@@ -505,14 +623,14 @@
 
 ;; Verbatim ----------
 
-(define-preference-names "texmacs->verbatim:encoding"
+(define-preference-names-and-validate "texmacs->verbatim:encoding"
   ("auto" "Automatic")
   ("cork" "Cork")
   ("iso-8859-1" "Iso-8859-1")
   ("iso-8859-2" "Iso-8859-2")
   ("utf-8" "Utf-8"))
 
-(define-preference-names "verbatim->texmacs:encoding"
+(define-preference-names-and-validate "verbatim->texmacs:encoding"
   ("auto" "Automatic")
   ("cork" "Cork")
   ("iso-8859-1" "Iso-8859-1")
@@ -550,12 +668,18 @@
             "12em"))))
 
 ;; Pdf ----------
-(define-preference-names "texmacs->pdf:version"
+(define-preference-names-and-validate "texmacs->pdf:version"
   ("Default" "default")
   ("1.4" "1.4")
   ("1.5" "1.5")
   ("1.6" "1.6")
   ("1.7" "1.7"))
+
+(define (color-links? locus-on-paper)
+ (if (== locus-on-paper "preserve") #f #t))
+
+(define (preserve-or-change color-links)
+ (if color-links "change" "preserve"))
 
 (tm-widget (pdf-preferences-widget)
   ======
@@ -573,6 +697,9 @@
     (meti (hlist // (text "Expand beamer slides"))
       (toggle (set-boolean-preference "texmacs->pdf:expand slides" answer)
               (get-boolean-preference "texmacs->pdf:expand slides")))
+    (meti (hlist // (text "Color links"))
+      (toggle (set-locus-rendering "locus-on-paper" (preserve-or-change answer))
+         (color-links? (get-locus-rendering "locus-on-paper"))))
     (assuming (supports-native-pdf?)
       (meti (hlist // (text "Distill encapsulated Pdf files"))
         (toggle (set-boolean-preference "texmacs->pdf:distill inclusion" answer)
@@ -628,6 +755,56 @@
                 (get-boolean-preference
                  "image->texmacs:svg-prefer-inkscape"))))))
 
+(define (http-proxy-shown)
+  (with p (get-preference "http proxy")
+    (if (in? p '("" "default")) "default" p)))
+
+(tm-widget (ai-preferences-widget)
+  ======
+  (bold (text "AI connexions"))
+  ===
+  (aligned
+    (item (hlist // (text "Network timeout in seconds:"))
+      (enum (set-preference "http request timeout" answer)
+                '("60" "30" "10" "5" "2" "1" "")
+                (get-preference "http request timeout") "6em"))
+    ;; (default: the proxy of the system; host:port, socks5://host:port,
+    ;; or direct; a browser has its own)
+    (assuming (not (defined? 'web-javascript))
+      (item (hlist // (text "Proxy:"))
+        (enum (set-preference "http proxy"
+                              (if (== answer "") "default" answer))
+              (list (http-proxy-shown) "default" "direct" "")
+              (http-proxy-shown) "14em"))))
+  ======
+  (bold (text "AI corrections"))
+  ===
+  (aligned
+    (meti (hlist // (text "Show differences after text corrections"))
+      (toggle (set-boolean-preference
+	       "ai-correct show differences" answer)
+	      (get-boolean-preference
+	       "ai-correct show differences")))
+    (meti (hlist // (text "Explain text corrections"))
+      (toggle (set-boolean-preference
+	       "ai-correct explain" answer)
+	      (get-boolean-preference
+	       "ai-correct explain")))))
+
+;; Markdown ----------
+
+(tm-widget (markdown-preferences-widget)
+  ======
+  (bold (text "TeXmacs -> Markdown"))
+  ===
+  (aligned
+    (meti (hlist // (text "Use Html for what Markdown cannot express"))
+      (toggle (set-boolean-preference "texmacs->markdown:html" answer)
+              (get-boolean-preference "texmacs->markdown:html")))
+    (meti (hlist // (text "Export the title, the authors and the date as a YAML header"))
+      (toggle (set-boolean-preference "texmacs->markdown:front-matter" answer)
+              (get-boolean-preference "texmacs->markdown:front-matter")))))
+
 ;; All converters ----------
 
 (tm-widget (conversion-preferences-widget)
@@ -643,6 +820,9 @@
       (tab (text "BibTeX")
         (centered
           (dynamic (bibtex-preferences-widget))))
+      (tab (text "Markdown")
+        (centered
+          (dynamic (markdown-preferences-widget))))
       (tab (text "Verbatim")
         (centered
           (dynamic (verbatim-preferences-widget))))
@@ -652,38 +832,41 @@
             (dynamic (pdf-preferences-widget)))))
       (tab (text "Image")
         (centered
-          (dynamic (image-preferences-widget))))))
+          (dynamic (image-preferences-widget))))
+      (tab (text "AI")
+	(centered
+          (dynamic (ai-preferences-widget))))))
   ===)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Other
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-preference-names "autosave"
+(define-preference-names-and-validate "autosave"
   ("5" "5 sec")
   ("30" "30 sec")
   ("120" "120 sec")
   ("300" "300 sec")
   ("0" "Disable"))
 
-(define-preference-names "security"
+(define-preference-names-and-validate "security"
   ("accept no scripts" "Accept no scripts")
   ("prompt on scripts" "Prompt on scripts")
   ("accept all scripts" "Accept all scripts"))
 
-(define-preference-names "updater:interval"
+(define-preference-names-and-validate "updater:interval"
   ("0" "Never")
   ("0" "Unsupported")
   ("24" "Once a day")
   ("168" "Once a week")
   ("720" "Once a month"))
 
-(define-preference-names "document update times"
+(define-preference-names-and-validate "document update times"
   ("1" "Once")
   ("2" "Twice")
   ("3" "Three times"))
 
-(define-preference-names "scripting language"
+(define-preference-names-and-validate "scripting language"
   ("none" "None"))
 
 (define (updater-last-check-formatted)
@@ -727,15 +910,54 @@
       (bold (text "Wallet"))
       ===
       (dynamic (wallet-preferences-widget))
-      ====== ======
-      (bold (text "Encryption"))
-      ===
-      (dynamic (gpg-preferences-widget))
+      ;; GnuPG is a program, which a web browser cannot run
+      (assuming (not (defined? 'web-javascript))
+        ====== ======
+        (bold (text "Encryption"))
+        ===
+        (dynamic (gpg-preferences-widget)))
       ;;====== ======
       ;;(bold (text "Scripts")) 
       ;;===
       ;;(dynamic (script-preferences-widget))
       )))
+
+(define (console-size-encode sz)
+  (cond ((== sz "All") "1000000")
+        ((string-starts? sz "Last ") (string-drop sz 5))
+        (else "100")))
+
+(define (console-size-decode sz)
+  (cond ((not (string->number sz)) "Last 100")
+        ((> (string->number sz) 10000) "All")
+        (else (string-append "Last " sz))))
+
+(tm-widget (debug-console-preferences-widget)
+  (aligned
+    (item (text "Details:")
+      (enum (set-preference "console details" (locase-all answer))
+            '("Normal" "Detailed")
+            (upcase-first (get-preference "console details"))
+            "12em"))
+    (item (text "Messages limit:")
+      (enum (set-preference "console size" (console-size-encode answer))
+            '("Last 25" "Last 100" "Last 250" "Last 1000" "All")
+            (console-size-decode (get-preference "console size"))
+            "12em"))
+    (meti (hlist // (text "Automatically open on errors"))
+      (toggle (set-boolean-preference "open console on errors" answer)
+              (get-boolean-preference "open console on errors")))
+    (meti (hlist // (text "Automatically open on warnings"))
+      (toggle (set-boolean-preference "open console on warnings" answer)
+              (get-boolean-preference "open console on warnings"))))
+  (explicit-buttons
+    (hlist
+      (text "Messages") >>
+      ("Clear" (clear-debug-messages))))
+  (explicit-buttons
+    (hlist
+      (text "Console") >>
+      ("Open debug console" (open-debug-console)))))
 
 (tm-widget (misc-preferences-widget)
   (aligned
@@ -774,6 +996,12 @@
       (meti (hlist // (text "Encryption"))
         (toggle (set-boolean-preference "experimental encryption" answer)
                 (get-boolean-preference "experimental encryption")))
+      (meti (hlist // (text "Continuous spell checking"))
+        (toggle (set-boolean-preference "continuous spell checking" answer)
+                (get-boolean-preference "continuous spell checking")))
+      (meti (hlist // (text "grammar checking"))
+        (toggle (set-boolean-preference "grammar checking" answer)
+                (get-boolean-preference "grammar checking")))
       (meti (hlist // (text "Fast environments"))
         (toggle (set-boolean-preference "fast environments" answer)
                 (get-boolean-preference "fast environments")))
@@ -783,6 +1011,9 @@
       (meti (hlist // (text "New style fonts"))
         (toggle (set-boolean-preference "new style fonts" answer)
                 (get-boolean-preference "new style fonts")))
+      (meti (hlist // (text "Hand tuned math fonts"))
+        (toggle (set-boolean-preference "hand tuned math fonts" answer)
+                (get-boolean-preference "hand tuned math fonts")))
       (meti (hlist // (text "Advanced font customization"))
         (toggle (set-boolean-preference "advanced font customization" answer)
                 (get-boolean-preference "advanced font customization")))
@@ -812,14 +1043,25 @@
         (meti (hlist // (text "Case-insensitive search"))
           (toggle (set-boolean-preference "case-insensitive-match" answer)
                   (get-boolean-preference "case-insensitive-match")))
-        (assuming (qt-gui?)  ; TODO: recode the dialogue in scheme
+        (assuming (or (qt-gui?) (vue-gui?))  ; TODO: recode the dialogue in scheme
           (meti (hlist // (text "Use print dialogue"))
             (toggle (set-boolean-preference "gui:print dialogue" answer)
                     (get-boolean-preference "gui:print dialogue"))))
         (assuming (os-macos?)
           (meti (hlist // (text "Use unified toolbars"))
             (toggle (set-boolean-preference "use unified toolbar" answer)
-                    (get-boolean-preference "use unified toolbar")))))
+                    (get-boolean-preference "use unified toolbar"))))
+        (assuming (qt6-or-later-gui?)
+          (meti (hlist // (text "Use new toolbar"))
+            (toggle (set-boolean-preference "new toolbar" answer)
+              (get-boolean-preference "new toolbar")))
+          (meti (hlist // (text "Use experimental keyboard patches") )
+            (toggle (set-boolean-preference "use experimental keyboard patches" answer)
+              (get-boolean-preference "use experimental keyboard patches"))))
+        (meti (hlist // (text "Disable texmacs window positioning") )
+          (toggle (set-boolean-preference "disable texmacs window positioning" answer)
+            (get-boolean-preference "disable texmacs window positioning")))
+      ) ; aligned
       (glue #f #t 0 0))))
 
 (tm-widget (experimental-preferences-widget*)
@@ -827,6 +1069,12 @@
     (meti (hlist // (text "Encryption"))
       (toggle (set-boolean-preference "experimental encryption" answer)
               (get-boolean-preference "experimental encryption")))
+    (meti (hlist // (text "Continuous spell checking"))
+      (toggle (set-boolean-preference "continuous spell checking" answer)
+              (get-boolean-preference "continuous spell checking")))
+    (meti (hlist // (text "grammar checking"))
+      (toggle (set-boolean-preference "grammar checking" answer)
+              (get-boolean-preference "grammar checking")))
     (meti (hlist // (text "Fast environments"))
       (toggle (set-boolean-preference "fast environments" answer)
               (get-boolean-preference "fast environments")))
@@ -858,7 +1106,7 @@
     ;;(meti (hlist // (text "Case-insensitive search"))
     ;;  (toggle (set-boolean-preference "case-insensitive-match" answer)
     ;;          (get-boolean-preference "case-insensitive-match")))
-    (assuming (qt-gui?)  ; TODO: recode the dialogue in scheme
+    (assuming (or (qt-gui?) (vue-gui?))  ; TODO: recode the dialogue in scheme
       (meti (hlist // (text "Use print dialogue"))
         (toggle (set-boolean-preference "gui:print dialogue" answer)
                 (get-boolean-preference "gui:print dialogue"))))
@@ -879,6 +1127,80 @@
     (dynamic (experimental-preferences-widget))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin preferences widget
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define prefs-plugin-table (make-ahash-table))
+
+(tm-define (prefs-plugin-get)
+  (or (ahash-ref prefs-plugin-table :current) "scheme"))
+
+(tm-define (prefs-plugin-set name)
+  (ahash-set! prefs-plugin-table :current name)
+  (refresh-now "plugin-prefs")
+  (update-menus))
+
+(tm-widget (plugin-preferences-list)
+  (scrollable
+    (choice (prefs-plugin-set (name->plugin answer))
+            (map plugin->name (plugins-with-preferences))
+            (plugin->name (prefs-plugin-get)))))
+
+(tm-widget (plugin-preferences-widget*)
+  (centered
+    (dynamic (plugin-preferences-widget (prefs-plugin-get)))))
+
+(tm-widget (plugins-preferences-widget)
+  (padded
+    (horizontal
+      (vertical
+        (resize "150px" "300px"
+          (dynamic (plugin-preferences-list)))
+        (glue #f #t 0 0))
+      ///
+      (vertical
+        (refreshable "plugin-prefs"
+          (promise (menu-dynamic
+                     (dynamic (plugin-preferences-widget (prefs-plugin-get))))))
+        (glue #f #t 400 0)))))
+
+(tm-tool* (plugin-preferences-tool win)
+  (:name (string-append (plugin->name (prefs-plugin-get)) " preferences"))
+  (centered
+    (dynamic (plugin-preferences-widget (prefs-plugin-get)))))
+
+(tm-widget (plugin-titled-preferences-widget name)
+  (division "title"
+    (text (string-append (plugin->name name) " preferences")) >>)
+  (padded
+    (dynamic (plugin-preferences-widget name))))
+
+(tm-tool* (plugins-preferences-tool win)
+  (:name "Plugin preferences")
+  (centered
+    (resize "250px" "200px"
+      (dynamic (plugin-preferences-list))))
+  === ===
+  (refreshable "plugin-prefs"
+    (dynamic (plugin-titled-preferences-widget (prefs-plugin-get)))))
+
+(tm-define (open-plugin-preferences name)
+  (:interactive #t)
+  (prefs-plugin-set name)
+  (if (side-tools?)
+      (tool-select :right 'plugin-preferences-tool)
+      (top-window plugin-preferences-widget*
+                  (string-append (plugin->name name) " preferences"))))
+
+(tm-define (open-plugins-preferences)
+  (:interactive #t)
+  (and-with l (plugins-with-preferences)
+    (prefs-plugin-set (car l)))
+  (if (side-tools?)
+      (tool-select :right 'plugins-preferences-tool)
+      (top-window plugins-preferences-widget "Plugin preferences")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Preferences widget
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -894,19 +1216,30 @@
       ;; TODO: please implement nice icon tabs first before
       ;; adding new tabs in the preferences widget
       ;; The tabs currently take too much horizontal space
-      ;;(icon-tab "tm_prefs_other.xpm" (text "Mathematics") ; TODO: icon
-      ;;  (centered
-      ;;    (dynamic (math-preferences-widget))))
+      (icon-tab "tm_math_preferences.xpm" (text "Maths")
+        (centered
+          (dynamic (math-preferences-widget))))
       (icon-tab "tm_prefs_convert.xpm" (text "Convert")
         (dynamic (conversion-preferences-widget)))
-      (assuming (== (get-preference "experimental encryption") "on")
+      ;; in a web browser the wallet (web-wallet.scm) is there anyway
+      (assuming (or (== (get-preference "experimental encryption") "on")
+                    (defined? 'web-javascript))
         (icon-tab "tm_prefs_security.xpm" (text "Security")
           (centered
             (dynamic (security-preferences-widget)))))
+      (icon-tab "tm_program.xpm" (text "Debug")
+        (centered
+          (dynamic (debug-console-preferences-widget))))
       (icon-tab "tm_prefs_other.xpm" (text "Other")
         (centered
           (dynamic (other-preferences-widget)))))))
 
-(tm-define (open-preferences)
+(tm-define (open-preferences-window)
   (:interactive #t)
   (top-window preferences-widget "User preferences"))
+
+(tm-define (open-preferences)
+  (:interactive #t)
+  (if (side-tools?)
+      (tool-select :right 'preferences-tool)
+      (open-preferences-window)))

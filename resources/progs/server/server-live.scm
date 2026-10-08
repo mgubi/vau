@@ -20,7 +20,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (live-name lid)
-  (let* ((s1 (url->string (url-unroot lid)))
+  (let* ((s1 (url->unix (url-unroot lid)))
          (s2 (if (== (tmfs-car s1) "live") (tmfs-cdr s1) s1))
          (s3 (tmfs-cdr s2))
          (s4 (if (== (tmfs-car s3) "live") (tmfs-cdr s3) s3)))
@@ -60,14 +60,17 @@
     (string-save doc fname)))
 
 (tm-service (remote-list-live)
-  ;; Return list of live documents owned by the user
-  ;;(display* "remote-list-chat-rooms\n")
+  ;; Return list of live documents owned by the user as (name date) pairs
+  ;;(display* "remote-list-live\n")
   (with (client msg-id) envelope
     (let* ((uid (server-get-user envelope))
            (l (db-search `(("type" "live")
                            ("owner" ,uid))))
-           (get-name (lambda (id) (db-get-field-first id "name" #f)))
-           (r (map get-name l)))
+           (get-entry (lambda (id)
+                        (let* ((name (db-get-field-first id "name" #f))
+                               (date (db-get-field-first id "date" "")))
+                          (list name date))))
+           (r (map get-entry l)))
       (server-return envelope r))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,7 +140,55 @@
   (for (client (live-get-connections lid))
     (live-broadcast-one lid client)))
 
+;; The cursors of the users of a live document: each client says where its
+;; cursor is in the document (live-cursor, a path in it, or #f when it left
+;; the document), and the server tells the other clients of the document,
+;; with the pseudo and the name of the user. The client is named by the
+;; number of its connection: a user with two clients has two cursors.
+
+(define live-cursor-table (make-ahash-table)) ;; (lid client) -> (uid pos)
+
+(define (live-cursor-tell other lid client uid pos)
+  (let* ((info (and uid (server-get-user-info uid)))
+         (pseudo (if info (first info) "?"))
+         (name (if info (second info) pseudo)))
+    ;; (a client which does not know of cursors answers with an error)
+    (server-remote-eval other `(live-cursor ,lid ,client ,pseudo ,name ,pos)
+                        ignore ignore)))
+
+(define (live-cursor-broadcast lid client uid pos)
+  (if pos
+      (ahash-set! live-cursor-table (list lid client) (list uid pos))
+      (ahash-remove! live-cursor-table (list lid client)))
+  (for (other (live-get-connections lid))
+    (when (and (!= other client) (active-client? other))
+      (live-cursor-tell other lid client uid pos))))
+
+(define (live-cursor-welcome lid client)
+  ;; a client which opens the document is told where the others are
+  (for (x (ahash-table->list live-cursor-table))
+    (let* ((lid* (caar x))
+           (other (cadar x))
+           (uid (cadr x))
+           (pos (caddr x)))
+      (when (and (== lid* lid) (!= other client) (active-client? other))
+        (live-cursor-tell client lid other uid pos)))))
+
+(tm-service (live-cursor lid pos)
+  (with (client msg-id) envelope
+    (let* ((uid (server-get-user envelope))
+           (rid (live-find lid)))
+      (if (and uid rid (db-allow? rid uid "readable")
+               (or (not pos) (and (list? pos) (list-and (map integer? pos)))))
+          (begin
+            (live-cursor-broadcast lid client uid pos)
+            (server-return envelope #t))
+          (server-error envelope "Error: read access denied")))))
+
 (tm-define (server-remove client)
+  ;; the others no longer see the cursor of a client which leaves
+  (for (lid (live-remote-connections client))
+    (live-cursor-broadcast lid client #f #f))
   (former client)
   (for (key (map car (ahash-table->list live-waiting)))
     (when (== (cadr key) client)
@@ -169,6 +220,7 @@
           (db-allow? rid uid "readable"))
         (with (client msg-id) envelope
           (live-connect lid client)
+          (live-cursor-welcome lid client)
           (let* ((doc (live-current-document lid))
                  (state (live-get-remote-state lid client)))
             (server-return envelope (list state (tm->stree doc)))))

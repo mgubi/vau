@@ -95,30 +95,44 @@
 
 (define db-the-default-user #f)
 
+(define (gecos:name gecos)
+  (first (string-split gecos #\,)))
+
+(define (gecos:office gecos)
+  (second (string-split gecos #\,)))
+
+(define (gecos:wphone gecos)
+  (third (string-split gecos #\,)))
+
+(define (gecos:hphone gecos)
+  (fourth (string-split gecos #\,)))
+
 (define (safe-getpwnam id)
   (catch #t
-	 (lambda () (passwd:gecos (getpwnam id)))
+	 (lambda () (gecos:name (passwd:gecos (getpwnam id))))
 	 (lambda err
 	   (display* "Error in getpwnam: " err "\n")
 	   "")))
 
 (define (safe-getpwuid id)
+  (if (os-android?)
+      "user"
   (catch #t
 	 (lambda () (passwd:name (getpwuid id)))
 	 (lambda err
 	   (display* "Error in getpwuid: " err "\n")
-	   "")))
+	   ""))))
 
 (define (get-full-name user)
+ (if (os-android?)
+    "Default User"
  (if (os-mingw?)
-     (or (and (url-exists-in-path? "fullname")
-              (var-eval-system (string-append "fullname " user)))
-         "Default User")
-     (safe-getpwnam user)))
+     (getenv "TEXMACS_DISPLAYNAME")
+     (safe-getpwnam user))))
 
 (define (create-default-user)
-  (let* ((pseudo (or (getlogin) (safe-getpwuid (getuid))))
-         (name (get-full-name pseudo)))
+  (let* ((pseudo (get-user-login))
+         (name (get-user-name)))
     ;;(display* "pseudo= " pseudo "\n")
     ;;(display* "name= " name "\n")
     (when (== pseudo "") (set! pseudo "default"))

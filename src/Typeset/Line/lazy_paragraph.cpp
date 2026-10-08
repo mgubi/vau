@@ -117,8 +117,7 @@ lazy_paragraph_rep::lazy_paragraph_rep (edit_env env2, path ip):
   else if (sm == "hangmobanjiao") protrusion += HANGMOBANJIAO;
   else if (sm == "kaiming") protrusion += KAIMING;
 
-  tree dec= env->read (ATOM_DECORATIONS);
-  if (N(dec) > 0) decs << tuple ("0", dec);
+  init_decs= env->read (ATOM_DECORATIONS);
 }
 
 lazy_paragraph_rep::~lazy_paragraph_rep () {
@@ -280,7 +279,7 @@ lazy_paragraph_rep::increase_kerning (SI dw, SI the_width) {
   SI tot_spc= 0;
   for (int i=cur_start; i<N(items)-1; i++)
     tot_spc += spcs[i]->max;
-  dw= (((long int) dw) * (the_width - tot_spc)) / the_width;
+  dw= (((long long int) dw) * (the_width - tot_spc)) / the_width;
 
   int first, last;
   find_first_last_text (first, last);
@@ -306,7 +305,7 @@ lazy_paragraph_rep::decrease_kerning (SI dw, SI the_width) {
   SI tot_spc= 0;
   for (int i=cur_start; i<N(items)-1; i++)
     tot_spc += spcs[i]->min;
-  dw= (((long int) dw) * (the_width - tot_spc)) / the_width;
+  dw= (((long long int) dw) * (the_width - tot_spc)) / the_width;
 
   int first, last;
   find_first_last_text (first, last);
@@ -332,7 +331,7 @@ lazy_paragraph_rep::expand_glyphs (SI dw, SI the_width) {
   SI tot_spc= 0;
   for (int i=cur_start; i<N(items)-1; i++)
     tot_spc += spcs[i]->max;
-  dw= (((long int) dw) * (the_width - tot_spc)) / the_width;
+  dw= (((long long int) dw) * (the_width - tot_spc)) / the_width;
   SI xdw= (SI) (dw * (expansion / (kstretch + expansion)));
   SI mdw= (SI) (expansion * the_width);
   int stages= 8;
@@ -363,7 +362,7 @@ lazy_paragraph_rep::contract_glyphs (SI dw, SI the_width) {
   SI tot_spc= 0;
   for (int i=cur_start; i<N(items)-1; i++)
     tot_spc += spcs[i]->min;
-  dw= (((long int) dw) * (the_width - tot_spc)) / the_width;
+  dw= (((long long int) dw) * (the_width - tot_spc)) / the_width;
   SI xdw= (SI) (dw * (contraction / (kreduce + contraction)));
   SI mdw= (SI) (contraction * the_width);
   int stages= 8;
@@ -649,6 +648,11 @@ lazy_paragraph_rep::line_unit (path start, path end, bool break_flag,
 void
 lazy_paragraph_rep::line_end (space spc, int penalty) {
   if (N(items) == 0) return;
+  if (N(decs) == 0 || decs[0][1] == tree (DATOMS)) {
+    tree dec= init_decs;
+    if (N(dec) > 0) decs= ::append (tuple ("0", dec), decs);
+    init_decs= tree (DATOMS);
+  }
   if (N(decs) != 0) handle_decorations ();
   // cout << items << ", " << spc << ", " << penalty << LF;
   if (N(notes) != 0) {
@@ -659,7 +663,7 @@ lazy_paragraph_rep::line_end (space spc, int penalty) {
       box sb  = move_box (note->ip, note, x, y);
       box nb  = resize_box (note->ip, sb, 0, 0, 0, 0);
       items= ::append (nb, items);
-      items_sp= ::append (0, items_sp);
+      items_sp= ::append ((SI) 0, items_sp);
     }
   }
   box b= phrase_box (sss->ip, items, items_sp);
@@ -812,6 +816,21 @@ typeset_concat_or_table (edit_env env, tree t, path ip) {
 }
 
 array<page_item>
+typeset_stack (edit_env env, tree t, path ip, SI width,
+	       array<line_item> a, array<line_item> b, stack_border& sb)
+{
+  // cout << "Typeset stack " << t << "\n";
+  lazy_paragraph par (env, ip);
+  par->a= a;
+  par->a << typeset_concat_or_table (env, t, ip);
+  par->a << b;
+  par->width= width;
+  par->format_paragraph ();
+  sb= par->sss->sb;
+  return par->sss->l;
+}
+
+array<page_item>
 typeset_stack (edit_env env, tree t, path ip,
 	       array<line_item> a, array<line_item> b, stack_border& sb)
 {
@@ -839,6 +858,17 @@ make_lazy_paragraph (edit_env env, array<box> bs, path ip) {
   return par;
 }
 
+box
+surround (edit_env env, box b, path ip,
+          array<line_item> l, array<line_item> r, format fm) {
+  if (N(l) == 0 && N(r) == 0) return b;
+  lazy_paragraph par (env, ip);
+  par->a << l;
+  par->a << line_item (STD_ITEM, env->mode_op, b, 0);
+  par->a << r;
+  return (box) par->produce (LAZY_BOX, fm);
+}
+
 array<line_item>
 join (array<line_item> a, array<line_item> b) {
   int i, m= N(a), n= N(b);
@@ -857,10 +887,10 @@ lazy_paragraph_rep::query (lazy_type request, format fm) {
     if (N (qvw->after ) != 0) li= join (li, qvw->after);
 
     // determine the first indentation
-    SI first= env->as_length (style [PAR_FIRST]);
     bool no_first= (style [PAR_NO_FIRST] == "true");
     style (PAR_NO_FIRST)= "false";
     if (no_first) style (PAR_FIRST)= "0cm";
+    SI first= env->as_length (style [PAR_FIRST]);
     for (int j=0; j<N(a); j++)
       if (a[j]->type == CONTROL_ITEM)
         if (is_tuple (a[j]->t, "env_par")) {

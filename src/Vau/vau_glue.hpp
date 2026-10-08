@@ -31,7 +31,7 @@ class glue_function_rep : concrete_struct {
 protected:
   glue_function_rep (const char *_name, s7_function _fn, int _ar);
   void instantiate () {
-    tmscm_install_procedure_bis (name, fn, arity, 0, 0);
+    s7_define_function (tm_s7, name, fn, arity, 0, false, "[missing doc]");
   }
 public:
   static void instantiate_all ();

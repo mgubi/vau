@@ -21,9 +21,6 @@
 #include "new_style.hpp"
 #include "iterator.hpp"
 #include "merge_sort.hpp"
-#ifdef EXPERIMENTAL
-#include "../../Style/Environment/std_environment.hpp"
-#endif // EXPERIMENTAL
 
 #include "printer.hpp"
 #include "new_data.hpp"
@@ -337,19 +334,6 @@ editor_rep::drd_update () {
   drd->heuristic_init (cur[tp]);
 }
 
-#ifdef EXPERIMENTAL
-void
-editor_rep::environment_update () {
-  hashmap<string,tree> h;
-  typeset_prepare ();
-  env->assign ("base-file-name", as_string (env->base_file_name));
-  env->assign ("cur-file-name", as_string (env->cur_file_name));
-  env->assign ("secure", bool_as_tree (env->secure));
-  env->read_env (h);
-  ::primitive (ste, h);
-}
-#endif
-
 /******************************************************************************
 * Routines for getting information
 ******************************************************************************/
@@ -545,12 +529,12 @@ tree
 editor_rep::get_init_value (string var) {
   if (init->contains (var)) {
     tree t= init [var];
-    if (var == BG_COLOR && is_func (t, PATTERN)) t= env->exec (t);
+    if (var == BG_COLOR && is_func (t, _PATTERN)) t= env->exec (t);
     return is_func (t, BACKUP, 2)? t[0]: t;
   }
   if (N(pre)==0) typeset_preamble ();
   tree t= pre [var];
-  if (var == BG_COLOR && is_func (t, PATTERN)) t= env->exec (t);
+  if (var == BG_COLOR && is_func (t, _PATTERN)) t= env->exec (t);
   return is_func (t, BACKUP, 2)? t[0]: t;
 }
 
@@ -1037,7 +1021,7 @@ editor_rep::print_doc (url name, bool conform, int first, int last) {
   env->write (PAGE_SHOW_HF, "true");
   env->write (PAGE_SCREEN_MARGIN, "false");
   env->write (PAGE_BORDER, "none");
-  if (is_func (env->read (BG_COLOR), PATTERN))
+  if (is_func (env->read (BG_COLOR), _PATTERN))
     env->write (BG_COLOR, env->exec (env->read (BG_COLOR)));
   if (!conform) {
     env->write (PAGE_MEDIUM, "paper");
@@ -1148,7 +1132,7 @@ editor_rep::typeset_document (string image_dpi) {
   env->write (PAGE_SHOW_HF, "true");
   env->write (PAGE_SCREEN_MARGIN, "false");
   env->write (PAGE_BORDER, "none");
-  if (is_func (env->read (BG_COLOR), PATTERN))
+  if (is_func (env->read (BG_COLOR), _PATTERN))
     env->write (BG_COLOR, env->exec (env->read (BG_COLOR)));
 
   if (!conform) {
@@ -1246,7 +1230,7 @@ editor_rep::get_page_image (url name, int page, string image_dpi) {
   env->write (PAGE_SHOW_HF, "true");
   env->write (PAGE_SCREEN_MARGIN, "false");
   env->write (PAGE_BORDER, "none");
-  if (is_func (env->read (BG_COLOR), PATTERN))
+  if (is_func (env->read (BG_COLOR), _PATTERN))
     env->write (BG_COLOR, env->exec (env->read (BG_COLOR)));
 
   if (!conform) {

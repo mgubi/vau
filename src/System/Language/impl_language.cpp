@@ -2,6 +2,7 @@
 /******************************************************************************
 * MODULE     : impl_language.cpp
 * COPYRIGHT  : (C) 2019-2020  Darcy Shen
+*              (C) 2008  Francis Jamet
 *******************************************************************************
 * This software falls under the GNU general public license version 3 or later.
 * It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE
@@ -47,10 +48,10 @@ tree
 line_inc (tree t, int i) {
   if (i == 0) return t;
   path p= obtain_ip (t);
-  if (is_nil (p) || last_item (p) < 0) return tree (ERROR);
+  if (is_nil (p) || last_item (p) < 0) return tree (_ERROR);
   tree pt= subtree (the_et, reverse (p->next));
-  if (!is_func (pt, DOCUMENT)) return tree (ERROR);
-  if ((p->item + i < 0) || (p->item + i >= N(pt))) return tree (ERROR);
+  if (!is_func (pt, DOCUMENT)) return tree (_ERROR);
+  if ((p->item + i < 0) || (p->item + i >= N(pt))) return tree (_ERROR);
   return pt[p->item + i];
 }
 
@@ -83,9 +84,10 @@ parse_string (string s, int& pos, bool force) {
   return false;
 }
 
-static bool
+static int
 begin_comment (string s, int i) {
-  bool comment= false;
+  // the position after the last /* which starts at or before i, or -1
+  int begin= -1;
   int opos, pos= 0;
   do {
     do {
@@ -94,25 +96,26 @@ begin_comment (string s, int i) {
       if (opos < pos) break;
       parse_comment_multi_lines (s, pos);
       if (opos < pos) {
-        comment = true;
+        begin= pos;
         break;
       }
       pos++;
     } while (false);
   } while (pos <= i);
-  return comment;
+  return begin;
 }
 
 static int
-after_begin_comment (int i, tree t) {
+after_begin_comment (int i, tree t, int& col) {
   tree   t2= t;
   string s2= t->label;
   int  line= line_number (t2);
   do {
-    if (begin_comment (s2, i)) return line;
+    col= begin_comment (s2, i);
+    if (col >= 0) return line;
     t2= line_inc (t2, -1);
     --line;
-      // line_inc returns tree(ERROR) upon error
+      // line_inc returns tree(_ERROR) upon error
     if (!is_atomic (t2)) return -1; // FIXME
     s2= t2->label;
     i = N(s2) - 1;
@@ -126,8 +129,9 @@ parse_end_comment (string s, int& pos) {
     pos += 2;
 }
 
-static bool
+static int
 end_comment (string s, int i) {
+  // the position after the first */ which starts at or after i, or -1
   int opos, pos= 0;
   do {
     do {
@@ -135,24 +139,25 @@ end_comment (string s, int i) {
       parse_string (s, pos, false);
       if (opos < pos) break;
       parse_end_comment (s, pos);
-      if (opos < pos && pos>i) return true;
+      if (opos < pos && opos >= i) return pos;
       pos++;
     } while (false);
   } while (pos < N(s));
-  return false;
+  return -1;
 }
 
 static int
-before_end_comment (int i, tree t) {
+before_end_comment (int i, tree t, int& col) {
   int   end= number_of_lines (t);
   tree   t2= t;
   string s2= t2->label;
   int  line= line_number (t2);
   do {
-    if (end_comment (s2, i)) return line;
+    col= end_comment (s2, i);
+    if (col >= 0) return line;
     t2= line_inc (t2, 1);
     ++line;
-      // line_inc returns tree(ERROR) upon error
+      // line_inc returns tree(_ERROR) upon error
     if (!is_atomic (t2)) return -1; // FIXME
     s2= t2->label;
     i = 0;
@@ -162,11 +167,13 @@ before_end_comment (int i, tree t) {
 
 bool
 in_comment (int pos, tree t) {
-  int beg= after_begin_comment (pos, t);
+  // the comment opened by the last /* before pos ends after pos
+  int bcol, ecol;
+  int beg= after_begin_comment (pos, t, bcol);
   if (beg >= 0) {
     int cur= line_number (t);
-    int end= before_end_comment (pos, line_inc (t, beg - cur));
-    return end >= beg && cur <= end;
+    int end= before_end_comment (bcol, line_inc (t, beg - cur), ecol);
+    return end >= beg && (cur < end || (cur == end && pos < ecol));
   }
   return false;
 }

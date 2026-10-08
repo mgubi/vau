@@ -201,13 +201,3 @@
   (:mode in-prog-scheme?)
   (:require (textual? (selection-tree)))
   (clipboard-copy-export "scheme" "primary"))
-
-(tm-define (kbd-cut)
-  (:mode in-prog-scheme?)
-  (:require (textual? (selection-tree)))
-  (clipboard-cut-export "scheme" "primary"))
-
-(tm-define (kbd-paste)
-  (:mode in-prog-scheme?)
-  (:require (textual? (clipboard-get "primary")))
-  (clipboard-paste-import "scheme" "primary"))

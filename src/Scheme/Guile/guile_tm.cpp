@@ -275,6 +275,12 @@ scheme_dialect () {
 #endif
 }
 
+string
+scheme_init_file () {
+  // sets up Guile, then loads the common init-kernel.scm and init-texmacs.scm
+  return "$TEXMACS_PATH/progs/init-guile.scm";
+}
+
 #if (defined(GUILE_C) || defined(GUILE_D))
 #define SET_SMOB(smob,data,type)   \
 SCM_NEWSMOB (smob, SCM_UNPACK (type), data);
@@ -415,10 +421,13 @@ tmscm_to_symbol (tmscm s) {
  * Blackbox
  ******************************************************************************/
 
+#if defined(SIZEOF_ENT) && SIZEOF_ENT == SCM_SIZEOF_LONG_LONG
+static long long blackbox_tag;
+#define SCM_BLACKBOXP(t) (SCM_NIMP (t) && (((long long) SCM_CAR (t)) == blackbox_tag))
+#else
 static long blackbox_tag;
-
-#define SCM_BLACKBOXP(t) \
-(SCM_NIMP (t) && (((long) SCM_CAR (t)) == blackbox_tag))
+#define SCM_BLACKBOXP(t) (SCM_NIMP (t) && (((long) SCM_CAR (t)) == blackbox_tag))
+#endif
 
 bool
 tmscm_is_blackbox (tmscm t) {
@@ -475,7 +484,8 @@ print_blackbox (SCM blackbox_smob, SCM port, scm_print_state *pstate) {
     s= "<promise-widget>";
   }
   else if (type_ == type_helper<command>::id) {
-    s= "<command>";
+    command cmd= tmscm_to_command (blackbox_smob);
+    s= print_to_string<command> (cmd);
   }
   else if (type_ == type_helper<url>::id) {
     url u= tmscm_to_url (blackbox_smob);

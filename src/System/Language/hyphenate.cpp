@@ -14,6 +14,7 @@
 #include "analyze.hpp"
 #include "converter.hpp"
 #include "universal.hpp"
+#include "sys_utils.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>

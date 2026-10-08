@@ -196,7 +196,7 @@ get_transformation (tree t) {
 
 void
 concater_rep::typeset_gr_transform (tree t, path ip) {
-  if (N(t) != 2) typeset_error (t, ip);
+  if (N(t) != 2) { typeset_error (t, ip); return; }
   tree tr= env->exec (t[1]);
   if (!is_transformation (tr)) typeset_error (t, ip);
   else {
@@ -208,7 +208,7 @@ concater_rep::typeset_gr_transform (tree t, path ip) {
 
 void
 concater_rep::typeset_gr_effect (tree t, path ip) {
-  if (N(t) < 2) typeset_error (t, ip);
+  if (N(t) < 2) { typeset_error (t, ip); return; }
   array<box> bs (N(t)-1);
   for (int i=0; i<N(t)-1; i++)
     bs[i]= typeset_as_atomic (env, t[i], descend (ip, i));
@@ -227,7 +227,7 @@ BEGIN_MAGNIFY
     string valign= env->text_at_valign;
 
     if (N(p) == 0)
-      typeset_dynamic (tree (ERROR, "bad text-at"), ip);
+      typeset_dynamic (tree (_ERROR, "bad text-at"), ip);
     else {
       SI ox= (SI) p[0], oy= (SI) p[1], axis= (b->h() >> 1), x= ox, y= oy;
       if (halign == "left") x -= b->x1;
@@ -264,7 +264,7 @@ BEGIN_MAGNIFY
     string valign= env->text_at_valign;
 
     if (N(p) == 0)
-      typeset_dynamic (tree (ERROR, "bad math-at"), ip);
+      typeset_dynamic (tree (_ERROR, "bad math-at"), ip);
     else {
       SI ox= (SI) p[0], oy= (SI) p[1], axis= (b->h() >> 1), x= ox, y= oy;
       if (halign == "left") x -= b->x1;
@@ -301,7 +301,7 @@ BEGIN_MAGNIFY
     string valign= env->doc_at_valign;
 
     if (N(p) == 0)
-      typeset_dynamic (tree (ERROR, "bad document-at"), ip);
+      typeset_dynamic (tree (_ERROR, "bad document-at"), ip);
     else {
       SI ox= (SI) p[0], oy= (SI) p[1], axis= (b->h() >> 1), x= ox, y= oy;
       if (halign == "left") x -= b->x1;
@@ -939,7 +939,7 @@ BEGIN_MAGNIFY
   tree u= env->exec (t);
   spacial obj= as_spacial (u);
   if (is_nil (obj))
-    typeset_dynamic (tree (ERROR, "bad spacial object"), ip);
+    typeset_dynamic (tree (_ERROR, "bad spacial object"), ip);
   else
     print (spacial_box (ip, transformed (obj, vt)));
 END_MAGNIFY

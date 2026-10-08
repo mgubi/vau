@@ -65,6 +65,10 @@
 #include "file.hpp"
 #include "analyze.hpp"
 
+#ifdef OS_ANDROID
+#include "android.hpp"
+#endif
+
 #include <ctype.h>
 
 #ifdef OS_MINGW
@@ -208,6 +212,18 @@ url_ftp (string name) {
 }
 
 static url
+url_doi (string name) {
+  url u= url_get_name (name);
+  return url_root ("doi") * u;
+}
+
+static url
+url_mailto (string name) {
+  url u= url_get_name (name);
+  return url_root ("mailto") * u;
+}
+
+static url
 url_tmfs (string name) {
   url u= url_get_name (name);
   return url_root ("tmfs") * u;
@@ -218,6 +234,14 @@ url_blank (string name) {
   url u= url_get_name (name);
   return url_root ("blank") * u;
 }
+
+#ifdef OS_ANDROID
+static url
+url_content (string name) {
+  url u= url_get_name (name);
+  return url_root ("content") * u;
+}
+#endif
 
 /******************************************************************************
 * Generic url constructor
@@ -278,8 +302,13 @@ url_general (string name, int type= URL_SYSTEM) {
   if (starts (name, "http://")) return url_http (name (7, N (name)));
   if (starts (name, "https://")) return url_https (name (8, N (name)));
   if (starts (name, "ftp://")) return url_ftp (name (6, N (name)));
+  if (starts (name, "doi:")) return url_doi (name (4, N (name)));
+  if (starts (name, "mailto:")) return url_mailto (name (7, N (name)));
   if (starts (name, "tmfs://")) return url_tmfs (name (7, N (name)));
   if (starts (name, "//")) return url_blank (name (2, N (name)));
+  #ifdef OS_ANDROID
+  if (starts (name, "content://")) return url_content (name (10, N (name)));
+  #endif
   if (heuristic_is_path (name, type)) return url_path (name, type);
   if (heuristic_is_default (name, type)) return url_default (name, type);
   if (heuristic_is_mingw_default (name, type)) return url_mingw_default (name, type);
@@ -495,6 +524,13 @@ is_ramdisc (url u) {
   return is_concat (u) && is_root (u[1], "ramdisc");
 }
 
+#ifdef OS_ANDROID
+bool
+is_content (url u) {
+  return is_concat (u) && is_root (u[1], "content");
+}
+#endif
+
 /******************************************************************************
 * Conversion routines for urls
 ******************************************************************************/
@@ -507,7 +543,11 @@ as_string (url u, int type) {
   if (is_atomic (u)) return u->t->label;
   if (is_concat (u)) {
     int stype= type;
-    if (is_root (u[1]) && (!is_root (u[1], "default"))) stype= URL_STANDARD;
+    if (is_root (u[1])) {
+      if (!is_root (u[1], "default")) stype= URL_STANDARD;
+      if (is_root (u[1], "doi")) return "doi:" * as_string (u[2], stype);
+      if (is_root (u[1], "mailto")) return "mailto:" * as_string (u[2], stype);
+    }
     string sep= (stype==URL_SYSTEM? string (URL_CONCATER): string ("/"));
     string s1 = as_string (u[1], type);
     string s2 = as_string (u[2], stype);
@@ -597,6 +637,11 @@ tail (url u) {
 
 string
 suffix (url u) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    return android_suffix_from_mime(concretize(u));
+  }
+#endif
   u= tail (u);
   if (!is_atomic (u)) return "";
   string s= as_string (u);
@@ -827,6 +872,12 @@ reroot (url u, string protocol) {
 
 static url
 complete (url base, url sub, url u, string filter, bool flag) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    if (is_of_type (u, filter)) return u;
+    else return url_none ();
+  }
+#endif
   if (is_or (sub)) {
     url res1= complete (base, sub[1], u, filter, flag);
     if ((!is_none (res1)) && flag) return res1;
@@ -836,11 +887,23 @@ complete (url base, url sub, url u, string filter, bool flag) {
     url res= complete (sub[1], sub[2], u, filter, flag);
     return sub[1] * res;
   }
+  if (is_concat (sub)) {
+    // NOTE: sub[2] may hold alternatives, as obtained by completing
+    // url_any (), so that base * sub would not be a valid base
+    url res= complete (base * sub[1], sub[2], u, filter, flag);
+    return sub[1] * res;
+  }
   return sub * complete (base * sub, u, filter, flag);
 }
 
 url
 complete (url base, url u, string filter, bool flag) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    if (is_of_type (u, filter)) return u;
+    else return url_none ();
+  }
+#endif
   // cout << "complete " << base << " |||| " << u << LF;
   if (!is_rooted(u)) {
      if (is_none (base)) return base;
@@ -858,7 +921,8 @@ complete (url base, url u, string filter, bool flag) {
       if (is_of_type (comp, filter)) return reroot (u, "default");
       return url_none ();
     }
-    if (is_rooted_web (comp) || is_rooted_tmfs (comp) || is_ramdisc (comp)) {
+    if (is_rooted_web (comp) || is_rooted_tmfs (comp) ||
+        is_ramdisc (comp) || is_rooted (comp, "mailto")) {
       if (is_of_type (comp, filter)) return u;
       return url_none ();
     }
@@ -941,12 +1005,24 @@ complete (url base, url u, string filter, bool flag) {
 
 url
 complete (url u, string filter, bool flag) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    if (is_of_type (u, filter)) return u;
+    else return url_none ();
+  }
+#endif
   url home= url_pwd ();
   return home * complete (home, u, filter, flag);
 }
 
 url
 complete (url u, string filter) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    if (is_of_type (u, filter)) return u;
+    else return url_none ();
+  }
+#endif
   // This routine can be used in order to find all possible matches
   // for the wildcards in an url and replace the wildcards by these matches.
   // Moreover, matches are normalized (file root -> default root).
@@ -957,6 +1033,12 @@ complete (url u, string filter) {
 
 url
 resolve (url u, string filter) {
+#ifdef OS_ANDROID
+  if (is_content (u)) {
+    if (is_of_type (u, filter)) return u;
+    else return url_none ();
+  }
+#endif
   // This routine does the same thing as complete, but it stops at
   // the first match. It is particularly useful for finding files in paths.
   return complete (u, filter, true);
@@ -966,14 +1048,18 @@ resolve (url u, string filter) {
     cout << "Failed resolution of " << u << ", " << filter << LF;
   return res;
   */
+  
 }
 
 url
 resolve_in_path (url u) {
+#ifdef OS_ANDROID
+  if (is_content (u)) return resolve (u, "x");
+#endif
   if (use_which) {
     string name = escape_sh (as_string (u));
     string which= var_eval_system ("which " * name * " 2> /dev/null");
-    if (ends (which, name))
+    if (ends (which, as_string (u)))
       return which;
     else if ((which != "") &&
              (!occurs ("bin/which: ", which)) &&
@@ -981,7 +1067,7 @@ resolve_in_path (url u) {
              (!starts (which, "no ")))
       cout << "TeXmacs] " << which << "\n";
   }
-#ifdef OS_MINGW
+#if defined(OS_MINGW) || defined(OS_ANDROID)
   return resolve ((url_path ("$TEXMACS_PATH/bin") | url_path ("$PATH")) * u, "x");
 #else
   return resolve (url_path ("$PATH") * u, "x");
@@ -990,6 +1076,7 @@ resolve_in_path (url u) {
 
 bool
 exists (url u) {
+  // if it's a content url, we assume it exists
   return !is_none (resolve (u, "r"));
 }
 
@@ -1047,6 +1134,9 @@ url
 concretize_url (url u) {
   // This routine transforms a resolved url into a system url.
   // In the case of distant files from the web, a local copy is created.
+#ifdef OS_ANDROID
+  if (is_content (u)) return u;
+#endif
   if (is_rooted (u, "default") ||
       is_rooted (u, "file") ||
       is_rooted (u, "blank"))
@@ -1060,25 +1150,28 @@ concretize_url (url u) {
 }
 
 string
-concretize (url u) {
+concretize (url u, bool quiet) {
   // This routine transforms a resolved url into a system file name.
   // In the case of distant files from the web, a local copy is created.
+#ifdef OS_ANDROID
+  if (is_content (u)) return as_string (u);
+#endif
   url c= concretize_url (u);
   if (!is_none (c)) return as_string (c);
   if (is_wildcard (u, 1)) return u->t[1]->label;
-  std_warning << "Couldn't concretize " << u->t << LF;
-  // failed_error << "u= " << u << LF;
-  // FAILED ("url has no root");
-  return "xxx";
+  if (!quiet)
+    std_warning << "concretize, failed for url " << u->t << LF;
+  return "";
 }
 
 string
-materialize (url u, string filter) {
+materialize (url u, string filter, bool quiet) {
   // Combines resolve and concretize
   url r= resolve (u, filter);
-  if (!(is_rooted (r) || is_here (r) || is_parent (r))) {
-    failed_error << "u= " << u << LF;
-    FAILED ("url could not be resolved");
-  }
-  return concretize (r);
+  string ret= "";
+  if (is_rooted (r) || is_here (r) || is_parent (r))
+    ret= concretize (r, true);
+  if (ret == "" && !quiet)
+    std_warning << "materialize, failed for url " << u << LF;
+  return ret;
 }

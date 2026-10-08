@@ -133,7 +133,7 @@
 
 (menu-bind document-font-menu
   (-> "Text font"
-      ("Default" (init-default "font" "math-font" "prg-font"))
+      ("Default" (init-default "font" "math-font" "prog-font"))
       ---
       ("Concrete" (init-env "font" "concrete"))
       (if (url-exists-in-tex? "pnr10.mf")
@@ -256,7 +256,12 @@
       (if (font-exists-in-tt? "STIX-Regular")
           ("Stix" (init-env "math-font" "math-stix")))
       (if (font-exists-in-tt? "texgyretermes-math")
-          ("Termes" (init-env "math-font" "math-termes"))))
+          ("Termes" (init-env "math-font" "math-termes")))
+      (if (nnull? (opentype-math-font-list))
+          ---
+          (group "OpenType math fonts")
+          (link opentype-math-font-menu)))
+  (-> "Features" (link document-font-features-menu))
   (-> "Program font"
       ("Default" (init-default "prog-font"))
       ---
@@ -360,60 +365,15 @@
 (menu-bind document-short-font-menu
   ("Default" (init-default-font))
   ---
+  (group "Text and mathematics")
   ("Roman" (init-font "roman" "roman"))
-  ("Stix" (init-font "stix" "math-stix"))
-  (if (or (font-exists-in-tt? "texgyrebonum-math")
-          (font-exists-in-tt? "texgyrepagella-math")
-          (font-exists-in-tt? "texgyreschola-math")
-          (font-exists-in-tt? "texgyretermes-math"))
-      ---
-      (group "TeX Gyre")
-      (if (font-exists-in-tt? "texgyrebonum-math")
-          ("Bonum" (init-font "bonum" "math-bonum")))
-      (if (font-exists-in-tt? "texgyrepagella-math")
-          ("Pagella" (init-font "pagella" "math-pagella")))
-      (if (font-exists-in-tt? "texgyreschola-math")
-          ("Schola" (init-font "schola" "math-schola")))
-      (if (font-exists-in-tt? "texgyretermes-math")
-          ("Termes" (init-font "termes" "math-termes"))))
-  (if (or (font-exists-in-tt? "DejaVuSerif")
-          (font-exists-in-tt? "FiraSans-Regular")
-          (font-exists-in-tt? "LinLibertine_R")
-          (font-exists-in-tt? "Optima")
-          (font-exists-in-tt? "Papyrus"))
-      ---
-      (if (font-exists-in-tt? "AmericanTypewriter")
-          ("American Typewriter" (init-font "American Typewriter")))
-      (if (font-exists-in-tt? "Baskerville")
-          ("Baskerville" (init-font "Baskerville")))
-      (if (font-exists-in-tt? "Chalkboard")
-          ("Chalkboard" (init-font "Chalkboard")))
-      (if (font-exists-in-tt? "Chalkduster")
-          ("Chalkduster" (init-font "Chalkduster")))
-      (if (font-exists-in-tt? "Cochin")
-          ("Cochin" (init-font "Cochin")))
-      (if (font-exists-in-tt? "Cuprum-Regular")
-          ("Cuprum" (init-font "Cuprum")))
-      (if (font-exists-in-tt? "DejaVuSerif")
-          ("Dejavu" (init-font "dejavu" "math-dejavu")))
-      (if (font-exists-in-tt? "Didot")
-          ("Didot" (init-font "Didot")))
-      (if (font-exists-in-tt? "Essays1743")
-          ("Essays1743" (init-font "Essays1743")))
-      (if (font-exists-in-tt? "FiraSans-Regular")
-          ("Fira" (init-font "Fira")))
-      (if (font-exists-in-tt? "MarkerFelt")
-          ("Marker Felt" (init-font "Marker Felt")))
-      (if (font-exists-in-tt? "meyne_textur")
-          ("Meyne Textur" (init-font "Meyne Textur")))
-      (if (font-exists-in-tt? "LinBiolinum_R")
-          ("Linux Biolinum" (init-font "Linux Biolinum")))
-      (if (font-exists-in-tt? "LinLibertine_R")
-          ("Linux Libertine" (init-font "Linux Libertine")))
-      (if (font-exists-in-tt? "Optima")
-          ("Optima" (init-font "Optima")))
-      (if (font-exists-in-tt? "Papyrus")
-          ("Papyrus" (init-font "Papyrus"))))
+  (if (font-exists-in-tt? "STIX-Regular")
+      ("Stix" (init-font "stix" "math-stix")))
+  (if (nnull? (opentype-math-font-list))
+      (link opentype-font-menu))
+  ---
+  (group "Text only")
+  (link document-short-text-font-menu)
   (if (and (supports-chinese?) (== (get-init "language") "chinese"))
       ---
       (link document-short-chinese-font-menu))
@@ -616,7 +576,8 @@
   ("Screen" (init-page-rendering "automatic"))
   ("Beamer" (init-page-rendering "beamer"))
   ("Book" (init-page-rendering "book"))
-  ("Panorama" (init-page-rendering "panorama")))
+  ("Panorama" (init-page-rendering "panorama"))
+  ("Slideshow" (init-page-rendering "slideshow")))
 
 (menu-bind page-layout-menu
   ("Margins as on paper" (toggle-page-screen-margin))
@@ -850,7 +811,15 @@
   (-> "Metadata" (link document-metadata-menu))
   (-> "Bibliography"
       (when (buffer-has-biblio? (current-buffer))
-	("Local entries" (open-biblio))))
+	("Local entries" (open-biblio)))
+      ("Update from Zotero" (zotero-update-bibliography))
+      (when (supports-db?)
+        ("Synchronize with Zotero" (zotero-synchronize))
+        ("Import the citations into the database" (zotero-import-citations)))
+      ("Update the citations" (zotero-update-citations))
+      ("Check against Zotero..." (open-zotero-check))
+      ---
+      ("Zotero settings..." (open-zotero-settings)))
   ---
   (-> "Magnification" (link document-magnification-menu))
   (-> "Colors" (link document-colors-menu))
@@ -876,7 +845,7 @@
   (-> "Update" (link document-update-menu))
   ---
   (if (new-fonts?)
-      ("Font" (interactive open-document-font-selector)))
+      ("Font" (open-document-font-selector)))
   (if (not (new-fonts?))
       (-> "Font" (link document-full-font-menu)))
   ("Paragraph" (open-document-paragraph-format))
@@ -1090,9 +1059,12 @@
       (dynamic (focus-customizable-icons-item
                 "bg-color" "Background color" :global)))
     (assuming (is-background-picture? (get-init-tree "bg-color"))
-      ((balloon (icon "tm_camera.xpm") "Select background picture")
-       (with bg (tree->stree (get-init-tree "bg-color"))
-         (open-background-picture-selector setter bg))))))
+      (=> (balloon (icon "tm_camera.xpm") "Select background picture")
+          (when (init-has? "bg-color")
+            ("Restore default background" (init-default "bg-color")))
+          ("Select background picture"
+           (with bg (tree->stree (get-init-tree "bg-color"))
+             (open-background-picture-selector setter bg)))))))
 
 (tm-define (current-page-icon)
   (cond ((test-init? "page-orientation" "landscape")

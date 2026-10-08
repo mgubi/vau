@@ -63,13 +63,23 @@
 		 (tmconcat-math-sub s (+ end plus))))
 	  (else (eat (+ end 1))))))
 
+(define (tmconcat-number s pos)
+  ;; A number, with at most one decimal point between digits
+  (define (digit? i) (and (< i (string-length s)) (char-numeric? (string-ref s i))))
+  (let eat ((end pos) (point? #f))
+    (cond ((digit? end) (eat (+ end 1) point?))
+	  ((and (not point?) (< end (string-length s))
+		(== (string-ref s end) #\.) (digit? (+ end 1)))
+	   (eat (+ end 1) #t))
+	  (else (cons (substring s pos end) (tmconcat-math-sub s end))))))
+
 (define (tmconcat-math-sub s pos)
   (if (>= pos (string-length s)) '()
       (with c (string-ref s pos)
 	(cond ((== c #\<)
 	       (tmconcat-eat s pos 1 (lambda (c) (== c #\>))))
 	      ((char-numeric? c)
-	       (tmconcat-eat s pos 0 (lambda (c) (not (char-numeric? c)))))
+	       (tmconcat-number s pos))
 	      ((and (char-alphabetic? c)
 		    (< (+ pos 1) (string-length s))
 		    (char-alphabetic? (string-ref s (+ pos 1))))
@@ -79,7 +89,7 @@
 
 (tm-define (tmconcat-tokenize-math s)
   (:type (-> string (list string)))
-  (:synopsis "Decompose mathematical string @s into list of tokens.")
+  (:synopsis "Decompose mathematical string @s into list of tokens")
   (tmconcat-math-sub s 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -130,7 +140,7 @@
 
 (tm-define (tmconcat-simplify-tabs l)
   (:type (forall T (-> (list T) (list T))))
-  (:synopsis "Rewrite weak left and write tabs in concatenation @l.")
+  (:synopsis "Rewrite weak left and write tabs in concatenation @l")
   (with c (cons 'concat l)
     (cdr (simplify-tabs c (list) c))))
 
@@ -153,7 +163,7 @@
 
 (tm-define (tmconcat-structure-tabs l)
   (:type (forall T (-> (list T) (list T))))
-  (:synopsis "Structure tabs in concatenation @l.")
+  (:synopsis "Structure tabs in concatenation @l")
   ;;(display* "**** l << " l "\n")
   (set! l (tmconcat-simplify-tabs l))
   ;;(display* "**** l << " l "\n")
@@ -188,7 +198,7 @@
 
 (tm-define (tmconcat-structure-brackets l)
   (:type (forall T (-> (list T) (list T))))
-  (:synopsis "Recursively group matching brackets in concatenation @l.")
+  (:synopsis "Recursively group matching brackets in concatenation @l")
   (receive (r tail) (tmconcat-brackets-sub l)
     (if (null? tail) r
 	(append r (tmconcat-structure-brackets tail)))))
@@ -247,5 +257,5 @@
 (tm-define (tmconcat-structure-scripts l)
   ;; used for instance in MathML generation
   (:type (forall T (-> (list T) (list T))))
-  (:synopsis "Group scripts in @l.")
+  (:synopsis "Group scripts in @l")
   (tmconcat-structure-scripts-sub (tmconcat-simplify-scripts l)))

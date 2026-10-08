@@ -649,8 +649,9 @@ EStatusCode Type1Input::ParseSubrs()
         mSubrs = NULL;
         return PDFHummus::eSuccess;
     }
-    else
+    else {
         mSubrs = new Type1CharString[mSubrsCount];
+	}
 
 	// parse the subrs. they look like this: 	
 	// dup index nbytes RD ~n~binary~bytes~ NP
@@ -904,7 +905,7 @@ std::string Type1Input::FromPSString(const std::string& inPSString)
 	Byte buffer;
 	std::string::const_iterator it = inPSString.begin();
 	size_t i=1;
-	++it; // skip first paranthesis
+	++it; // skip first parenthesis
 	
 	for(; i < inPSString.size()-1;++it,++i)
 	{

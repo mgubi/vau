@@ -11,6 +11,10 @@
 
 #include "glue.hpp"
 
+// the glue type uint (see build-glue): the C library of macOS declares it,
+// that of the browser build does not (a typedef may be repeated in C++)
+typedef unsigned int uint;
+
 #include "promise.hpp"
 #include "tree.hpp"
 #include "drd_mode.hpp"
@@ -19,16 +23,16 @@
 #include "patch.hpp"
 
 #include "boxes.hpp"
-//#include "editor.hpp"
+#include "editor.hpp"
 #include "universal.hpp"
 #include "convert.hpp"
 #include "file.hpp"
 #include "locale.hpp"
 #include "iterator.hpp"
 #include "Freetype/tt_tools.hpp"
-//#include "Database/database.hpp"
-//#include "Sqlite3/sqlite3.hpp"
-//#include "Updater/tm_updater.hpp"
+#include "Database/database.hpp"
+#include "Sqlite3/sqlite3.hpp"
+#include "Updater/tm_updater.hpp"
 
 tmscm 
 blackboxP (tmscm t) {
@@ -51,6 +55,135 @@ template<class T> tmscm boxP (tmscm t) {
 #endif
 
 /******************************************************************************
+* Miscellaneous routines for use by glue only
+******************************************************************************/
+
+string original_path;
+
+string
+get_original_path () {
+  return original_path;
+}
+
+string
+texmacs_version (string which) {
+  if (which == "tgz") return TM_DEVEL;
+  if (which == "rpm") return TM_DEVEL_RELEASE;
+  if (which == "stgz") return TM_STABLE;
+  if (which == "srpm") return TM_STABLE_RELEASE;
+  if (which == "devel") return TM_DEVEL;
+  if (which == "stable") return TM_STABLE;
+  if (which == "devel-release") return TM_DEVEL_RELEASE;
+  if (which == "stable-release") return TM_STABLE_RELEASE;
+  if (which == "revision") return TEXMACS_REVISION;
+  return TEXMACS_VERSION;
+}
+
+void
+set_fast_environments (bool b) {
+  enable_fastenv= b;
+}
+
+void
+win32_display (string s) {
+  cout << s;
+  cout.flush ();
+}
+
+void
+tm_output (string s) {
+  cout << s;
+  cout.flush ();
+}
+
+void
+tm_errput (string s) {
+  cerr << s;
+  cerr.flush ();
+}
+
+void
+cpp_error () {
+  //char *np= 0; *np= 1;
+  FAILED ("an error occurred");
+}
+
+array<int>
+get_bounding_rectangle (tree t) {
+  editor ed= get_current_editor ();
+  rectangle wr= ed -> get_window_extents ();
+  path p= reverse (obtain_ip (t));
+  selection sel= ed->search_selection (p * start (t), p * end (t));
+  SI sz= ed->get_pixel_size ();
+  double sf= ((double) sz) / 256.0;
+  rectangle r (0, 0, 0, 0);
+  if (!is_nil (sel->rs)) {
+    rectangle selr= least_upper_bound (sel->rs) / sf;
+    r= translate (selr, wr->x1, wr->y2);
+  }
+  array<int> ret;
+  ret << ((int) r->x1) << ((int) r->y1) << ((int) r->x2) << ((int) r->y2);
+  //ret << (r->x1/PIXEL) << (r->y1/PIXEL) << (r->x2/PIXEL) << (r->y2/PIXEL);
+  return ret;
+}
+
+bool use_mupdf_pdf (); // edit_main.cpp
+
+bool
+supports_native_pdf () {
+#ifdef PDF_RENDERER
+  return true;
+#else
+#ifdef MUPDF_RENDERER
+  // The writer on MuPDF is a native PDF renderer too, when it is the one
+  // chosen. Saying so keeps the Scheme side and the C++ side of the same
+  // mind: printer-file-suffix would otherwise ask for PostScript while
+  // use_pdf () was writing a PDF (see docs/pdf-output-with-mupdf.md).
+  return use_mupdf_pdf ();
+#else
+  return false;
+#endif
+#endif
+}
+
+bool
+supports_ghostscript () {
+#ifdef USE_GS
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool
+is_busy_versioning () {
+  return busy_versioning;
+}
+
+array<SI>
+get_screen_size () {
+  array<SI> r;
+  SI w, h;
+  gui_root_extents (w, h);
+  r << w << h;
+  return r;
+}
+
+/******************************************************************************
+* Redirections
+******************************************************************************/
+
+void
+cout_buffer () {
+  cout.buffer ();
+}
+
+string
+cout_unbuffer () {
+  return cout.unbuffer ();
+}
+
+/******************************************************************************
 * Basic assertions
 ******************************************************************************/
 
@@ -60,6 +193,8 @@ TMSCM_ASSERT (tmscm_is_string (s), s, arg, rout)
 TMSCM_ASSERT (tmscm_is_bool (flag), flag, arg, rout)
 #define TMSCM_ASSERT_INT(i,arg,rout) \
 TMSCM_ASSERT (tmscm_is_int (i), i, arg, rout);
+#define TMSCM_ASSERT_UINT(i,arg,rout) \
+TMSCM_ASSERT (tmscm_is_int (i) && tmscm_to_int (i) >= 0, i, arg, rout);
 #define TMSCM_ASSERT_DOUBLE(i,arg,rout) \
   TMSCM_ASSERT (tmscm_is_double (i), i, arg, rout);
 //TMSCM_ASSERT (SCM_REALP (i), i, arg, rout);
@@ -163,10 +298,21 @@ tree_active (tree t) {
   return is_nil (ip) || last_item (ip) != DETACHED;
 }
 
+// The children of a compound tree; an atomic tree has none, and A would
+// read its string as an array of trees
+array<tree>
+tree_children (tree t) {
+  TMSCM_ASSERT (is_compound (t), tree_to_tmscm (t), TMSCM_ARG1,
+                "tree-children");
+  return A (t);
+}
+
 tree
 tree_child_insert (tree t, int pos, tree x) {
   //cout << "t= " << t << "\n";
   //cout << "x= " << x << "\n";
+  TMSCM_ASSERT (is_compound (t) && pos >= 0 && pos <= N(t),
+                tree_to_tmscm (t), TMSCM_ARG1, "tree-child-insert");
   int i, n= N(t);
   tree r (t, n+1);
   for (i=0; i<pos; i++) r[i]= t[i];
@@ -180,6 +326,12 @@ tree_child_insert (tree t, int pos, tree x) {
 ******************************************************************************/
 
 extern tree the_et;
+
+// The edits below raise an error when they do not apply to the tree, as
+// modification-applicable? would say; without the check, an edit at a
+// wrong position or of the wrong kind of tree crashes TeXmacs
+#define TREE_EDIT_ASSERT(ok, r, name) \
+  TMSCM_ASSERT (ok, tree_to_tmscm (r), TMSCM_ARG1, name)
 
 tree
 tree_assign (tree r, tree t) {
@@ -196,6 +348,8 @@ tree_assign (tree r, tree t) {
 
 tree
 tree_insert (tree r, int pos, tree t) {
+  TREE_EDIT_ASSERT (is_applicable (r, mod_insert (path (), pos, t)), r,
+                    "tree-var-insert");
   path ip= copy (obtain_ip (r));
   if (ip_attached (ip)) {
     insert (reverse (path (pos, ip)), copy (t));
@@ -209,6 +363,8 @@ tree_insert (tree r, int pos, tree t) {
 
 tree
 tree_remove (tree r, int pos, int nr) {
+  TREE_EDIT_ASSERT (is_applicable (r, mod_remove (path (), pos, nr)), r,
+                    "tree-remove");
   path ip= copy (obtain_ip (r));
   if (ip_attached (ip)) {
     remove (reverse (path (pos, ip)), nr);
@@ -222,6 +378,8 @@ tree_remove (tree r, int pos, int nr) {
 
 tree
 tree_split (tree r, int pos, int at) {
+  TREE_EDIT_ASSERT (is_applicable (r, mod_split (path (), pos, at)), r,
+                    "tree-split");
   path ip= copy (obtain_ip (r));
   if (ip_attached (ip)) {
     split (reverse (path (at, pos, ip)));
@@ -235,6 +393,9 @@ tree_split (tree r, int pos, int at) {
 
 tree
 tree_join (tree r, int pos) {
+  TREE_EDIT_ASSERT (is_compound (r) &&
+                    is_applicable (r, mod_join (path (), pos)), r,
+                    "tree-join");
   path ip= copy (obtain_ip (r));
   if (ip_attached (ip)) {
     join (reverse (path (pos, ip)));
@@ -298,6 +459,7 @@ scheme_tree_to_tmscm (scheme_tree t) {
     if (s == "#t") return tmscm_true ();
     if (s == "#f") return tmscm_false ();
     if (is_int (s)) return int_to_tmscm (as_int (s));
+    if (is_double (s)) return double_to_tmscm (as_double (s));
     if (is_quoted (s))
       return string_to_tmscm (scm_unquote (s));
     //if ((N(s)>=2) && (s[0]=='\42') && (s[N(s)-1]=='\42'))
@@ -328,6 +490,7 @@ tmscm_to_scheme_tree (tmscm p) {
   if (tmscm_is_string (p)) return scm_quote (tmscm_to_string (p));
   //if (tmscm_is_string (p)) return "\"" * tmscm_to_string (p) * "\"";
   if (tmscm_is_int (p)) return as_string ((int) tmscm_to_int (p));
+  if (tmscm_is_double (p)) return as_string (tmscm_to_double (p));
   if (tmscm_is_bool (p)) return (tmscm_to_bool (p)? string ("#t"): string ("#f"));
   if (tmscm_is_tree (p)) return tree_to_scheme_tree (tmscm_to_tree (p));
   return "?";
@@ -342,9 +505,9 @@ tmscm_is_content (tmscm p) {
   if (tmscm_is_string (p) || tmscm_is_tree (p)) return true;
   else if (!tmscm_is_pair (p) || !tmscm_is_symbol (tmscm_car (p))) return false;
   else {
-    for (p= tmscm_cdr (p); !tmscm_is_null (p); p= tmscm_cdr (p))
+    for (p= tmscm_cdr (p); tmscm_is_pair (p); p= tmscm_cdr (p))
       if (!tmscm_is_content (tmscm_car (p))) return false;
-    return true;
+    return tmscm_is_null (p);
   }
 }
 
@@ -383,7 +546,9 @@ contentP (tmscm t) {
 bool
 tmscm_is_path (tmscm p) {
   if (tmscm_is_null (p)) return true;
-  else return tmscm_is_int (tmscm_car (p)) && tmscm_is_path (tmscm_cdr (p));
+  else return tmscm_is_pair (p) &&
+    tmscm_is_int (tmscm_car (p)) &&
+    tmscm_is_path (tmscm_cdr (p));
 }
 
 #define TMSCM_ASSERT_PATH(p,arg,rout) \
@@ -477,7 +642,7 @@ command_to_tmscm (command o) {
   return blackbox_to_tmscm (close_box<command> (o));
 }
 
-static command
+command
 tmscm_to_command (tmscm o) {
   return open_box<command> (tmscm_to_blackbox (o));
 }
@@ -577,12 +742,16 @@ modificationP (tmscm t) {
 
 tree
 var_apply (tree& t, modification m) {
+  TMSCM_ASSERT (is_applicable (t, m), modification_to_tmscm (m), TMSCM_ARG2,
+                "modification-inplace-apply");
   apply (t, copy (m));
   return t;
 }
 
 tree
 var_clean_apply (tree& t, modification m) {
+  TMSCM_ASSERT (is_applicable (t, m), modification_to_tmscm (m), TMSCM_ARG2,
+                "modification-apply");
   return clean_apply (t, copy (m));
 }
 
@@ -620,11 +789,15 @@ branch_patch (array<patch> a) {
 
 tree
 var_clean_apply (tree t, patch p) {
+  TMSCM_ASSERT (is_applicable (p, t), patch_to_tmscm (p), TMSCM_ARG2,
+                "patch-apply");
   return clean_apply (copy (p), t);
 }
 
 tree
 var_apply (tree& t, patch p) {
+  TMSCM_ASSERT (is_applicable (p, t), patch_to_tmscm (p), TMSCM_ARG2,
+                "patch-inplace-apply");
   apply (copy (p), t);
   return t;
 }
@@ -685,6 +858,7 @@ TMSCM_ASSERT (tmscm_is_solution(p), p, arg, rout)
 ******************************************************************************/
 
 typedef array<int> array_int;
+typedef array<SI> array_SI;
 typedef array<string> array_string;
 typedef array<tree> array_tree;
 typedef array<url> array_url;
@@ -724,7 +898,43 @@ tmscm_to_array_int (tmscm p) {
   return a;
 }
 
+// FIXME: we also should introduce separate converters for SI
+#define tmscm_is_SI tmscm_is_int
+#define tmscm_to_SI tmscm_to_int
+#define SI_to_tmscm int_to_tmscm
+
+/* NOTE: not yet needed
 static bool
+tmscm_is_array_SI (tmscm p) {
+  if (tmscm_is_null (p)) return true;
+  else return tmscm_is_pair (p) &&
+    tmscm_is_SI (tmscm_car (p)) &&
+    tmscm_is_array_SI (tmscm_cdr (p));
+}
+
+#define TMSCM_ASSERT_ARRAY_SI(p,arg,rout) \
+TMSCM_ASSERT (tmscm_is_array_SI (p), p, arg, rout)
+*/
+
+/* static */ tmscm 
+array_SI_to_tmscm (array<SI> a) {
+  int i, n= N(a);
+  tmscm p= tmscm_null ();
+  for (i=n-1; i>=0; i--) p= tmscm_cons (SI_to_tmscm (a[i]), p);
+  return p;
+}
+
+/* static */ array<SI>
+tmscm_to_array_SI (tmscm p) {
+  array<SI> a;
+  while (!tmscm_is_null (p)) {
+    a << ((SI) tmscm_to_SI (tmscm_car (p)));
+    p= tmscm_cdr (p);
+  }
+  return a;
+}
+
+/* static */ bool
 tmscm_is_array_string (tmscm p) {
   if (tmscm_is_null (p)) return true;
   else return tmscm_is_pair (p) && 
@@ -1051,7 +1261,6 @@ tmscm_to_list_tree (tmscm p) {
             tmscm_to_list_tree (tmscm_cdr (p)));
 }
 
-#if 0 //FIXME: glue
 /******************************************************************************
 * Gluing
 ******************************************************************************/
@@ -1072,6 +1281,7 @@ tmscm_to_list_tree (tmscm p) {
 #include "tree_traverse.hpp"
 #include "tree_analyze.hpp"
 #include "tree_correct.hpp"
+#include "tree_cache.hpp"
 #include "tree_modify.hpp"
 #include "tree_math_stats.hpp"
 #include "tm_frame.hpp"
@@ -1090,124 +1300,8 @@ tmscm_to_list_tree (tmscm p) {
 #include "new_style.hpp"
 #include "persistent.hpp"
 
-
-/******************************************************************************
-* Miscellaneous routines for use by glue only
-******************************************************************************/
-
-string original_path;
-
-string
-get_original_path () {
-  return original_path;
-}
-
-string
-texmacs_version (string which) {
-  if (which == "tgz") return TM_DEVEL;
-  if (which == "rpm") return TM_DEVEL_RELEASE;
-  if (which == "stgz") return TM_STABLE;
-  if (which == "srpm") return TM_STABLE_RELEASE;
-  if (which == "devel") return TM_DEVEL;
-  if (which == "stable") return TM_STABLE;
-  if (which == "devel-release") return TM_DEVEL_RELEASE;
-  if (which == "stable-release") return TM_STABLE_RELEASE;
-  if (which == "revision") return TEXMACS_REVISION;
-  return TEXMACS_VERSION;
-}
-
-void
-set_fast_environments (bool b) {
-//  enable_fastenv= b;
-}
-
-void
-win32_display (string s) {
-  cout << s;
-  cout.flush ();
-}
-
-void
-tm_output (string s) {
-  cout << s;
-  cout.flush ();
-}
-
-void
-tm_errput (string s) {
-  cerr << s;
-  cerr.flush ();
-}
-
-void
-cpp_error () {
-  //char *np= 0; *np= 1;
-  FAILED ("an error occurred");
-}
-
-array<int>
-get_bounding_rectangle (tree t) {
-  editor ed= get_current_editor ();
-  rectangle wr= ed -> get_window_extents ();
-  path p= reverse (obtain_ip (t));
-  selection sel= ed->search_selection (p * start (t), p * end (t));
-  SI sz= ed->get_pixel_size ();
-  double sf= ((double) sz) / 256.0;
-  rectangle selr= least_upper_bound (sel->rs) / sf;
-  rectangle r= translate (selr, wr->x1, wr->y2);
-  array<int> ret;
-  ret << (r->x1) << (r->y1) << (r->x2) << (r->y2);
-  //ret << (r->x1/PIXEL) << (r->y1/PIXEL) << (r->x2/PIXEL) << (r->y2/PIXEL);
-  return ret;
-}
-
-bool
-supports_native_pdf () {
-#ifdef PDF_RENDERER
-  return true;
-#else
-  return false;
-#endif
-}
-
-bool
-supports_ghostscript () {
-#ifdef USE_GS
-  return true;
-#else
-  return false;
-#endif
-}
-
-bool
-is_busy_versioning () {
-  return busy_versioning;
-}
-
-array<SI>
-get_screen_size () {
-  array<SI> r;
-  SI w, h;
-  gui_root_extents (w, h);
-  r << w << h;
-  return r;
-}
-
-/******************************************************************************
-* Redirections
-******************************************************************************/
-
-void
-cout_buffer () {
-  cout.buffer ();
-}
-
-string
-cout_unbuffer () {
-  return cout.unbuffer ();
-}
-
-
+#include "Pdf/pdf_hummus_extract_attachment.hpp"
+#include "Pdf/pdf_hummus_make_attachment.hpp"
 
 #include "../Glue/glue_basic.cpp"
 #include "../Glue/glue_editor.cpp"
@@ -1227,4 +1321,3 @@ initialize_glue () {
   initialize_glue_editor ();
   initialize_glue_server ();
 }
-#endif

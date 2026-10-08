@@ -15,7 +15,7 @@
   (:use (kernel texmacs tm-define) (kernel texmacs tm-modes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Lazy exports from other modules
+;; Lazy exports from other modules and other overridable routines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (lazy-define (utils plugins plugin-convert) plugin-supports-math-input-ref)
@@ -26,6 +26,10 @@
 (lazy-define (utils plugins plugin-cmd) plugin-supports-completions-set!)
 (lazy-define (utils plugins plugin-cmd) plugin-supports-input-done?)
 (lazy-define (utils plugins plugin-cmd) plugin-supports-input-done-set!)
+
+(define-public (supports-jupyter?) #f)
+(define-public (run-via-jupyter? lan) #f)
+(define-public (run-via-jupyter lan enable?) (noop))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection types for plugins
@@ -39,9 +43,12 @@
 (define-public connection-session (make-ahash-table))
 (define-public connection-scripts (make-ahash-table))
 
-(ahash-set! connection-defined "scheme" "Scheme")
-(ahash-set! connection-session "scheme" "Scheme")
-(ahash-set! connection-scripts "scheme" "Scheme")
+(define (register-scheme-connection)
+  (ahash-set! connection-defined "scheme" "Scheme")
+  (ahash-set! connection-session "scheme" "Scheme")
+  (ahash-set! connection-scripts "scheme" "Scheme"))
+
+(register-scheme-connection)
 
 (define (connection-setup name val . opt)
   (ahash-set! connection-defined name #t)
@@ -82,6 +89,74 @@
   (with pos (string-index session #\:)
     (if pos (connection-info name (substring session 0 pos))
         (connection-info-sub name session))))
+
+(define-public (connection-cmdline? name)
+  (with info (connection-info name "default")
+    (and (func? info 'tuple 3) (== (cadr info) "cmdline"))))
+  
+(define-public (connection-cmdline name chat cmd)
+  (with info (connection-info name "default")
+    (if (and (func? info 'tuple 3) (== (cadr info) "cmdline"))
+        (with fun (caddr info)
+          (if (procedure? fun)
+              (fun name chat cmd)
+              ""))
+        "")))
+
+;; the first output of a session of a request (which has no program to
+;; write a banner): a procedure of the plug-in, from its name to a tree
+(define request-banners (make-ahash-table))
+(define-public (set-request-banner! name f)
+  (ahash-set! request-banners name f))
+(define-public (request-banner name)
+  (with f (ahash-ref request-banners name)
+    (and f (f name))))
+
+;; the sessions of a group are in a submenu of the menus which list them
+;; (Insert > Session: AI for the chatbots), whose name is the group
+(define session-groups (make-ahash-table))
+(define-public (set-session-group! name group)
+  (ahash-set! session-groups name group))
+(define-public (session-group name)
+  (ahash-ref session-groups name))
+
+;; the names of the sessions l and of their groups, in the order of their
+;; names in the menus; a group as (group name ...)
+(define-public (session-menu-entries l)
+  (let* ((alone (list-filter l (lambda (n) (not (session-group n)))))
+         (groups (list-remove-duplicates
+                  (list-filter (map session-group l) (lambda (g) g))))
+         (entries (append alone
+                          (map (lambda (g)
+                                 (cons g (list-filter
+                                          l (lambda (n)
+                                              (== (session-group n) g)))))
+                               groups)))
+         (label (lambda (x) (if (pair? x) (car x) (session-name x)))))
+    (sort entries (lambda (x y) (string<=? (label x) (label y))))))
+
+(define-public (connection-request? name)
+  (with info (connection-info name "default")
+    (and (func? info 'tuple 3) (== (cadr info) "request"))))
+  
+(define-public (connection-request name chat cmd)
+  (with info (connection-info name "default")
+    (if (and (func? info 'tuple 3) (== (cadr info) "request"))
+        (with fun (caddr info)
+          (if (procedure? fun)
+              (fun name chat cmd)
+              ""))
+        "")))
+
+(define-public (connection-result name chat res)
+  (with info (connection-info name "default")
+    (if (and (func? info 'tuple 3)
+	     (in? (cadr info) (list "cmdline" "request")))
+        (with fun (cadddr info)
+          (if (procedure? fun)
+              (fun name chat res)
+              (tm->tree "")))
+        (tm->tree ""))))
 
 (define (connection-insert-handler name channel routine)
   (if (not (ahash-ref connection-handler name))
@@ -318,7 +393,8 @@
   (set! connection-varlist (make-ahash-table))
   (set! connection-handler (make-ahash-table))
   (set! connection-session (make-ahash-table))
-  (set! connection-scripts (make-ahash-table)))
+  (set! connection-scripts (make-ahash-table))
+  (register-scheme-connection))
 
 (define-public (reinit-plugin-cache)
   (reinit-connection)
@@ -327,11 +403,33 @@
     (for-each (cut ahash-set! plugin-initialize-todo <> #t) plugins)
     (for-each (cut plugin-initialize <>) plugins)))
 
+(define (reinit-connection-single name)
+  (ahash-remove! connection-defined name)
+  (ahash-remove! connection-default name)
+  (ahash-remove! connection-variant name)
+  (ahash-remove! connection-varlist name)
+  (ahash-remove! connection-handler name)
+  (ahash-remove! connection-session name)
+  (ahash-remove! connection-scripts name))
+
+(define-public (reinit-plugin-single name)
+  (when (string? name) (set! name (string->symbol name)))
+  (reinit-connection-single name)
+  (set! reconfigure-flag? #t)
+  (ahash-set! plugin-initialize-todo name #t)
+  (plugin-initialize name))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cache plugin settings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-public reconfigure-flag? #t)
+
+;; Other modules should use these accessors: in S7 a public variable which its
+;; module changes with set! keeps its first value in the other modules.
+(define-public (plugin-reconfigure?) reconfigure-flag?)
+(define-public (plugin-reconfigure-set! flag) (set! reconfigure-flag? flag))
+
 (define plugin-loaded-setup? #f)
 (define plugin-cache "$TEXMACS_HOME_PATH/system/cache/plugin_cache.scm")
 
@@ -339,7 +437,15 @@
 (define check-dir-table (make-ahash-table))
 (define-public plugin-data-table (make-ahash-table))
 
-(define (plugin-load-setup)
+;; what the cache of the plugins was made for: the path, and in a browser
+;; the build of the page (its packages, misc/wasm/packages.js), since the
+;; path of a page never changes while its plugins do
+(define (plugin-cache-key)
+  (with b (or (getenv "TEXMACS_WEB_BUILD") "")
+    (if (== b "") (get-original-path)
+        (string-append (get-original-path) "|" b))))
+
+(define-public (plugin-load-setup)
   (when (not plugin-loaded-setup?)
     (set! plugin-loaded-setup? #t)
     (when (url-exists? plugin-cache)
@@ -360,7 +466,7 @@
 (define (plugin-save-setup)
   (when reconfigure-flag?
     (save-object plugin-cache
-                 (list (get-original-path)
+                 (list (plugin-cache-key)
                        (ahash-table->list plugin-data-table)
                        (ahash-table->list check-dir-table)))))
 
@@ -426,33 +532,90 @@
     (add-macos-program-path (url-append rad rel) after?)))
 
 (define (path-up-to-date?)
-  (with ok? (== plugin-check-path (get-original-path))
+  (with ok? (== plugin-check-path (plugin-cache-key))
     (for (p (ahash-table->list check-dir-table))
       (with modified? (!= (url-last-modified (system->url (car p))) (cdr p))
         (if modified? (set! ok? #f))))
     ok?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin preferences and names
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public plugin-declared-table (make-ahash-table))
+(define-public plugin-prefs-table (make-ahash-table))
+
+(define-public (plugin-has-preferences? name)
+  (ahash-ref plugin-prefs-table name))
+
+(define-public (declared-plugins)
+  (sort (map car (ahash-table->list plugin-declared-table)) string<=?))
+
+(define-public (plugins-with-preferences)
+  (list-filter (declared-plugins) plugin-has-preferences?))
+
+(define-public (plugin->name name)
+  (if (symbol? name) (set! name (symbol->string name)))
+  (session-name name))
+
+(define-public (name->plugin name)
+  (with t (make-ahash-table)
+    (for (p (declared-plugins))
+      (ahash-set! t (plugin->name p) p))
+    (or (ahash-ref t name) (locase-first name))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Configuration of plugins
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-public (alt-launcher name) #f)
+
+;; the result of a :require or :versions: an empty string is no command
+;; ((python-command) is "" where no Python is found: in a browser, the
+;; plugins which run Python were declared, and froze it)
+(define (plugin-detected r)
+  (and r (not (and (string? r) (== r ""))) r))
 
 (define (plugin-configure-cmd name cmd)
   (cond ((func? cmd :require 1)
          (when reconfigure-flag?
-           (ahash-set! plugin-data-table name ((second cmd)))))
+           ;;(display* "try to detect " name "\n")
+           (if (alt-launcher name)
+               (ahash-set! plugin-data-table name #t)
+               (ahash-set! plugin-data-table name
+                           (plugin-detected ((second cmd)))))))
         ((func? cmd :versions 1)
          (when reconfigure-flag?
-           (ahash-set! plugin-data-table name ((second cmd)))))
+           (if (alt-launcher name)
+               (ahash-set! plugin-data-table name #t)
+               (ahash-set! plugin-data-table name
+                           (plugin-detected ((second cmd)))))))
+        ((func? cmd :preferences 1)
+         (ahash-set! plugin-prefs-table name ((second cmd))))
         ((func? cmd :setup 1)
          (if reconfigure-flag? ((second cmd))))
         ((func? cmd :prioritary 1)
          (ahash-set! plugin-data-table (list name :prioritary) (cadr cmd)))
         ((func? cmd :initialize 1)
          ((second cmd)))
+        ((func? cmd :cmdline 2)
+         ;;(display* "cmdline " name "\n")
+         (connection-setup name `(tuple "cmdline" ,(second cmd) ,(third cmd))))
+        ((func? cmd :request 2)
+         ;;(display* "request " name "\n")
+         (connection-setup name `(tuple "request" ,(second cmd) ,(third cmd))))
+        ((and (func? cmd :launch) (alt-launcher name))
+         ;;(display* "alt launcher " name " -> " (alt-launcher name) "\n")
+         (connection-setup name `(tuple "pipe" ,(alt-launcher name))))
         ((func? cmd :launch 1)
+         ;;(display* "normal launcher " name " -> " (second cmd) "\n")
          (connection-setup name `(tuple "pipe" ,(second cmd))))
         ((func? cmd :launch 2)
          (connection-setup name `(tuple "pipe" ,(third cmd)) (cadr cmd)))
+        ((func? cmd :worker 1)
+         ;; a Web Worker, in a browser (worker_link.cpp): its script, from
+         ;; the directory of the page
+         (connection-setup name `(tuple "worker" ,(second cmd))))
         ((func? cmd :socket 2)
          (connection-setup name `(tuple "socket" ,(second cmd) ,(third cmd))))
         ((func? cmd :socket 3)
@@ -487,10 +650,23 @@
         ((func? cmd :tab-completion 1)
          (if (second cmd) (plugin-supports-completions-set! name)))
         ((func? cmd :test-input-done 1)
-         (if (second cmd) (plugin-supports-input-done-set! name))))
+         (if (second cmd) (plugin-supports-input-done-set! name)))
+        (else
+          (display* "warning: unsupported tm-configure option, " cmd "\n"
+                    "for plugin '" name "'\n")))
 
+  (ahash-set! plugin-declared-table name #t)
   (or (in? (car cmd) '(:macpath :winpath))
       (ahash-ref plugin-data-table name)))
+
+;; plugin-configure expands into calls of these functions rather than into
+;; references to plugin-data-table, which plugin-load-setup replaces: in S7
+;; the other modules would keep seeing the first table.
+(define-public (plugin-data name)
+  (ahash-ref plugin-data-table name))
+
+(define-public (plugin-configure-start name)
+  (if reconfigure-flag? (ahash-set! plugin-data-table name #t)))
 
 (define-public (plugin-configure-cmds name cmds)
   "Helper function for plugin-configure"
@@ -500,7 +676,8 @@
 (define-public (plugin-configure-sub cmd)
   "Helper function for plugin-configure"
   (if (and (list? cmd) (= (length cmd) 2)
-           (in? (car cmd) '(:require :versions :setup :initialize)))
+           (in? (car cmd) '(:require :versions :preferences
+                            :setup :initialize)))
       (list (car cmd) (list 'unquote `(lambda () ,(cadr cmd))))
       cmd))
 
@@ -513,10 +690,10 @@
     `(begin
        (texmacs-modes (,in-name (== (get-env "prog-language") ,name)))
        (texmacs-modes (,name-scripts (== (get-env "prog-scripts") ,name)))
-       (define (,supports-name?)
-         (or (ahash-ref plugin-data-table ,name)
+       (tm-define (,supports-name?)
+         (or (plugin-data ,name)
              (remote-connection-defined? ,name)))
-       (if reconfigure-flag? (ahash-set! plugin-data-table ,name #t))
+       (plugin-configure-start ,name)
        (plugin-configure-cmds ,name
          ,(list 'quasiquote (map plugin-configure-sub options))))))
 
@@ -528,32 +705,38 @@
 (define plugin-initialize-done? #f)
 
 (define (plugin-all-initialized?)
-  (with l (ahash-table->list plugin-initialize-todo)
-    (not (list-or (map cdr l)))))
+  (== (ahash-size plugin-initialize-todo) 0))
 
 (define-public (plugin-initialize name*)
   "Initialize plugin with name @name*"
   (plugin-load-setup)
-  (if (ahash-ref plugin-initialize-todo name*)
-      (let* ((name (symbol->string name*))
-             (file (string-append "plugins/" name "/progs/init-" name ".scm"))
-             (u (url-unix "$TEXMACS_HOME_PATH:$TEXMACS_PATH" file)))
-        (ahash-set! plugin-initialize-todo name* #f)
-        (if (url-exists? u)
-            (with fname (url-materialize u "r")
-              ;;(display* "loading plugin " name* "\n")
-              ;;(display* "loading plugin " fname "\n")
-              ;;(with start (texmacs-time)
-              ;;  (load fname)
-              ;;  (display* name " -> " (- (texmacs-time) start) " ms\n"))
-              (load fname)
-              ))
-        (if (plugin-all-initialized?) (plugin-save-setup)))))
+  (when (ahash-ref plugin-initialize-todo name*)
+    (let* ((name (symbol->string name*))
+           (file (string-append "plugins/" name "/progs/init-" name ".scm"))
+           (u (url-unix "$TEXMACS_HOME_PATH:$TEXMACS_PATH" file)))
+      (ahash-remove! plugin-initialize-todo name*)
+      (if (url-exists? u)
+          (with fname (url-materialize u "r")
+            ;;(display* "loading plugin " name* "\n")
+            ;;(display* "loading plugin " fname "\n")
+            ;;(with start (texmacs-time)
+            ;;  (load fname)
+            ;;  (display* name " -> " (- (texmacs-time) start) " ms\n"))
+            ;; a plugin which fails (an error in its files) is reported,
+            ;; and does not stop the initialization of the others
+            (catch #t
+              (lambda () (load fname))
+              (lambda err
+                (display* "TeXmacs] the plugin " name
+                          " could not be initialized: " err "\n")))))
+      (if (plugin-all-initialized?) (plugin-save-setup)))))
 
 (define-public (lazy-plugin-initialize name)
   "Initialize the plug-in @name in a lazy way"
+  (plugin-load-setup)
   (ahash-set! plugin-initialize-todo name #t)
-  (if (eval (ahash-ref plugin-data-table (list name :prioritary)))
+  (if (eval (ahash-ref plugin-data-table
+                       (list (symbol->string name) :prioritary)))
       (plugin-initialize name)
       (delayed
         (:idle 1000)

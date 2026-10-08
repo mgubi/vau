@@ -195,9 +195,7 @@ operator <= (string s1, string s2) {
 
 tm_ostream&
 operator << (tm_ostream& out, string a) {
-  int i, n=N(a);
-  if (n==0) return out;
-  for (i=0; i<n; i++) out << a[i];
+  out->write (&a[0], N(a));
   return out;
 }
 
@@ -286,7 +284,11 @@ as_string_bool (bool f) {
 string
 as_string (int i) {
   char buf[64];
+#ifdef HAVE_SNPRINTF
+  snprintf (buf, 64, "%i", i);
+#else
   sprintf (buf, "%i", i);
+#endif
   // sprintf (buf, "%i\0", i);
   return string (buf);
 }
@@ -294,7 +296,11 @@ as_string (int i) {
 string
 as_string (unsigned int i) {
   char buf[64];
+#ifdef HAVE_SNPRINTF
+  snprintf (buf, 64, "%u", i);
+#else
   sprintf (buf, "%u", i);
+#endif
   // sprintf (buf, "%u\0", i);
   return string (buf);
 }
@@ -302,7 +308,11 @@ as_string (unsigned int i) {
 string
 as_string (long int i) {
   char buf[64];
+#ifdef HAVE_SNPRINTF
+  snprintf (buf, 64, "%li", i);
+#else
   sprintf (buf, "%li", i);
+#endif
   // sprintf (buf, "%li\0", i);
   return string (buf);
 }
@@ -310,10 +320,18 @@ as_string (long int i) {
 string
 as_string (long long int i) {
   char buf[64];
-#ifdef OS_MINGW
-  sprintf (buf, "%I64d", i);
+#ifdef HAVE_SNPRINTF  
+#  ifdef OS_MINGW
+  snprintf (buf, 64, "%I64d", i);
+#  else
+  snprintf (buf, 64, "%lli", i);
+#  endif
 #else
+#  ifdef OS_MINGW
+  sprintf (buf, "%I64d", i);
+#  else
   sprintf (buf, "%lli", i);
+#  endif
 #endif
   // sprintf (buf, "%lli\0", i);
   return string (buf);
@@ -322,7 +340,11 @@ as_string (long long int i) {
 string
 as_string (unsigned long int i) {
   char buf[64];
+#ifdef HAVE_SNPRINTF    
+  snprintf (buf, 64, "%lu", i);
+#else
   sprintf (buf, "%lu", i);
+#endif
   // sprintf (buf, "%lu\0", i);
   return string (buf);
 }
@@ -330,7 +352,11 @@ as_string (unsigned long int i) {
 string
 as_string (double x) {
   char buf[64];
+#ifdef HAVE_SNPRINTF    
+  snprintf (buf, 64, "%g", x);
+#else
   sprintf (buf, "%g", x);
+#endif
   // sprintf (buf, "%g\0", x);
   return string(buf);
 }
@@ -338,6 +364,11 @@ as_string (double x) {
 string
 as_string (const char* s) {
   return string (s);
+}
+
+string
+as_string (const unsigned char* s) {
+    return string(reinterpret_cast<const char*>(s));
 }
 
 bool
@@ -355,7 +386,7 @@ is_int (string s) {
   int i=0, n=N(s);
   if (n==0) return false;
   if (s[i]=='+') i++;
-  if (s[i]=='-') i++;
+  if (i<n && s[i]=='-') i++;
   if (i==n) return false;
   for (; i<n; i++)
     if ((s[i]<'0') || (s[i]>'9')) return false;
@@ -364,24 +395,25 @@ is_int (string s) {
 
 bool
 is_double (string s) {
-  int i=0, n=N(s);
+  int i=0, n=N(s), d=0;
   if (n==0) return false;
   if (s[i]=='+') i++;
-  if (s[i]=='-') i++;
+  if (i<n && s[i]=='-') i++;
   if (i==n) return false;
-  for (; i< n; i++)
+  for (; i< n; i++, d++)
     if ((s[i]<'0') || (s[i]>'9')) break;
   if (i==n) return true;
   if (s[i]=='.') {
     i++;
     if (i==n) return false;
-    for (; i< n; i++)
+    for (; i< n; i++, d++)
       if ((s[i]<'0') || (s[i]>'9')) break;
   }
+  if (d==0) return false;
   if (i==n) return true;
   if (s[i++]!='e') return false;
-  if (s[i]=='+') i++;
-  if (s[i]=='-') i++;
+  if (i<n && s[i]=='+') i++;
+  if (i<n && s[i]=='-') i++;
   if (i==n) return false;
   for (; i< n; i++)
     if ((s[i]<'0') || (s[i]>'9')) return false;

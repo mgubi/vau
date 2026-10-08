@@ -63,17 +63,14 @@
 
 (define (doctree-lan t)
   "Returns the language of the TeXmacs document tree @t."
-  (let* ((s (select t '(initial collection associate)))
-         (flt (lambda (x) (== (tm-ref x 0) "language")))
-         (s2 (list-filter (map tree->stree s) flt)))
-    (or (and (nnull? s2) (tm-ref (car s2) 1)) "english")))
+  (tmfile-language t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parsing and processing of explain tags in texmacs trees.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-define (doc-scm-cache)
-  (:synopsis "Url of the cache with the collected scheme documentation.")
+  (:synopsis "Url of the cache with the collected scheme documentation")
   (with pref (get-preference "doc:doc-scm-cache")
     (if (and (!= pref "default") (url-exists? (system->url pref)))
         (system->url pref)
@@ -166,7 +163,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-define (doc-collect-explains basedir fname)
-  (:synopsis "Parse @fname in @basedir and its sub-branches, collecting docs.")
+  (:synopsis "Parse @fname in @basedir and its sub-branches, collecting docs")
   (set! _scm_ (doc-scm-cache))
   (set! _macro_ (doc-macro-cache))
   (parse-branch `(branch (dummy) ,fname) basedir))
@@ -179,7 +176,7 @@
     (doc-collect-explains path file)))
 
 (tm-define (doc-collect-all lan)
-  (:synopsis "Collect all explain tags available in the documentation.")
+  (:synopsis "Collect all explain tags available in the documentation")
   (with loc (string-take (language-to-locale lan) 2)
    (doc-collect-sub "devel/scheme" "scheme" loc)
    (doc-collect-sub "devel/plugin" "plugin" loc)
@@ -193,7 +190,7 @@
                 (string-append "(" lan ")"))))
 
 (tm-define (doc-check-cache)
-  (:synopsis "Ensure that the documentation cache is built.")
+  (:synopsis "Ensure that the documentation cache is built")
   (let  ((t (get-preference "doc:collect-timestamp"))
          (lan (get-output-language))
          (langs (get-preference "doc:collect-languages")))
@@ -214,13 +211,21 @@
   (doc-check-cache)
   (doc-retrieve* cache key lan))
 
+(define (doc-delete-cache-file u)
+  ;; only delete inside the cache directory: the preferences
+  ;; holding the cache locations may have been edited by hand
+  (with cache (url-append (get-texmacs-home-path) "system/cache")
+    (cond ((or (not (url-descends? u cache)) (== (url->url u) cache)) (noop))
+          ((url-directory? u) (system-rmdir-recursive u))
+          ((url-exists? u) (system-remove u)))))
+
 (define (doc-delete-cache*)
   (with s (url->system (doc-scm-cache))
-    (display* "I WOULD HAVE deleted the cache at " s ".\n")
+    (doc-delete-cache-file (system->url s))
     (reset-preference "doc:doc-scm-cache")
     (set-message `(replace "The cache at %1 was deleted" (verbatim ,s)) ""))
   (with s (url->system (doc-macro-cache))
-    (display* "I WOULD HAVE deleted the cache at " s ".\n")
+    (doc-delete-cache-file (system->url s))
     (reset-preference "doc:doc-macro-cache")
     (set-message `(replace "The cache at %1 was deleted" (verbatim ,s)) ""))
   (reset-preference "doc:collect-timestamp")

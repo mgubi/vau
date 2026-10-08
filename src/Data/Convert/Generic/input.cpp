@@ -34,6 +34,8 @@
 #define MODE_COMMAND   8
 #define MODE_XFORMAT   9
 #define MODE_FILE     10
+#define MODE_CMDLINE  11
+#define MODE_REQUEST  12
 
 /******************************************************************************
 * Universal data input
@@ -69,6 +71,8 @@ texmacs_input_rep::get_mode (string s) {
   if (s == "channel")  return MODE_CHANNEL;
   if (s == "command")  return MODE_COMMAND;
   if (s == "file") return MODE_FILE;
+  if (starts (s, "cmdline-")) return MODE_CMDLINE;
+  if (starts (s, "request-")) return MODE_REQUEST;
   if (format_exists (s)) return MODE_XFORMAT;
   return MODE_VERBATIM;
 }
@@ -157,7 +161,8 @@ texmacs_input_rep::put (char c) { // returns true when expecting input
 
 void
 texmacs_input_rep::bof () {
-  format = "verbatim";
+  if (!(starts (format, "cmdline-") || starts (format, "request-")))
+      format = "verbatim";
   channel= type;
   docs (channel)= tree (DOCUMENT, "");
 }
@@ -168,10 +173,10 @@ texmacs_input_rep::eof () {
 }
 
 void
-texmacs_input_rep::write (tree u) {
-  if (!docs->contains (channel))
-    docs (channel)= tree (DOCUMENT, "");
-  tree& t= docs (channel);
+document_append (tree& t, tree u) {
+  // append u to the non empty document t: the first line of u continues
+  // the last line of t (also used for the answers read in several pieces,
+  // connection_append in System/Link/connection.cpp)
   if (!is_document (u)) u= tree (DOCUMENT, u);
   if (t[N(t)-1] == "") t[N(t)-1]= u[0];
   else if (u[0] != "") {
@@ -180,6 +185,13 @@ texmacs_input_rep::write (tree u) {
     t[N(t)-1] << A(u[0]);
   }
   if (N(u)>1) t << A (u (1, N(u)));
+}
+
+void
+texmacs_input_rep::write (tree u) {
+  if (!docs->contains (channel))
+    docs (channel)= tree (DOCUMENT, "");
+  document_append (docs (channel), u);
 }
 
 tree
@@ -233,6 +245,12 @@ texmacs_input_rep::flush (bool force) {
     break;
   case MODE_FILE:
     file_flush (force);
+    break;
+  case MODE_CMDLINE:
+    cmdline_flush (force);
+    break;
+  case MODE_REQUEST:
+    request_flush (force);
     break;
   default:
     FAILED ("invalid mode");
@@ -458,4 +476,19 @@ texmacs_input_rep::file_flush (bool force) {
     }
     buf= "";
   }
+}
+
+void
+texmacs_input_rep::cmdline_flush (bool force) {
+  if (force) {
+    string name= format (8, N(format));
+    tree r= as_tree (call ("connection-result", name, "default", buf));
+    write (r);
+    buf= "";
+  }
+}
+
+void
+texmacs_input_rep::request_flush (bool force) {
+  cmdline_flush (force);
 }

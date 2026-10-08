@@ -23,6 +23,7 @@
 
 s7_scheme *tm_s7;
 s7_pointer user_env;
+static s7_pointer catch_call;
 
 int tm_s7_argc;
 char **tm_s7_argv;
@@ -34,10 +35,40 @@ start_scheme (int argc, char** argv, void (*call_back) (int, char**)) {
   
   tm_s7 = s7_init ();
 
+  // read 'x as (quote x) and not as (#_quote x): the TeXmacs code inspects
+  // quoted forms, e.g. (== (car x) 'quote), as in standard Scheme
+  s7_eval_c_string (tm_s7, "(set! (*s7* 'symbol-quote?) #t)");
+
+  // start with a heap of 1M cells (about what TeXmacs uses once booted)
+  // instead of growing it step by step, with fewer collections meanwhile
+  s7_eval_c_string (tm_s7, "(set! (*s7* 'heap-size) 1024000)");
+
+  // expand each macro call once and keep its expansion, as Guile does,
+  // instead of expanding it at each evaluation (local patch 0005)
+  s7_eval_c_string (tm_s7, "(set! (*s7* 'cache-macro-expansions?) #t)");
+
   // make a new user environment (used in evaluation)
   user_env = s7_inlet (tm_s7, s7_nil (tm_s7));
   s7_gc_protect (tm_s7, user_env);
-  
+
+  // (catch-call f args) applies f to args and catches the errors, which it
+  // reports and returns as (type . info): as in the Guile version, an error
+  // stops at the C++ code which called Scheme, instead of jumping over it to
+  // an enclosing catch (the function runs in the environment of this lambda,
+  // inside the user environment, where (defined? 'sym) also sees the
+  // arguments: they have unlikely names)
+  catch_call= s7_eval_c_string_with_environment (tm_s7,
+    "(lambda (catch-call-fun catch-call-args)"
+    "  (#_catch #t"
+    "    (lambda () (#_apply catch-call-fun catch-call-args))"
+    "    (lambda (type info)"
+    "      (#_format *stderr* \"Error: ~A~%\""
+    "        (#_catch #t"
+    "          (lambda () (#_apply #_format #f info))"
+    "          (lambda _ (#_list type info))))"
+    "      (#_cons type info))))", user_env);
+  s7_gc_protect (tm_s7, catch_call);
+
   call_back (argc, argv);
 }
 
@@ -81,7 +112,7 @@ TeXmacs_call_scm (arg_list *args) {
   tmscm l= s7_nil (tm_s7);
   for (i=args->n; i>=1; i--)
     l= s7_cons (tm_s7, args->a[i], l);
-  return s7_call (tm_s7, args->a[0], l);
+  return s7_call (tm_s7, catch_call, s7_list (tm_s7, 2, args->a[0], l));
 }
 
 tmscm
@@ -144,6 +175,12 @@ call_scheme (tmscm fun, array<tmscm> a) {
 string
 scheme_dialect () {
   return "s7";
+}
+
+string
+scheme_init_file () {
+  // sets up s7, then loads the common init-kernel.scm and init-texmacs.scm
+  return "$TEXMACS_PATH/progs/init-s7.scm";
 }
 
 /******************************************************************************
@@ -349,8 +386,6 @@ initialize_scheme () {
   "\n"
   "(define (texmacs-version) \"" TEXMACS_VERSION "\")\n"
   "(define object-stack '(()))\n"
-  "(define (notify-debug-message channel) (begin))\n" //FIXME: stub
-  "(display \"S7 Scheme initializing\\n\")\n"
   ")";
 
   // eval in the root enviornment
@@ -359,4 +394,11 @@ initialize_scheme () {
   initialize_smobs ();
   initialize_glue ();
   object_stack= s7_name_to_value (tm_s7, "object-stack");
+  
+    // uncomment to have a guile repl available at startup	
+    //	gh_repl(guile_argc, guile_argv);
+    //scm_shell (guile_argc, guile_argv);
+  
+  
 }
+

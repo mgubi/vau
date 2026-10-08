@@ -143,6 +143,7 @@ public:
 				      int i, int i1, int i2);
   virtual int  subnr ();
   virtual box  subbox (int i);
+  virtual void broadcast (tree t, rectangles& rs);
   virtual tree message (tree t, SI x, SI y, rectangles& rs);
   virtual void loci (SI x, SI y, SI d, list<string>& ids, rectangles& rs);
   virtual void display_links (renderer ren);
@@ -211,6 +212,17 @@ public:
   virtual SI        lsup_correction ();
   virtual SI        rsub_correction ();
   virtual SI        rsup_correction ();
+  // corrections when the height h of the facing edge of the script
+  // (relative to the baseline of this box) is known
+  virtual SI        lsub_correction_at (SI h);
+  virtual SI        lsup_correction_at (SI h);
+  virtual SI        rsub_correction_at (SI h);
+  virtual SI        rsup_correction_at (SI h);
+  // whether scripts follow the height of this box (composite boxes and
+  // extended shapes) or sit at the standard shifts (ordinary glyphs)
+  virtual bool      extended_shape ();
+  // horizontal attachment point of accents, when the box knows it
+  virtual bool      top_accent (SI& x);
   virtual SI        sub_lo_base (int level);
   virtual SI        sub_hi_lim  (int level);
   virtual SI        sup_lo_lim  (int level);
@@ -346,5 +358,9 @@ struct gr_selection_rep: concrete_struct {
   curve c;
 };
 CONCRETE_CODE(gr_selection);
+
+// the font inspector and the font report (font_debug_boxes.cpp)
+tree box_font_debug_info (box root, path bp, bool after);
+tree box_font_debug_report (box root);
 
 #endif // defined BOXES_H

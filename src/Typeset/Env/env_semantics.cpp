@@ -40,6 +40,7 @@ initialize_default_var_type () {
   var_type (FONT_SIZE)          = Env_Font_Size;
   var_type (FONT_BASE_SIZE)     = Env_Font_Size;
   var_type (FONT_EFFECTS)       = Env_Font;
+  var_type (FONT_FEATURES)      = Env_Font;
   var_type (MAGNIFICATION)      = Env_Magnification;
   var_type (MAGNIFY)            = Env_Magnify;
   var_type (COLOR)              = Env_Color;
@@ -227,7 +228,7 @@ edit_env_rep::update_page_pars () {
     }
     else if (height_flag == "true") {
       page_user_height  = get_length (PAGE_USER_HEIGHT);
-      page_top_margin   = (page_height - page_user_width) >> 1;
+      page_top_margin   = (page_height - page_user_height) >> 1;
       page_bottom_margin= page_top_margin;
     }
     else {
@@ -547,32 +548,51 @@ edit_env_rep::get_script_size (int sz, int level) {
 * Updating the environment from the variables
 ******************************************************************************/
 
+font
+edit_env_rep::make_current_font (int sz) {
+  switch (mode) {
+  case 2:
+    return smart_font (get_string (MATH_FONT), get_string (MATH_FONT_FAMILY),
+                       get_string (MATH_FONT_SERIES),
+                       get_string (MATH_FONT_SHAPE),
+                       get_string (FONT), get_string (FONT_FAMILY),
+                       get_string (FONT_SERIES), "mathitalic",
+                       sz, (int) (magn*dpi));
+  case 3:
+    return smart_font (get_string (PROG_FONT), get_string (PROG_FONT_FAMILY),
+                       get_string (PROG_FONT_SERIES),
+                       get_string (PROG_FONT_SHAPE),
+                       get_string (FONT), get_string (FONT_FAMILY) * "-tt",
+                       get_string (FONT_SERIES), get_string (FONT_SHAPE),
+                       sz, (int) (magn*dpi));
+  default:
+    return smart_font (get_string (FONT), get_string (FONT_FAMILY),
+                       get_string (FONT_SERIES), get_string (FONT_SHAPE),
+                       sz, (int) (magn*dpi));
+  }
+}
+
 void
 edit_env_rep::update_font () {
   fn_size= (int) (((double) get_int (FONT_BASE_SIZE)) *
 		  get_double (FONT_SIZE) + 0.5);
-  switch (mode) {
-  case 0:
-  case 1:
-    fn= smart_font (get_string (FONT), get_string (FONT_FAMILY),
-                    get_string (FONT_SERIES), get_string (FONT_SHAPE),
-                    get_script_size (fn_size, index_level), (int) (magn*dpi));
-    break;
-  case 2:
-    fn= smart_font (get_string (MATH_FONT), get_string (MATH_FONT_FAMILY),
-                    get_string (MATH_FONT_SERIES), get_string (MATH_FONT_SHAPE),
-                    get_string (FONT), get_string (FONT_FAMILY),
-                    get_string (FONT_SERIES), "mathitalic",
-                    get_script_size (fn_size, index_level), (int) (magn*dpi));
-    break;
-  case 3:
-    fn= smart_font (get_string (PROG_FONT), get_string (PROG_FONT_FAMILY),
-                    get_string (PROG_FONT_SERIES), get_string (PROG_FONT_SHAPE),
-                    get_string (FONT), get_string (FONT_FAMILY) * "-tt",
-                    get_string (FONT_SERIES), get_string (FONT_SHAPE),
-                    get_script_size (fn_size, index_level), (int) (magn*dpi));
-    break;
+  int sz= get_script_size (fn_size, index_level);
+  fn= make_current_font (sz);
+  // fonts with an OpenType MATH table prescribe their own script sizes,
+  // unless the document sets math-font-sizes explicitly
+  if (index_level > 0 && fn->ot_math &&
+      math_font_sizes == "default") {
+    int pct= (index_level == 1)? fn->script_percent: fn->script_script_percent;
+    if (pct > 0) {
+      int nsz= max (1, (int) tm_round (fn_size * pct / 100.0));
+      if (nsz != sz) fn= make_current_font (nsz);
+    }
+    // script size alternates (GSUB feature ssty) of untuned OpenType fonts
+    if (fn->math_type == MATH_TYPE_OPENTYPE)
+      fn= feature_font (fn, "ssty", min (index_level, 2) - 1);
   }
+  string feat= get_string (FONT_FEATURES);
+  if (N(feat) != 0) fn= apply_features (fn, feat);
   string eff= get_string (FONT_EFFECTS);
   if (N(eff) != 0) fn= apply_effects (fn, eff);
 }
@@ -602,12 +622,12 @@ edit_env_rep::update_color () {
   tree fc= env [FILL_COLOR];
   if (pc == "none") pen= pencil (false);
   else {
-    if (L(pc) == PATTERN) pc= exec (pc);
+    if (L(pc) == _PATTERN) pc= exec (pc);
     pen= pencil (pc, alpha, get_length (LINE_WIDTH));
   }
   if (fc == "none") fill_brush= brush (false);
   else {
-    if (L(fc) == PATTERN) fc= exec (fc);
+    if (L(fc) == _PATTERN) fc= exec (fc);
     fill_brush= brush (fc, alpha);
   }
 }
@@ -617,15 +637,15 @@ edit_env_rep::update_pattern_mode () {
   no_patterns= (get_string (NO_PATTERNS) == "true");
   if (no_patterns) {
     tree c= env[COLOR];
-    if (is_func (c, PATTERN, 4)) env (COLOR)= exec (c);
+    if (is_func (c, _PATTERN, 4)) env (COLOR)= exec (c);
     c= env[BG_COLOR];
-    if (is_func (c, PATTERN, 4)) env (BG_COLOR)= exec (c);
+    if (is_func (c, _PATTERN, 4)) env (BG_COLOR)= exec (c);
     c= env[FILL_COLOR];
-    if (is_func (c, PATTERN, 4)) env (FILL_COLOR)= exec (c);
+    if (is_func (c, _PATTERN, 4)) env (FILL_COLOR)= exec (c);
     c= env[ORNAMENT_COLOR];
-    if (is_func (c, PATTERN, 4)) env (ORNAMENT_COLOR)= exec (c);
+    if (is_func (c, _PATTERN, 4)) env (ORNAMENT_COLOR)= exec (c);
     c= env[ORNAMENT_EXTRA_COLOR];
-    if (is_func (c, PATTERN, 4)) env (ORNAMENT_EXTRA_COLOR)= exec (c);
+    if (is_func (c, _PATTERN, 4)) env (ORNAMENT_EXTRA_COLOR)= exec (c);
     update_color ();
   }
 }
@@ -875,12 +895,6 @@ edit_env_rep::decode_arrow (tree t, string l, string h) {
                          tree (_POINT, "0" * lun, "0" * hun),
                          tree (_POINT, as_string (-lx) * lun,
                                as_string (-hx) * hun)));
-    if (s == "<gtr>")
-      return tree (LINE,
-                   tree (_POINT, as_string (-lx) * lun, h),
-                   tree (_POINT, "0" * lun, "0" * hun),
-                   tree (_POINT, as_string (-lx) * lun,
-                                 as_string (-hx) * hun));
     if (s == "<less><less>")
       return tree (GR_GROUP,
                    tree (LINE,

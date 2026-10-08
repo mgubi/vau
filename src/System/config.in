@@ -1,13 +1,16 @@
 /* src/System/config.in.  Generated from configure.in by autoheader.  */
 
-/* The normal alignment of `void *', in bytes. */
+/* Qt major version number */
+#undef AC_QT_MAJOR_VERSION
+
+/* The normal alignment of 'void *', in bytes. */
 #undef ALIGNOF_VOID_P
+
+/* Alternative version number */
+#undef ALTERNATIVE_VERSION
 
 /* Enable experimental Cocoa port */
 #undef AQUATEXMACS
-
-/* embedded aspell location */
-#undef ASPELL
 
 /* If there is a static plugin Cocoa */
 #undef CocoaPlugin
@@ -33,6 +36,12 @@
 /* gs lib path relative to TEXMACS_PATH */
 #undef GS_LIB
 
+/* Use the Guile Scheme interpreter */
+#undef USE_GUILE
+
+/* Use the S7 Scheme interpreter */
+#undef USE_S7
+
 /* Guile version */
 #undef GUILE_A
 
@@ -54,20 +63,17 @@
 /* Guile version */
 #undef GUILE_VERSION
 
-/* Define to 1 if the system has the type `FILE'. */
+/* Define to 1 if the system has the type 'FILE'. */
 #undef HAVE_FILE
 
-/* Define to 1 if you have the `gettimeofday' function. */
+/* Define to 1 if you have the 'gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define to 1 if the system has the type `intptr_t'. */
+/* Define to 1 if the system has the type 'intptr_t'. */
 #undef HAVE_INTPTR_T
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
 
 /* Define to 1 if you have the <pty.h> header file. */
 #undef HAVE_PTY_H
@@ -75,8 +81,14 @@
 /* Define if the Qt framework is available. */
 #undef HAVE_QT
 
+/* Define to 1 if you have the 'snprintf' function. */
+#undef HAVE_SNPRINTF
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
@@ -93,7 +105,7 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if the system has the type `time_t'. */
+/* Define to 1 if the system has the type 'time_t'. */
 #undef HAVE_TIME_T
 
 /* Define to 1 if you have the <unistd.h> header file. */
@@ -120,20 +132,35 @@
 /* Link imlib2 library with TeXmacs */
 #undef LINKED_IMLIB2
 
+/* Link MuPDF library with TeXmacs */
+#undef LINKED_MUPDF
+
 /* Link sqlite3 library with TeXmacs */
 #undef LINKED_SQLITE3
 
 /* Enabling Mac OSX extensions */
 #undef MACOSX_EXTENSIONS
 
+/* makeappx location */
+#undef MAKEAPPX
+
+/* makepri location */
+#undef MAKEPRI
+
 /* Max fast alloc // WORD_LENGTH more than power of 2 */
 #undef MAX_FAST
+
+/* Enabling native MuPDF backend */
+#undef MUPDF_RENDERER
 
 /* Disable fast memory allocator */
 #undef NO_FAST_ALLOC
 
 /* Use g++ strictly prior to g++ 3.0 */
 #undef OLD_GNU_COMPILER
+
+/* OS type */
+#undef OS_ANDROID
 
 /* OS type */
 #undef OS_CYGWIN
@@ -158,6 +185,9 @@
 
 /* OS type */
 #undef OS_MINGW
+
+/* OS type */
+#undef OS_MINGW64
 
 /* OS type */
 #undef OS_POWERPC_GNU_LINUX
@@ -198,26 +228,58 @@
 /* Enabling Qt pipes */
 #undef QTPIPES
 
-/* Enable experimental Qt port */
+/* Enable Qt port */
 #undef QTTEXMACS
+
+/* Enable experimental Qt port with Widkit */
+#undef QTWKTEXMACS
+
+/* sanitizers linked */
+#undef SANITIZERS_ON
 
 /* Enable checks style rewriting code */
 #undef SANITY_CHECKS
 
-/* The size of `void *', as computed by sizeof. */
+/* Enable experimental SDL port */
+#undef SDLTEXMACS
+
+/* signtool location */
+#undef SIGNTOOL
+
+/* The size of 'int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of 'long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of 'long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of 'short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of 'void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
 
 /* If not set during link */
 #undef STACK_SIZE
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
+
+/* Special fix */
+#undef TEXMACS_FIX_1_GNUTLS
 
 /* Svn build revision */
 #undef TEXMACS_REVISION
 
 /* Dynamic linking function name */
 #undef TM_DYNAMIC_LINKING
+
+/* Use aspell library */
+#undef USE_ASPELL
 
 /* Use axel library */
 #undef USE_AXEL
@@ -228,14 +290,38 @@
 /* Use freetype library */
 #undef USE_FREETYPE
 
+/* Use GnuTLS library version >= 3 */
+#undef USE_GNUTLS
+
 /* Use ghostscript */
 #undef USE_GS
+
+/* Use the Guile Scheme interpreter */
+#undef USE_GUILE
 
 /* Use iconv library */
 #undef USE_ICONV
 
 /* Use imlib2 library */
 #undef USE_IMLIB2
+
+/* Use intl library */
+#undef USE_INTL
+
+/* Use MuPDF library */
+#undef USE_MUPDF
+
+/* Make the HTTP requests with libcurl */
+#undef USE_LIBCURL
+
+/* Use resvg library for SVG rendering */
+#undef USE_RESVG
+
+/* Use the S7 Scheme interpreter */
+#undef USE_S7
+
+/* Use SDL3 library */
+#undef USE_SDL3
 
 /* Use Sparkle framework */
 #undef USE_SPARKLE
@@ -245,6 +331,12 @@
 
 /* Use C++ stack backtraces */
 #undef USE_STACK_TRACE
+
+/* Use ThorVG and OpenGL for the Vue renderer */
+#undef USE_THORVG
+
+/* Enable experimental Vue port */
+#undef VUETEXMACS
 
 /* Pointer size */
 #undef WORD_LENGTH
@@ -264,6 +356,9 @@
 /* Guile string size type */
 #undef guile_str_size_t
 
+/* Qt without fontconfig */
+#undef qt_no_fontconfig
+
 /* If there is a static plugin qgif */
 #undef qt_static_plugin_qgif
 
@@ -275,3 +370,6 @@
 
 /* If there is a static plugin qsvg */
 #undef qt_static_plugin_qsvg
+
+/* If Qt is statically linked */
+#undef qt_static_plugin_xcb

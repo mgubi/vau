@@ -233,7 +233,7 @@
 (define (kbd-map-body conds l)
   (cond ((null? l) '())
 	((symbol? (car l))
-	 (kbd-map-body (list 0 (car l)) (cdr l)))
+	 (kbd-map-body (ctx-add-condition conds 0 (car l)) (cdr l)))
 	((and (pair? (car l)) (== (caar l) :profile))
 	 (if (not (has-look-and-feel? (cdar l))) '((noop))
 	     (kbd-map-body conds (cdr l))))
@@ -289,10 +289,10 @@
 
 (tm-define-macro (kbd-symbols . l)
   (:synopsis "Add symbols in @l to keyboard mapping")
-  (define (fun s)
-    (list s (string-append "insert#<" s ">")
-	  (list 'kbd-insert (string-append "<" s ">"))))
-  `(kbd-commands ,@(map fun l)))
+  (let ((fun (lambda (s)
+               (list s (string-append "insert#<" s ">")
+                     (list 'kbd-insert (string-append "<" s ">"))))))
+    `(kbd-commands ,@(map fun l))))
 
 (tm-define (emulate-keyboard k)
   (delayed (raw-emulate-keyboard k)))

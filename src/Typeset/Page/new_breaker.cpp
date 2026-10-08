@@ -9,6 +9,8 @@
 * in the root directory or <http://www.gnu.org/licenses/gpl-3.0.html>.
 ******************************************************************************/
 
+#include "typesetter.hpp" // edit_profile
+#include "sys_utils.hpp"  // get_env
 #include "new_breaker.hpp"
 
 /******************************************************************************
@@ -55,7 +57,7 @@ new_breaker_rep::new_breaker_rep (
     fn (fn2), first_page (fp2), quality (quality2), last_page_flag (true),
     body_ht (), body_cor (), foot_ht (), foot_tot (),
     float_ht (), float_tot (), ins_list (),
-    best_prev (path (-1)), best_pens (MAX_SI),
+    best_prev (path (-1)), best_pens (vpenalty (MAX_INT)),
     todo_list (false), done_list (false),
     cache_uniform (array<path> ()),
     cache_colbreaks (array<path> ())
@@ -86,9 +88,9 @@ new_breaker_rep::new_breaker_rep (
 
   int same= 0;
   for (int i=0; i<N(l); i++) {
-    SI   bot_cor= max (0, l[i]->b->y1- fn->y1);
+    SI   bot_cor= max (l[i]->b->y1- fn->y1, 0);
     SI   bod_cor= l[i]->b->h ();
-    SI   top_cor= max (0, fn->y2- l[i]->b->y2);
+    SI   top_cor= max (fn->y2- l[i]->b->y2, 0);
     if (l[i]->type != PAGE_LINE_ITEM) bot_cor= bod_cor= top_cor= 0;
     body_ht  << (space (l[i]->b->h()) + l[i]->spc);
     body_cor << space (bot_cor, bod_cor, top_cor);
@@ -183,9 +185,9 @@ new_breaker_rep::make_insertion (lazy_vstream lvs, path p) {
   array<space> ins_cor;
   array<space> ins_tot;
   for (int i=0; i<N(l); i++) {
-    SI   bot_cor= max (0, l[i]->b->y1- fn->y1);
+    SI   bot_cor= max (l[i]->b->y1- fn->y1, 0);
     SI   bod_cor= l[i]->b->h ();
-    SI   top_cor= max (0, fn->y2- l[i]->b->y2);
+    SI   top_cor= max (fn->y2- l[i]->b->y2, 0);
     if (l[i]->type != PAGE_LINE_ITEM) bot_cor= bod_cor= top_cor= 0;
     ins_ht  << (space (l[i]->b->h()) + l[i]->spc);
     ins_cor << space (bot_cor, bod_cor, top_cor);
@@ -402,6 +404,18 @@ new_breaker_rep::find_page_breaks () {
       }
       if (best_start == path (N(l))) break;
       find_page_breaks (best_start);
+      while (N(todo_list) == 0 && !best_prev->contains (N(l))) {
+        // Fix for bug #62844
+        path best (0);
+        for (iterator<path> it= iterate (best_prev); it->busy (); ) {
+          path next= it->next ();
+          if (path_inf (best, next))
+            if (!done_list->contains (next) ||
+                (temp_list->contains (next) && next != best_start))
+              best= next;
+        }
+        find_page_breaks (best);
+      }
     }
   }
   //cout << "Found page breaks" << LF;
@@ -722,11 +736,94 @@ new_breaker_rep::assemble_skeleton (skeleton& sk, path end, int& offset) {
 * The exported page breaking routine
 ******************************************************************************/
 
+/******************************************************************************
+* The page breaks of the last documents are kept
+*
+* The search of the page breaks (find_page_breaks) tries every line as the
+* start of a page: 40 ms for 140 pages, at every typesetting pass, that is
+* at every keystroke. Its result is a function of what it reads: for every
+* page item the height and the vertical extents of its box, its space, its
+* penalty, its type, its number of columns, its control tree and its
+* floating objects (their channel and their items, in the same way), and
+* the parameters of the breaker. These numbers and trees are the signature
+* of a call; most edits do not change them (a character typed in a line
+* makes new boxes of the same heights). The skeletons made for the last
+* few signatures are kept and returned for an equal signature: a skeleton
+* holds no box, only the positions of the items of each page with their
+* heights and stretch, and the pager, which fills the pages with the
+* current items, only reads it.
+*
+* The environment variable TEXMACS_PAGE_BREAK_CACHE may be "off" (always
+* search) or "check" (search too, and report a difference).
+******************************************************************************/
+
+static void
+breaker_signature (array<page_item> l, array<SI>& nums, array<tree>& trees) {
+  nums << (SI) N(l);
+  for (int i=0; i<N(l); i++) {
+    page_item_rep* it= l[i].operator -> ();
+    nums << (SI) it->type << (SI) it->b->h () << (SI) it->b->y1 << (SI) it->b->y2
+         << (SI) it->spc->min << (SI) it->spc->def << (SI) it->spc->max
+         << (SI) it->penalty << (SI) it->nr_cols << (SI) N(it->fl);
+    trees << it->t;
+    for (int j=0; j<N(it->fl); j++) {
+      lazy_vstream lvs= (lazy_vstream) it->fl[j];
+      trees << lvs->channel;
+      breaker_signature (lvs->l, nums, trees);
+    }
+  }
+}
+
+static bool
+same_signature (array<SI> n1, array<tree> t1, array<SI> n2, array<tree> t2) {
+  if (N(n1) != N(n2) || N(t1) != N(t2)) return false;
+  for (int i=0; i<N(n1); i++)
+    if (n1[i] != n2[i]) return false;
+  for (int i=0; i<N(t1); i++)
+    if (inside (t1[i]) != inside (t2[i]) && t1[i] != t2[i]) return false;
+  return true;
+}
+
+struct breaker_memo {
+  bool        used;
+  array<SI>   nums;
+  array<tree> trees;
+  skeleton    sk;
+  breaker_memo (): used (false) {}
+};
+
+#define BREAKER_MEMOS 4
+static breaker_memo breaker_memos[BREAKER_MEMOS];
+static int breaker_memo_next= 0;
+
 skeleton
 new_break_pages (array<page_item> l, space ph, int qual,
                  space fn_sep, space fnote_sep, space float_sep,
                  font fn, int first_page)
 {
+  static string mode= get_env ("TEXMACS_PAGE_BREAK_CACHE");
+  array<SI> nums;
+  array<tree> trees;
+  breaker_memo* memo= NULL;
+  if (mode != "off") {
+    nums << (SI) ph->min << (SI) ph->def << (SI) ph->max << (SI) qual
+         << (SI) fn_sep->min << (SI) fn_sep->def << (SI) fn_sep->max
+         << (SI) fnote_sep->min << (SI) fnote_sep->def << (SI) fnote_sep->max
+         << (SI) float_sep->min << (SI) float_sep->def << (SI) float_sep->max
+         << (SI) fn->y1 << (SI) fn->y2 << (SI) first_page;
+    breaker_signature (l, nums, trees);
+    for (int i=0; i<BREAKER_MEMOS && memo == NULL; i++)
+      if (breaker_memos[i].used &&
+          same_signature (breaker_memos[i].nums, breaker_memos[i].trees,
+                          nums, trees))
+        memo= &breaker_memos[i];
+  }
+
+  if (memo != NULL && mode != "check") {
+    if (edit_profile.on) edit_profile.breaks_reused++;
+    return memo->sk;
+  }
+
   new_breaker_rep* H=
     tm_new<new_breaker_rep> (l, ph, qual, fn_sep, fnote_sep, float_sep,
                              fn, first_page);
@@ -738,5 +835,21 @@ new_break_pages (array<page_item> l, space ph, int qual,
   H->assemble_skeleton (sk, path (N(l)), offset);
   //cout << HRULE << LF;
   tm_delete (H);
+
+  if (memo != NULL) {
+    // "check": what was kept against what is found
+    if (memo->sk != sk)
+      failed_error << "The skeleton kept for this signature differs "
+                   << "from the one found (" << N(l) << " items)" << LF;
+    else if (edit_profile.on) edit_profile.breaks_reused++;
+  }
+  else if (mode != "off") {
+    memo= &breaker_memos[breaker_memo_next];
+    breaker_memo_next= (breaker_memo_next + 1) % BREAKER_MEMOS;
+    memo->used= true;
+    memo->nums= nums;
+    memo->trees= trees;
+    memo->sk= sk;
+  }
   return sk;
 }

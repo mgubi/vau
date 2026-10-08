@@ -28,6 +28,7 @@ unslash (string s) {
       switch (s[++i]) {
       case '0': r << ((char) 0); break;
       case 'n': r << '\n'; break;
+      case 'r': r << '\r'; break;
       case 't': r << '\t'; break;
       default: r << s[i];
       }
@@ -41,7 +42,7 @@ unslash (string s) {
 
 static bool
 is_spc (char c) {
-  return (c==' ') || (c=='\t') || (c=='\n');
+  return (c==' ') || (c=='\t') || (c=='\n') || (c=='\r');
 }
 
 static scheme_tree
@@ -52,6 +53,7 @@ string_to_scheme_tree (string s, int& i) {
     case ' ':
     case '\t':
     case '\n':
+    case '\r':
       break;
       case '(':
       {
@@ -101,7 +103,6 @@ string_to_scheme_tree (string s, int& i) {
 
 scheme_tree
 string_to_scheme_tree (string s) {
-  s= replace (s, "\015", "");
   int i=0;
   return string_to_scheme_tree (s, i);
 }
@@ -154,7 +155,7 @@ scheme_tree_to_tree (scheme_tree t, hashmap<string,int> codes, bool flag) {
 tree
 scheme_tree_to_tree (scheme_tree t, string version) {
   version= scm_unquote (version);
-  tree doc, error (ERROR, "bad format or data");
+  tree doc, error (_ERROR, "bad format or data");
   if (version_inf (version, "1.0.2.4"))
     doc= scheme_tree_to_tree (t, get_codes (version), false);
   else doc= scheme_tree_to_tree (t);
@@ -178,7 +179,7 @@ scheme_to_tree (string s) {
 
 tree
 scheme_document_to_tree (string s) {
-  tree error (ERROR, "bad format or data");
+  tree error (_ERROR, "bad format or data");
   if (starts (s, "(document (apply \"TeXmacs\" ") ||
       starts (s, "(document (expand \"TeXmacs\" ") ||
       starts (s, "(document (TeXmacs "))

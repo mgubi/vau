@@ -29,6 +29,10 @@ hashmap<string,double> lsub_ecrm_table ();
 hashmap<string,double> lsup_ecrm_table ();
 hashmap<string,double> rsub_ecrm_table ();
 hashmap<string,double> rsup_ecrm_table ();
+hashmap<string,double> lsub_ecss_table ();
+hashmap<string,double> lsup_ecss_table ();
+hashmap<string,double> rsub_ecss_table ();
+hashmap<string,double> rsup_ecss_table ();
 hashmap<string,double> lsub_cmr_table ();
 hashmap<string,double> lsup_cmr_table ();
 hashmap<string,double> rsub_cmr_table ();
@@ -164,6 +168,13 @@ tex_font_rep::tex_font_rep (string name, int status2,
     lsup_correct= lsup_ecrm_table ();
     rsub_correct= rsub_ecrm_table ();
     rsup_correct= rsup_ecrm_table ();
+    above_correct= hashmap<string,double> (0.0);
+  }
+  else if (family == "ecss" || family == "ecsx") {
+    lsub_correct= lsub_ecss_table ();
+    lsup_correct= lsup_ecss_table ();
+    rsub_correct= rsub_ecss_table ();
+    rsup_correct= rsup_ecss_table ();
     above_correct= hashmap<string,double> (0.0);
   }
   else if (family == "cmr" || family == "cmbx") {
@@ -357,8 +368,8 @@ tex_font_rep::special_get_left_correction (string s) {
   int i= 0;
   tm_char_forwards (s, i);
   string r= special_translate (s (0, i));
-  if (N(r)!=0) return (SI) (slope * conv (tfm->d ((QN) r[0])));
-  return (SI) (slope * conv (tfm->d ((QN) '<')));
+  if (N(r)!=0) return (SI) (slope * conv (tfm->d ((N8) r[0])));
+  return (SI) (slope * conv (tfm->d ((N8) '<')));
 }
 
 SI
@@ -366,8 +377,8 @@ tex_font_rep::special_get_right_correction (string s) {
   int n= N(s), i= n;
   tm_char_backwards (s, i);
   string r= special_translate (s (i, n));
-  if (N(r)!=0) return conv (tfm->i ((QN) r[0]));
-  return conv (tfm->i ((QN) '>'));
+  if (N(r)!=0) return conv (tfm->i ((N8) r[0]));
+  return conv (tfm->i ((N8) '>'));
 }
 
 /******************************************************************************
@@ -572,13 +583,13 @@ tex_font_rep::accented_draw (renderer ren, string s, SI x, SI y) {
 SI
 tex_font_rep::accented_get_left_correction (string s) {
   s= get_unaccented (s);
-  return (SI) (slope * conv (tfm->d ((QN) s[0])));
+  return (SI) (slope * conv (tfm->d ((N8) s[0])));
 }
 
 SI
 tex_font_rep::accented_get_right_correction (string s) {
   s= get_unaccented (s);
-  return conv (tfm->i ((QN) s[N(s)-1]));
+  return conv (tfm->i ((N8) s[N(s)-1]));
 }
 
 /******************************************************************************
@@ -648,12 +659,12 @@ tex_font_rep::get_extents (string s, metric& ex) {
 
   int n= N(s);
   int m= (n+16) << 1;
-  STACK_NEW_ARRAY (s_copy, int, n);
-  STACK_NEW_ARRAY (buf, int, m);
-  STACK_NEW_ARRAY (ker, int, m);
+  STACK_NEW_ARRAY (s_copy, Z32, n);
+  STACK_NEW_ARRAY (buf, Z32, m);
+  STACK_NEW_ARRAY (ker, Z32, m);
 
   if (exec) {
-    for (i=0; i<n; i++) s_copy[i]= ((QN) s[i]);
+    for (i=0; i<n; i++) s_copy[i]= ((N8) s[i]);
     tfm->execute (s_copy, n, buf, ker, m);
   }
   else {
@@ -743,7 +754,7 @@ tex_font_rep::get_xpositions (string s, SI* xpos, bool ligf) {
   }
 
   STACK_NEW_ARRAY (s_copy, int, n);
-  for (i=0; i<n; i++) s_copy[i]= ((QN) s[i]);
+  for (i=0; i<n; i++) s_copy[i]= ((N8) s[i]);
   tfm->get_xpositions (s_copy, n, unit, xpos, ligf);
   STACK_DELETE_ARRAY (s_copy);
 }
@@ -787,12 +798,12 @@ tex_font_rep::draw_fixed (renderer ren, string s, SI ox, SI y) {
   SI  x= ox;
   int n= N(s);
   int m= (n+16) << 1;
-  STACK_NEW_ARRAY (str, int, n);
-  STACK_NEW_ARRAY (buf, int, m);
-  STACK_NEW_ARRAY (ker, int, m);
+  STACK_NEW_ARRAY (str, Z32, n);
+  STACK_NEW_ARRAY (buf, Z32, m);
+  STACK_NEW_ARRAY (ker, Z32, m);
 
   if (exec) {
-    for (i=0; i<n; i++) str[i]= ((QN) s[i]);
+    for (i=0; i<n; i++) str[i]= ((N8) s[i]);
     tfm->execute (str, n, buf, ker, m);
   }
   else {
@@ -855,7 +866,7 @@ tex_font_rep::get_left_correction (string s) {
       return accented_get_left_correction (s);
     }
   }
-  return (SI) (slope * conv (tfm->d ((QN) s[0])));
+  return (SI) (slope * conv (tfm->d ((N8) s[0])));
 }
 
 SI
@@ -877,7 +888,7 @@ tex_font_rep::get_right_correction (string s) {
       return accented_get_right_correction (s);
     }
   }
-  return conv (tfm->i ((QN) s[N(s)-1]));
+  return conv (tfm->i ((N8) s[N(s)-1]));
 }
 
 SI
@@ -944,10 +955,10 @@ tex_font_rep::advance_glyph (string s, int& pos, bool ligf) {
 
       int n= N(r);
       int m= (n+16) << 1;
-      STACK_NEW_ARRAY (str, int, n);
-      STACK_NEW_ARRAY (buf, int, m);
-      STACK_NEW_ARRAY (ker, int, m);
-      for (int i=0; i<n; i++) str[i]= ((QN) r[i]);
+      STACK_NEW_ARRAY (str, Z32, n);
+      STACK_NEW_ARRAY (buf, Z32, m);
+      STACK_NEW_ARRAY (ker, Z32, m);
+      for (int i=0; i<n; i++) str[i]= ((N8) r[i]);
       tfm->execute (str, n, buf, ker, m);
       bool done= (m > 0 && buf[0] == c);
       if (!done && m > 0) c= buf[0];
@@ -987,7 +998,7 @@ tex_font_rep::get_glyph (string s) {
   }
   int c;
   if (N(s) != 1) c= get_ligature_code (s);
-  else c= ((QN) s[0]);
+  else c= ((N8) s[0]);
   if (c == -1) return font_rep::get_glyph (s);
   glyph gl= pk->get (c);
   if (is_nil (gl)) return font_rep::get_glyph (s);
@@ -1018,11 +1029,11 @@ tex_font_rep::index_glyph (string s, font_metric& rm, font_glyphs& rg) {
   }
   int c;
   if (N(s) != 1) c= get_ligature_code (s);
-  else c= ((QN) s[0]);
+  else c= ((N8) s[0]);
   if (c == -1) return font_rep::index_glyph (s, rm, rg);
   glyph gl= pk->get (c);
   if (is_nil (gl)) {
-    if (c == ((QN) 254)) return -1;
+    if (c == ((N8) 254)) return -1;
     return font_rep::index_glyph (s, rm, rg);
   }
   rm= tfm_font_metric (tfm, pk, unit);
@@ -1034,10 +1045,10 @@ int
 tex_font_rep::get_ligature_code (string s) {
   int n= N(s);
   int m= (n+16) << 1;
-  STACK_NEW_ARRAY (str, int, n);
-  STACK_NEW_ARRAY (buf, int, m);
-  STACK_NEW_ARRAY (ker, int, m);
-  for (int i=0; i<n; i++) str[i]= ((QN) s[i]);
+  STACK_NEW_ARRAY (str, Z32, n);
+  STACK_NEW_ARRAY (buf, Z32, m);
+  STACK_NEW_ARRAY (ker, Z32, m);
+  for (int i=0; i<n; i++) str[i]= ((N8) s[i]);
   tfm->execute (str, n, buf, ker, m);
   STACK_DELETE_ARRAY (str);
   STACK_DELETE_ARRAY (buf);

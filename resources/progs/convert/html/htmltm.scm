@@ -37,7 +37,7 @@
     ("purple" (128 0 128)) ("fuchsia" (255 0 255)) ("green" (0 128 0))
     ("lime" (0 255 0)) ("olive" (128 128 0)) ("yellow" (255 255 0))
     ("navy" (0 0 128)) ("blue" (0 0 255)) ("teal" (0 128 128))
-    ("aqua" (0 0 255))))
+    ("aqua" (0 255 255))))
 
 (define (html-named-color->rgb255 s)
   (cond ((assoc-string-ci s html-named-colors) => second)
@@ -206,7 +206,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; TODO: cell attributes: nowrap, width, height, id, bgcolor, align, char,
   ;;   charoff, valign.
-  ;; TODO: row and column attributes (beware of alignement inheritance rules).
+  ;; TODO: row and column attributes (beware of alignment inheritance rules).
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (cond ((eq? msg :cell)
 	 (let ((attrs (sxml-attr-list kar)))
@@ -303,8 +303,13 @@
 		   a 'name (htmltm-args-serial env c))))))
 
 (define (htmltm-href->hlink a body)
-  (let ((href (shtml-attr-non-null a 'href)))
-    (if href `(hlink ,body ,(xmltm-url-text href)) body)))
+  ;; a link with a title is hlink*
+  (let ((href (shtml-attr-non-null a 'href))
+        (title (shtml-attr-non-null a 'title)))
+    (cond ((not href) body)
+          ((and title (!= title ""))
+           `(hlink* ,body ,(xmltm-url-text href) ,(xmltm-url-text title)))
+          (else `(hlink ,body ,(xmltm-url-text href))))))
 
 (define (htmltm-dimension attrs name)
   (let ((s (shtml-attr-non-null attrs name)))
@@ -313,7 +318,8 @@
 	      ((string->number s) => (lambda (n) (tmlength n 'px)))
 	      ((and (string-ends? s "%")
 		    (string->number (string-drop-right s 1)))
-	       => (lambda (n) (tmlength (/ n 100) 'par)))
+	       ;; (not a fraction, which is not a length: 1/2par)
+	       => (lambda (n) (tmlength (exact->inexact (/ n 100)) 'par)))
 	      (else (tmlength))))))
 
 (define (htmltm-image env a c)
@@ -360,7 +366,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (htmltm-math env a c)
-(with cm `(m:math (@ ,@a) ,(replace-nsprefix-in-stree c "h:" "m:"))
+(with cm `(m:math (@ ,@a) ,@(replace-nsprefix-in-stree c "h:" "m:"))
   `(,(mathtm-as-serial env cm))
 ))
 
@@ -524,7 +530,7 @@
   ;;; Links
   (a (handler :mixed :inline htmltm-anchor))
   ;; Elements allowed only in HEAD
-  ((:or (link base)) htmltm-drop)
+  ((:or link base) htmltm-drop)
 
   ;;; Objects images and applets
   (object (handler :mixed :inline htmltm-drop))
@@ -578,7 +584,7 @@
   (mathjax (handler :collapse :inline htmltm-mathjax))
   
   ;;; Math tag in HTML5 (no namespace prefix)
-  (math (handler :mixed :block htmltm-math))
+  (math (handler :mixed :inline htmltm-math))
   
   ;; Tags present in the previous converter
   ;; Unknown: FIG FN NOTE AU LANG PERSON
@@ -664,5 +670,5 @@
 
 (tm-define (html->texmacs html)
   (:type (-> stree stree))
-  (:synopsis "Convert a parsed HTML stree @t into a TeXmacs stree.")
+  (:synopsis "Convert a parsed HTML stree @t into a TeXmacs stree")
   (tree->stree (clean-html (convert-html-texmacs html))))

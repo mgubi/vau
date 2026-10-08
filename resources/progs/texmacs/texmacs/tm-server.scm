@@ -22,7 +22,10 @@
   (if (or (like-gnome?) (like-macos?) (like-windows?)) "popup" "footer"))
 
 (define (get-default-buffer-management)
-  (if (or (like-macos?) (like-windows?)) "separate" "shared"))
+  ;; in the browser (where the Vue plugin defines web-files) the windows are
+  ;; the tabs of the page: a document per tab
+  (if (or (like-macos?) (like-windows?) (defined? 'web-files))
+      "separate" "shared"))
 
 (define (notify-buffer-management var val)
   (when (== val (get-default-buffer-management))
@@ -31,6 +34,12 @@
 (define (get-default-show-table-cells)
   (if (qt-gui?) "on" "off"))
 
+(define (get-default-gui-density)
+  (if (os-android?) "large" "normal"))
+
+(define (get-default-responsive-tab-mode)
+  (if (os-android?) "mobile" "side"))
+
 (define (notify-look-and-feel var val)
   (set-message "Restart in order to let the new look and feel take effect"
                "configure look and feel"))
@@ -38,6 +47,23 @@
 (define (notify-gui-theme var val)
   (set-message "Restart in order to let the new theme take effect"
                "graphical interface theme"))
+
+(define (notify-icon-set var val)
+  ;; the Vue interface follows the icon set at once (vue_follow_icon_set);
+  ;; the others at their next start
+  (when (not (vue-gui?)) (notify-restart var val)))
+
+(define (notify-gui-scaling var val)
+  ;; the Vue interface follows the scaling at once
+  ;; (vue_follow_interface_scale); Qt reads it at its start
+  (when (not (vue-gui?)) (notify-restart var val)))
+
+(define (notify-window-tabs var val)
+  ;; the tabs of the windows of the browser (misc/wasm/frame.js): in a
+  ;; column at the left of the page, or above it
+  (when (defined? 'web-javascript)
+    (web-javascript (string-append "tmFrame.setTabsPosition ('"
+                                   (if (== val "top") "top" "left") "')"))))
 
 (define (notify-language var val)
   (set-output-language val)
@@ -71,8 +97,14 @@
 (define (notify-new-fonts var val)
   (set-new-fonts (== val "on")))
 
+(define (notify-hand-tuned-math-fonts var val)
+  (set-hand-tuned-math-fonts (== val "on")))
+
 (define (notify-fast-environments var val)
   (set-fast-environments (== val "on")))
+
+(define (notify-continuous-spell-checking var val)
+  (if (current-view) (notify-change 2048)))
 
 (define (notify-new-page-breaking var val)
   (noop))
@@ -83,18 +115,37 @@
 (define (get-default-unified-toolbar)
   (if (qt4-gui?) "on" "off"))
 
+(define (notify-restart var val)
+  (set-message "Restart in order to let the new setting take effect"
+               "configure graphical interface"))
+
 (define-preferences
   ("profile" "beginner" (lambda args (noop)))
   ("look and feel" "default" notify-look-and-feel)
   ("case sensitive shortcuts" "default" noop)
   ("detailed menus" "detailed" noop)
   ("buffer management" (get-default-buffer-management) notify-buffer-management)
+  ("new toolbar" "on" notify-restart)
+  ("disable texmacs window positioning" "off" noop)
+  ("use experimental keyboard patches" "off" noop)
   ("complex actions" "popups" noop)
   ("interactive questions" (get-default-interactive-questions) noop)
   ("language" (get-locale-language) notify-language)
   ("gui theme" "default" notify-gui-theme)
+  ("icon set" "neo-classical" notify-icon-set)
+  ;; the Vue interface reads it at each layout; at the left by default in
+  ;; a web browser
+  ("icon bars" (if (defined? 'web-javascript) "left" "top") noop)
+  ("window tabs" "left" notify-window-tabs)
+  ("gui density" (get-default-gui-density) noop)
+  ("gui scaling" "default" notify-gui-scaling)
+  ("gui:responsive tab mode" (get-default-responsive-tab-mode) noop)
+  ("interactive footer" "off" noop)
+  ("typographic palette set" "Classical" noop)
   ("page medium" "paper" (lambda args (noop)))
   ("fast environments" "on" notify-fast-environments)
+  ("continuous spell checking" "off" notify-continuous-spell-checking)
+  ("grammar checking" "off" (lambda args (noop)))
   ("show full context" "on" (lambda args (noop)))
   ("show table cells" (get-default-show-table-cells) (lambda args (noop)))
   ("show focus" "on" (lambda args (noop)))
@@ -114,6 +165,7 @@
   ("latex command" "pdflatex" notify-latex-command)
   ("bibtex command" "bibtex" notify-bibtex-command)
   ("scripting language" "none" notify-scripting-language)
+  ("speech" "off" noop)
   ("database tool" "off" notify-tool)
   ("debugging tool" "off" notify-tool)
   ("developer tool" "off" notify-tool)
@@ -121,16 +173,60 @@
   ("presentation tool" "off" notify-tool)
   ("remote tool" "off" notify-tool)
   ("source tool" "off" notify-tool)
-  ("versioning tool" "off" notify-tool)
+  ("versioning tool" "auto" notify-tool)
   ("experimental alpha" "on" notify-tool)
   ("new style fonts" "on" notify-new-fonts)
+  ("hand tuned math fonts" "on" notify-hand-tuned-math-fonts)
   ("bitmap effects" "on" notify-tool)
   ("new style page breaking" "on" notify-new-page-breaking)
   ("open console on errors" "on" noop)
   ("open console on warnings" "on" noop)
   ("gui:line-input:autocommit" "on" noop)
-  ("use native menubar" (get-default-native-menubar) noop)
-  ("use unified toolbar" (get-default-unified-toolbar) noop))
+  ("use native menubar" (get-default-native-menubar) noop))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Startup validation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (validate-boolean-preference pref)
+  (when (nin? (get-preference pref) '("on" "off"))
+    (reset-preference pref)))
+
+(for (pref '("new toolbar" "disable texmacs window positioning"
+             "use experimental keyboard patches" "fast environments"
+             "show full context" "show table cells" "show focus"
+             "show only semantic focus" "semantic editing" "semantic selections"
+             "semantic correctness" "remove superfluous invisible"
+             "insert missing invisible" "zealous invisible correct"
+             "homoglyph correct" "manual remove superfluous invisible"
+             "manual insert missing invisible" "manual zealous invisible correct"
+             "manual homoglyph correct" "speech" "database tool" "debugging tool"
+             "developer tool" "linking tool" "presentation tool" "remote tool"
+             "source tool" "versioning tool" "experimental alpha" "new style fonts"
+             "bitmap effects" "new style page breaking" "open console on errors"
+             "open console on warnings" "gui:line-input:autocommit"
+             "use native menubar"))
+  (validate-boolean-preference pref))
+
+(define (validate-enum-preference pref allowed-values)
+  (when (nin? (get-preference pref) allowed-values)
+    (reset-preference pref)))
+
+(validate-enum-preference "look and feel" '("default" "emacs" "gnome" "kde" "macos" "windows"))
+(validate-enum-preference "complex actions" '("menus" "popups"))
+(validate-enum-preference "interactive questions" '("footer" "popup"))
+(validate-enum-preference "detailed menus" '("simple" "detailed"))
+(validate-enum-preference "buffer management" '("separate" "shared"))
+(validate-enum-preference "security" '("accept no scripts" "prompt on scripts" "accept all scripts"))
+(validate-enum-preference "autosave" '("0" "5" "30" "120" "300"))
+(validate-enum-preference "document update times" '("1" "2" "3"))
+(validate-enum-preference "updater:interval" '("0" "24" "168" "720"))
+(validate-enum-preference "gui theme" '("default" "light" "dark" ""))
+(validate-enum-preference "icon set" '("classical" "monochrome" "neo-classical" "lucide"))
+(validate-enum-preference "icon bars" '("top" "left"))
+(validate-enum-preference "window tabs" '("top" "left"))
+(validate-enum-preference "gui density" '("compact" "normal" "large"))
+(validate-enum-preference "gui:responsive tab mode" '("top" "side" "mobile" "grid"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Properties of some built-in routines
@@ -211,11 +307,12 @@
         (else (do-kill-window))))
 
 (tm-define (safely-quit-TeXmacs)
-  (with l (filter buffer-modified? (buffer-list))
+  (let* ((m (filter buffer-modified? (buffer-list)))
+	 (l (filter (non buffer-aux?) m)))
     (if (null? l)
         (quit-TeXmacs)
         (begin
-          (when (not (buffer-modified? (current-buffer)))
+          (when (nin? (current-buffer) l)
             ;; FIXME: focus on window with buffer, if any
             (switch-to-buffer (car l)))
           (user-confirm "There are unsaved documents. Really quit?" #f  
@@ -232,7 +329,20 @@
   (if (window-per-buffer?) (new-buffer) (open-window)))
 
 (tm-define (close-document)
-  (if (window-per-buffer?) (safely-kill-window) (safely-kill-buffer)))
+  (delayed (:idle 1)
+    (if (window-per-buffer?) (safely-kill-window) (safely-kill-buffer))))
 
 (tm-define (close-document*)
   (if (window-per-buffer?) (safely-kill-buffer) (safely-kill-window)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; When to show the versioning tool
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(tm-define (versioning-tool-is? what)
+  (== (get-preference "versioning tool") what))
+
+(tm-define (set-versioning-tool what)
+  (:synopsis "When to show the versioning tool")
+  (:check-mark "*" versioning-tool-is?)
+  (set-preference "versioning tool" what))

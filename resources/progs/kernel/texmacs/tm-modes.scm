@@ -32,7 +32,12 @@
            (deps* (map list (map texmacs-mode-pred deps)))
            (l (if (== action #t) deps* (cons action deps*)))
            (test (if (null? l) #t (if (null? (cdr l)) (car l) (cons 'and l))))
-           (defn `(varlet *texmacs-module* ',pred (lambda () ,test)))
+           (defn (if (s7-scheme?)
+                     ;; register the name: s7 procedures do not know their name
+                     `(begin
+                        (varlet *texmacs-module* ',pred (lambda () ,test))
+                        (ahash-set! tm-defined-name ,pred ',pred))
+                     `(define-public (,pred) ,test)))
            (rules (map (lambda (dep) (list dep mode)) deps))
            (logic-cmd `(logic-rules ,@rules))
            (arch1 `(set-symbol-procedure! ',mode ,pred))
@@ -43,8 +48,14 @@
           (list 'begin defn arch1 arch2 logic-cmd)))))
 
 (define-public-macro (texmacs-modes . l)
-  `(begin
-     ,@(map texmacs-mode l)))
+  (if (s7-scheme?)
+      `(begin
+         ,@(map texmacs-mode l))
+      `(begin
+         (set! temp-module ,(current-module))
+         (set-current-module texmacs-user)
+         ,@(map texmacs-mode l)
+         (set-current-module temp-module))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Checking modes
@@ -63,7 +74,7 @@
 (define-public (texmacs-mode-mode pred)
   "Get drd predicate name associated to scheme predicate or symbol"
   (if (procedure? pred)
-      (with name (procedure-name pred)
+      (with name (procedure-symbol-name pred)
         (if name (texmacs-mode-mode name) 'unknown%))
       (let* ((pred-str (symbol->string pred))
              (pred-root (substring pred-str 0 (- (string-length pred-str) 1)))
@@ -102,11 +113,96 @@
   (== (get-preference "database tool") "on"))
 
 (define-public (side-tools?)
-  (visible-side-tools? 0))
+  (and (== (get-preference "side tools") "on")
+       (== (get-preference "developer tool") "on")))
+
+(define-public (left-tools?)
+  (and (== (get-preference "left tools") "on")
+       (== (get-preference "developer tool") "on")))
+
+(define-public (has-side-tools? n)
+  (cond ((== n 0) (side-tools?))
+        ((== n 1) (left-tools?))
+        (else #f)))
+
+(define-public (has-markup-gui?)
+  (and (== (get-preference "markup gui") "on")
+       (== (get-preference "developer tool") "on")))
+
+(define-public (has-chatgpt?) #f)
+(define-public (has-gemini?) #f)
+(define-public (has-llama?) #f)
+(define-public (has-mistral-7b?) #f)
+(define-public (has-albert?) #f)
+(define-public (has-claude?) #f)
+(define-public (has-openrouter?) #f)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mode related
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Versioning tool
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; With the preference "versioning tool" set to "auto", the versioning tool
+;; is active for documents inside a working tree of Git or Subversion.
+;; NOTE: this is tested very often (e.g. for the keyboard), hence the cache;
+;; no external command is run here. Directories which are not versioned are
+;; tested again after a while, for repositories created outside TeXmacs.
+
+(define versioning-directory-table (make-ahash-table))
+(define versioning-directory-delay 10000)
+
+(define (versioning-directory-sub dir)
+  (cond ((or (url-exists? (url-append dir ".git"))
+             (url-exists? (url-append dir ".svn"))) dir)
+        ((== (url-head dir) dir) #f)
+        (else (versioning-directory-sub (url-head dir)))))
+
+(define-public (versioning-directory u)
+  "Root of the Git or Subversion working tree containing @u, or @#f"
+  (and (url? u) (url-rooted? u) (not (url-rooted-tmfs? u))
+       (not (url-rooted-web? u))
+       (let* ((dir (url-head u))
+              (key (url->system dir))
+              (old (ahash-ref versioning-directory-table key)))
+         (if (and old (or (url? old)
+                          (< (- (texmacs-time) old) versioning-directory-delay)))
+             (and (url? old) old)
+             (with r (versioning-directory-sub dir)
+               ;; NOTE: the time is kept for directories which are not versioned
+               (ahash-set! versioning-directory-table key (or r (texmacs-time)))
+               r)))))
+
+(define-public (git-directory? u)
+  "Is @u inside a Git working tree?"
+  (and-with d (versioning-directory u)
+    (url-exists? (url-append d ".git"))))
+
+(define-public (git-context? u)
+  "Is @u a document inside a Git working tree, or a Git page?"
+  (or (git-directory? u)
+      (and (url? u) (url-rooted-tmfs? u)
+           (list-or (map (cut string-starts? (url->unix u) <>)
+                         '("tmfs://git/" "tmfs://commit/" "tmfs://blame/"))))))
+
+(define-public (versioning-directory-reset)
+  (set! versioning-directory-table (make-ahash-table)))
+
+(define-public (versioning-tool-active?)
+  (with p (get-preference "versioning tool")
+    (or (== p "on")
+        (and (== p "auto")
+             (with u (current-buffer)
+               (or (nnot (versioning-directory u))
+                   (and (url? u) (url-rooted-tmfs? u)
+                        (list-or (map (cut string-starts? (url->unix u) <>)
+                                      versioning-pages)))))))))
+
+(define versioning-pages
+  '("tmfs://git/" "tmfs://commit/" "tmfs://history/" "tmfs://revision/"
+    "tmfs://blame/"))
 
 (texmacs-modes
   (always% #t)
@@ -192,21 +288,21 @@
     "danish" "dutch" "english" "esperanto" "finnish" "french" "german" "greek"
     "hungarian" "italian" "japanese" "korean" "polish"
     "portuguese" "romanian" "russian" "slovak" "slovene" "spanish"
-    "swedish" "chineset" "ukrainian"))
+    "swedish" "taiwanese" "ukrainian"))
 
 (define-public (supported-language? lan)
   (and (in? lan supported-languages)
        (cond ((== lan "chinese") (supports-chinese?))
              ((== lan "japanese") (supports-japanese?))
              ((== lan "korean") (supports-korean?))
-             ((== lan "chineset") (supports-chinese?))
+             ((== lan "taiwanese") (supports-chinese?))
              (else #t))))
 
 (texmacs-modes
   (in-cyrillic% (in? (get-env "language")
                      '("bulgarian" "russian" "ukrainian")) in-text%)
   (in-oriental% (in? (get-env "language")
-                     '("chinese" "japanese" "korean" "chineset")) in-text%)
+                     '("chinese" "japanese" "korean" "taiwanese")) in-text%)
   (in-english% (in? (get-env "language")
                     '("british" "english")) in-text%)
   (in-american% (== (get-env "language") "english") in-text%)
@@ -227,14 +323,14 @@
   (in-japanese% (== (get-env "language") "japanese") in-oriental%)
   (in-korean% (== (get-env "language") "korean") in-oriental%)
   (in-polish% (== (get-env "language") "polish") in-text%)
-  (in-portugese% (== (get-env "language") "portugese") in-text%)
+  (in-portuguese% (== (get-env "language") "portuguese") in-text%)
   (in-romanian% (== (get-env "language") "romanian") in-text%)
   (in-russian% (== (get-env "language") "russian") in-cyrillic%)
   (in-slovak% (== (get-env "language") "slovak") in-text%)
   (in-slovene% (== (get-env "language") "slovene") in-text%)
   (in-spanish% (== (get-env "language") "spanish") in-text%)
   (in-swedish% (== (get-env "language") "swedish") in-text%)
-  (in-chineset% (== (get-env "language") "chineset") in-oriental%)
+  (in-taiwanese% (== (get-env "language") "taiwanese") in-oriental%)
   (in-ukrainian% (== (get-env "language") "ukrainian") in-cyrillic%)
 
   (in-math-english% (in? (get-env "language")
@@ -276,7 +372,8 @@
   (with-presentation-tool% (== (get-preference "presentation tool") "on"))
   (with-remote-tool% (== (get-preference "remote tool") "on"))
   (with-source-tool% (== (get-preference "source tool") "on"))
-  (with-versioning-tool% (== (get-preference "versioning tool") "on"))
+  (with-versioning-tool% (versioning-tool-active?))
+  (with-keyboard-tool% (== (get-preference "keyboard tool") "on"))
   (in-presentation% (or (style-has? "beamer-style")
                         (== (get-preference "presentation tool") "on")
                         (inside? 'screens)) in-beamer%)

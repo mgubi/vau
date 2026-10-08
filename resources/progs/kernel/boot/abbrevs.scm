@@ -69,24 +69,51 @@
 (define-public (number->keyword x)
   (symbol->keyword (string->symbol (string-append "%" (number->string x)))))
 
-(define-public (save-object file value)
-  (call-with-output-file (url-materialize file "") (lambda (port)
-    (let-temporarily (((*s7* 'print-length) 9223372036854775807)) (write value port)))))
+(if (s7-scheme?)
+    ;; s7 truncates long vectors when printing, unless print-length is raised
+    (define-public (save-object file value)
+      (call-with-output-file (url-materialize file "")
+        (lambda (port)
+          (let-temporarily (((*s7* 'print-length) 9223372036854775807))
+            (write value port)))))
+    (define-public (save-object file value)
+      (call-with-output-file (url-materialize file "")
+        (lambda (port) (write value port)))))
 
 (define-public (load-object file)
-  (let ((r (call-with-input-file (url-materialize file "r") (lambda (port) (read port)))))
-        (if (eof-object? r) '() r)))
+  (let ((r (catch #t
+    (lambda ()
+      (call-with-input-file (url-materialize file "r")
+        (lambda (port) (read port))))
+    (lambda (key msg . err-msg)
+      (let* ((msg (car err-msg))
+	     (args (cadr err-msg))
+	     (err-msg 
+	      (if (list? args) (eval (apply format #f msg args)) msg)))
+	(display* "Error, cannot load file " file ": " err-msg "\n")
+	'())))))
+    (if (eof-object? r) '() r)))
 
 (define-public (persistent-ref dir key)
   (and (persistent-has? dir key)
        (persistent-get dir key)))
 
+(define-public (sourcify x)
+  (if (and (procedure? x) (procedure-source x)) (procedure-source x) x))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Common programming constructs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(if (not (s7-scheme?)) ;; built into s7
+    (begin
+      (define-public-macro (when cond? . body)
+        `(if ,cond? (begin ,@body)))
+      (define-public-macro (unless cond? . body)
+        `(if (not ,cond?) (begin ,@body)))))
+
 (define-public-macro (with var val . body)
-  (if (pair? var)
+  (if (or (pair? var) (null? var))
       `(apply (lambda ,var ,@body) ,val)
       `(let ((,var ,val)) ,@body)))
 
@@ -94,16 +121,26 @@
   `(let ((,(car fun) (lambda ,(cdr fun) ,fun-body)))
      ,@body))
 
+
 ;; handle multiple values in a way compatible with s7 (and backcompatible with guile)
 (define-public-macro (with-global var val . body)
   (let ((old (gensym)) (new (gensym)))
     `(let ((,old ,var))
        (set! ,var ,val)
-       (call-with-values
-          (lambda () ,@body)
-          (lambda vals
-            (set! ,var ,old)
+       (call-with-values 
+          (lambda () ,@body) 
+          (lambda vals 
+            (set! ,var ,old) 
             (apply values vals))))))
+ 
+;; old code
+;(define-public-macro (with-global var val . body)
+;  (let ((old (gensym)) (new (gensym)))
+;    `(let ((,old ,var))
+;       (set! ,var ,val)
+;       (let ((,new (begin ,@body))) ;; handle multiple values in s7
+;         (set! ,var ,old)
+;         ,new))))
 
 (define-public-macro (and-with var val . body)
   `(with ,var ,val
@@ -175,16 +212,16 @@
 (define-public (path->tree p)
   (and (path-exists? p) (cpp-path->tree p)))
 
-;(define-public selection-active? selection-active-any?)
+(define-public selection-active? selection-active-any?)
 
-;(define-public (selection-active-non-small?)
-;  (and (selection-active?)
-;       (not (selection-active-small?))))
+(define-public (selection-active-non-small?)
+  (and (selection-active?)
+       (not (selection-active-small?))))
 
-;(define-public (selection-active-large?)
-;  (and (selection-active?)
-;       (not (selection-active-small?))
-;       (not (selection-active-table?))))
+(define-public (selection-active-large?)
+  (and (selection-active?)
+       (not (selection-active-small?))
+       (not (selection-active-table?))))
 
 (define-public (go-to p)
   (let* ((r (buffer-path))
@@ -207,12 +244,13 @@
       (set! opts (list (car opts) u))))
   (cpp-choose-file fun title type (car opts) (cadr opts)))
 
-;(define-public (alt-windows-delete l)
-;  (for-each alt-window-delete l))
+(define-public (alt-windows-delete l)
+  (for-each alt-window-delete l))
 
-;(define-public (qt4-gui?) (== (gui-version) "qt4"))
-;(define-public (qt4-or-later-gui?) (in? (gui-version) (list "qt4" "qt5" "qt6")))
-;(define-public (qt5-gui?) (== (gui-version) "qt5"))
-;(define-public (qt5-or-later-gui?) (in? (gui-version) (list "qt5" "qt6")))
-;(define-public (qt6-gui?) (== (gui-version) "qt6"))
-;(define-public (qt6-or-later-gui?) (in? (gui-version) (list "qt6")))
+(define-public (qt4-gui?) (== (gui-version) "qt4"))
+(define-public (qt4-or-later-gui?) (in? (gui-version) (list "qt4" "qt5" "qt6")))
+(define-public (qt5-gui?) (== (gui-version) "qt5"))
+(define-public (qt5-or-later-gui?) (in? (gui-version) (list "qt5" "qt6")))
+(define-public (qt6-gui?) (== (gui-version) "qt6"))
+(define-public (qt6-or-later-gui?) (in? (gui-version) (list "qt6")))
+(define-public (ns-gui?) (== (gui-version) "ns")) ; the native Cocoa interface

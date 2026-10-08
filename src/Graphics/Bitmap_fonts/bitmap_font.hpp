@@ -11,14 +11,14 @@
 
 #ifndef BITMAP_FONT_H
 #define BITMAP_FONT_H
+
+#include "config.h"
 #include "resource.hpp"
 
 class frame;
 
 RESOURCE(font_metric);
 RESOURCE(font_glyphs);
-
-typedef unsigned char QN;
 
 struct metric_struct {
   SI x1, y1;
@@ -41,7 +41,7 @@ struct glyph_rep: concrete_struct {
   short lwidth;              // logical width of character
   short status;              // status for extensible characters
   short artistic;            // result of applying an artistic effect
-  QN*   raster;              // character definition
+  N8*   raster;              // character definition
 
   glyph_rep (int w, int h, int xoff, int yoff, int depth, int status=0);
   ~glyph_rep ();
@@ -92,7 +92,8 @@ void  rotate (metric& ey, metric ex, double angle, double ox, double oy);
 frame reslash (metric slash, metric proto);
 void  normalize_borders (glyph& gl, metric& ex);
 
-glyph shrink      (glyph gl, int xf, int yf, SI& xo, SI& yo);
+glyph shrink      (glyph gl, int xf, int yf, SI& xo, SI& yo,
+		   double pixel_ratio);
 glyph join        (glyph gl1, glyph gl2);
 glyph intersect   (glyph gl1, glyph gl2);
 glyph exclude     (glyph gl1, glyph gl2);
@@ -102,6 +103,8 @@ glyph move        (glyph gl, SI x, SI y);
 glyph bar_right   (glyph gl1, glyph gl2);
 glyph bar_bottom  (glyph gl1, glyph gl2);
 glyph copy        (glyph gl);
+glyph junc_left   (glyph gl, int jw);
+glyph junc_right  (glyph gl, int jw);
 glyph simplify    (glyph gl);
 glyph padded      (glyph gl, int l, int t, int r, int b);
 glyph clip        (glyph gl, SI x1, SI y1, SI x2, SI y3);

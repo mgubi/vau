@@ -21,14 +21,14 @@
 (define-public (user-ask prompt cont)
   (tm-interactive cont
     (if (string? prompt)
-	(list (build-interactive-arg prompt))
-	(list prompt))))
+        (list (build-interactive-arg prompt))
+        (list prompt))))
 
 (define-public (user-confirm prompt default cont)
   (let ((k (lambda (answ) (cont (yes? answ)))))
     (if default
-	(user-ask (list prompt "question" (translate "yes") (translate "no")) k)
-	(user-ask (list prompt "question" (translate "no") (translate "yes")) k))))
+        (user-ask (list prompt "question" (translate "yes") (translate "no")) k)
+        (user-ask (list prompt "question" (translate "no") (translate "yes")) k))))
 
 (define-public (user-url prompt type cont)
   (user-delayed (lambda () (choose-file cont prompt type))))
@@ -42,73 +42,89 @@
 
 (define-public (delayed-sub body)
   (cond ((or (npair? body) (nlist? (car body)) (not (keyword? (caar body))))
-	 `(lambda () ,@body #t))
-	((== (caar body) :pause)
-	 `(let* ((start (texmacs-time))
-		 (proc ,(delayed-sub (cdr body))))
-	    (lambda ()
-	      (with left (- (+ start ,(cadar body)) (texmacs-time))
-		(if (> left 0) left
-		    (begin
-		      (set! start (texmacs-time))
-		      (proc)))))))
-	((== (caar body) :every)
-	 `(let* ((time (+ (texmacs-time) ,(cadar body)))
-		 (proc ,(delayed-sub (cdr body))))
-	    (lambda ()
-	      (with left (- time (texmacs-time))
-		(if (> left 0) left
-		    (begin
-		      (set! time (+ (texmacs-time) ,(cadar body)))
-		      (proc)))))))
-	((== (caar body) :idle)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      (with left (- ,(cadar body) (idle-time))
-		(if (> left 0) left
-		    (proc))))))
-	((== (caar body) :refresh)
-	 (with sym (gensym)
-	   `(let* ((,sym #f)
-		   (proc ,(delayed-sub (cdr body))))
-	      (lambda ()
-		(if (!= ,sym (change-time)) 0
-		    (with left (- ,(cadar body) (idle-time))
-		      (if (> left 0) left
-			  (begin
-			    (set! ,sym (change-time))
-			    (proc)))))))))
-	((== (caar body) :require)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      (if (not ,(cadar body)) 0
-		  (proc)))))
-	((== (caar body) :while)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      (if (not ,(cadar body)) #t
-		  (with left (proc)
-		    (if (== left #t) 0 left))))))
-	((== (caar body) :clean)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      (with left (proc)
-		(if (!= left #t) left
-		    (begin ,(cadar body) #t))))))
-	((== (caar body) :permanent)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      (with left (proc)
-		(if (!= left #t) left
-		    (with next ,(cadar body)
-		      (if (!= next #t) #t
-			  0)))))))
-	((== (caar body) :do)
-	 `(with proc ,(delayed-sub (cdr body))
-	    (lambda ()
-	      ,(cadar body)
-	      (proc))))
-	(else (delayed-sub (cdr body)))))
+         `(lambda () ,@body #t))
+        ((== (caar body) :pause)
+         `(let* ((start (texmacs-time))
+                 (proc ,(delayed-sub (cdr body))))
+            (lambda ()
+              (with left (- (+ start ,(cadar body)) (texmacs-time))
+                (if (> left 0) left
+                    (begin
+                      (set! start (texmacs-time))
+                      (proc)))))))
+        ((== (caar body) :every)
+         `(let* ((time (+ (texmacs-time) ,(cadar body)))
+                 (proc ,(delayed-sub (cdr body))))
+            (lambda ()
+              (with left (- time (texmacs-time))
+                (if (> left 0) left
+                    (begin
+                      (set! time (+ (texmacs-time) ,(cadar body)))
+                      (proc)))))))
+        ;; :idle won't work in headless mode
+        ((== (caar body) :idle)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              (with left (- ,(cadar body) (idle-time))
+                (if (> left 0) left
+                  (proc))))))
+        ((== (caar body) :on-cpu-idle)
+         `(let* ((interval ,(cadar body))
+                 (next (+ (texmacs-time) interval))
+                 (proc ,(delayed-sub (cdr body))))
+            (lambda ()
+              (cond ((< (texmacs-time) next)
+                     ;(display* "waiting for interval " (texmacs-time) " " next "\n")
+                     (- next (texmacs-time)))
+                    ((>= (cpu-idle-time) 30000)
+                     (proc)
+                     (set! next (+ (texmacs-time) interval))
+                     0)
+                    (else
+                      ;(display* "waiting for idle" (cpu-idle-time) "\n")
+                      1000)))))
+        ((== (caar body) :refresh)
+         (with sym (gensym)
+           `(let* ((,sym #f)
+                   (proc ,(delayed-sub (cdr body))))
+              (lambda ()
+                (if (!= ,sym (change-time)) 0
+                    (with left (- ,(cadar body) (idle-time))
+                      (if (> left 0) left
+                          (begin
+                            (set! ,sym (change-time))
+                            (proc)))))))))
+        ((== (caar body) :require)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              (if (not ,(cadar body)) 0
+                  (proc)))))
+        ((== (caar body) :while)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              (if (not ,(cadar body)) #t
+                  (with left (proc)
+                    (if (== left #t) 0 left))))))
+        ((== (caar body) :clean)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              (with left (proc)
+                (if (!= left #t) left
+                    (begin ,(cadar body) #t))))))
+        ((== (caar body) :permanent)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              (with left (proc)
+                (if (!= left #t) left
+                    (with next ,(cadar body)
+                      (if (!= next #t) #t
+                          0)))))))
+        ((== (caar body) :do)
+         `(with proc ,(delayed-sub (cdr body))
+            (lambda ()
+              ,(cadar body)
+              (proc))))
+        (else (delayed-sub (cdr body)))))
 
 (define-public-macro (delayed . body)
   `(exec-delayed-pause ,(delayed-sub body)))
@@ -122,12 +138,24 @@
 (define-public (set-message-notify)
   (set! message-serial (+ message-serial 1)))
 
+;; is the status bar showing the properties of the text at the cursor and
+;; the tags around it (and not a message)? The editor says so each time it
+;; updates the status bar; an interactive status bar replaces only those
+;; (texmacs menus footer-menu)
+(define footer-environment #f)
+
+(define-public (footer-environment?)
+  footer-environment)
+
+(define-public (footer-environment-notify flag)
+  (set! footer-environment flag))
+
 (define-public (recall-message-after len)
   (with current message-serial
     (delayed
       (:idle len)
       (when (== message-serial current)
-	(recall-message)))))
+        (recall-message)))))
 
 (define-public (set-temporary-message left right len)
   (set-message-temp left right #t)
@@ -160,22 +188,42 @@
 
 (define (list-but l1 l2)
   (cond ((null? l1) l1)
-	((in? (car l1) l2) (list-but (cdr l1) l2))
-	(else (cons (car l1) (list-but (cdr l1) l2)))))
+        ((in? (car l1) l2) (list-but (cdr l1) l2))
+        (else (cons (car l1) (list-but (cdr l1) l2)))))
 
 (define (as-stree x)
   (cond ((tree? x) (tree->stree x))
-	((== x #f) "false")
-	((== x #t) "true")
-	(else x)))
+        ((== x #f) "false")
+        ((== x #t) "true")
+        (else x)))
+
+(define (interactive-password-args fun)
+  ;; the positions ("0", "1"...) of the arguments of @fun of type password:
+  ;; what is typed there is not learned, since the learned values are saved
+  ;; in clear in $TEXMACS_HOME_PATH/system/interactive.scm (a passphrase of
+  ;; the wallet was, and the password of a PDF would be)
+  (catch #t
+    (lambda ()
+      (with args (and (procedure? fun) (property fun :arguments))
+        (if (not (list? args)) '()
+            (let loop ((l args) (i 0) (acc '()))
+              (if (null? l) acc
+                  (loop (cdr l) (+ i 1)
+                        (if (== (compute-interactive-arg-type fun (car l))
+                                "password")
+                            (cons (number->string i) acc)
+                            acc)))))))
+    (lambda err '())))
 
 (define-public (learn-interactive fun assoc-t)
   "Learn interactive values for @fun"
+  (with pw (interactive-password-args fun)
+    (set! assoc-t (list-filter assoc-t (lambda (x) (nin? (car x) pw)))))
   (set! assoc-t (map (lambda (x) (cons (car x) (as-stree (cdr x)))) assoc-t))
   (set! fun (procedure-symbol-name fun))
-  (when (symbol? fun)
+  (when (and (symbol? fun) (nnull? assoc-t))
     (let* ((l1 (or (ahash-ref interactive-arg-table fun) '()))
-	   (l2 (cons assoc-t (list-but l1 (list assoc-t)))))
+           (l2 (cons assoc-t (list-but l1 (list assoc-t)))))
       (ahash-set! interactive-arg-table fun l2))))
 
 (define-public (learned-interactive fun)
@@ -191,43 +239,43 @@
 
 (define (learned-interactive-arg fun nr)
   (let* ((l (learned-interactive fun))
-	 (arg (number->string nr))
-	 (extract (lambda (assoc-l) (assoc-ref assoc-l arg))))
+         (arg (number->string nr))
+         (extract (lambda (assoc-l) (assoc-ref assoc-l arg))))
     (map extract l)))
 
 (define (compute-interactive-arg-text fun which)
   (with arg (property fun (list :argument which))
     (cond ((npair? arg) (upcase-first (symbol->string which)))
-	  ((and (string? (car arg)) (null? (cdr arg))) (car arg))
-	  ((string? (cadr arg)) (cadr arg))
-	  (else (upcase-first (symbol->string which))))))
+          ((and (string? (car arg)) (null? (cdr arg))) (car arg))
+          ((string? (cadr arg)) (cadr arg))
+          (else (upcase-first (symbol->string which))))))
 
 (define (compute-interactive-arg-type fun which)
   (with arg (property fun (list :argument which))
     (cond ((or (npair? arg) (npair? (cdr arg))) "string")
-	  ((string? (car arg)) (car arg))
-	  ((symbol? (car arg)) (symbol->string (car arg)))
-	  (else "string"))))
+          ((string? (car arg)) (car arg))
+          ((symbol? (car arg)) (symbol->string (car arg)))
+          (else "string"))))
 
 (define (compute-interactive-arg-proposals fun which)
   (let* ((default (property fun (list :default which)))
-	 (proposals (property fun (list :proposals which)))
-	 (learned '()))
+         (proposals (property fun (list :proposals which)))
+         (learned '()))
     (cond ((procedure? default) (list (default)))
-	  ((procedure? proposals) (proposals))
-	  (else '()))))
+          ((procedure? proposals) (proposals))
+          (else '()))))
 
 (define (compute-interactive-arg fun which)
   (cons (compute-interactive-arg-text fun which)
-	(cons (compute-interactive-arg-type fun which)
-	      (compute-interactive-arg-proposals fun which))))
+        (cons (compute-interactive-arg-type fun which)
+              (compute-interactive-arg-proposals fun which))))
 
 (define (compute-interactive-args-try-hard fun)
   (with src (procedure-source fun)
     (if (and (pair? src) (== (car src) 'lambda)
-	     (pair? (cdr src)) (list? (cadr src)))
-	(map upcase-first (map symbol->string (cadr src)))
-	'())))
+             (pair? (cdr src)) (list? (cadr src)))
+        (map upcase-first (map symbol->string (cadr src)))
+        '())))
 
 (define (compute-interactive-arg-list fun l)
   (if (npair? l) (list)
@@ -235,33 +283,38 @@
             (compute-interactive-arg-list fun (cdr l)))))
 
 (tm-define (compute-interactive-args fun)
-  (with s-fun (procedure-symbol-name fun)
-    (with args (property s-fun :arguments)
-      (if (not args)
-        (compute-interactive-args-try-hard s-fun)
-        (compute-interactive-arg-list s-fun args)))))
+  (let* ((args (property fun :arguments))
+         (syn* (property fun :synopsis*)))
+    (cond ((not args)
+           (compute-interactive-args-try-hard fun))
+          ((and (not (side-tools?)) (list-1? syn*) (string? (car syn*)))
+           (let* ((type (compute-interactive-arg-type fun (car args)))
+                  (prop (compute-interactive-arg-proposals fun (car args)))
+                  (tail (compute-interactive-arg-list fun (cdr args))))
+             (cons (cons (car syn*) (cons type prop)) tail)))
+          (else (compute-interactive-arg-list fun args)))))
 
 (define (build-interactive-arg s)
   (cond ((string-ends? s ":") s)
-	((string-ends? s "?") s)
-	(else (string-append s ":"))))
+        ((string-ends? s "?") s)
+        (else (string-append s ":"))))
 
 (tm-define (build-interactive-args fun l nr learned?)
   (cond ((null? l) l)
-	((string? (car l))
-	 (build-interactive-args
-	  fun (cons (list (car l) "string") (cdr l)) nr learned?))
-	(else
-	 (let* ((name (build-interactive-arg (caar l)))
-		(type (cadar l))
-		(pl (cddar l))
-		(ql pl)
-		;;(ql (if (null? pl) '("") pl))
-		(ll (if learned? (learned-interactive-arg fun nr) '()))
-		(rl (append ql (list-but ll ql)))
-		(props (if (<= (length ql) 1) rl ql)))
-	   (cons (cons name (cons type props))
-		 (build-interactive-args fun (cdr l) (+ nr 1) learned?))))))
+        ((string? (car l))
+         (build-interactive-args
+          fun (cons (list (car l) "string") (cdr l)) nr learned?))
+        (else
+         (let* ((name (build-interactive-arg (caar l)))
+                (type (cadar l))
+                (pl (cddar l))
+                (ql pl)
+                ;;(ql (if (null? pl) '("") pl))
+                (ll (if learned? (learned-interactive-arg fun nr) '()))
+                (rl (append ql (list-but ll ql)))
+                (props (if (<= (length ql) 1) rl ql)))
+           (cons (cons name (cons type props))
+                 (build-interactive-args fun (cdr l) (+ nr 1) learned?))))))
 
 (tm-define (interactive fun . args)
   (:synopsis "Call @fun with interactively specified arguments @args")
@@ -269,7 +322,15 @@
   (lazy-define-force fun)
   (if (null? args) (set! args (compute-interactive-args fun)))
   (with fun-args (build-interactive-args fun args 0 #t)
-    (tm-interactive fun fun-args)))
+    (tm-interactive-hook fun fun-args)))
+
+(tm-define (interactive-title fun)
+  (let* ((val (property fun :synopsis))
+         (name (procedure-symbol-name fun))
+         (name* (and name (symbol->string name))))
+    (or (and (list-1? val) (string? (car val)) (car val))
+        (and name (string-append "Interactive command '" name* "'"))
+        "Interactive command")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Store learned arguments from one session to another
@@ -283,33 +344,33 @@
   (with (key . l) x
     (with (form arg) key
       (with a (or (ahash-ref t form) '())
-	(set! a (assoc-set! a arg l))
-	(ahash-set! t form a)))))      
+        (set! a (assoc-set! a arg l))
+        (ahash-set! t form a)))))      
 
 (define (rearrange-old x)
   (with (form . l) x
     (let* ((len (apply min (map length l)))
-	   (truncl (map (cut sublist <> 0 len) l))
-	   (sl (sort truncl (lambda (l1 l2) (< (car l1) (car l2)))))
-	   (nl (map (lambda (x) (cons (number->string (car x)) (cdr x))) sl))
-	   (build (lambda args (map cons (map car nl) args)))
-	   (r (apply map (cons build (map cdr nl)))))
+           (truncl (map (cut sublist <> 0 len) l))
+           (sl (sort truncl (lambda (l1 l2) (< (car l1) (car l2)))))
+           (nl (map (lambda (x) (cons (number->string (car x)) (cdr x))) sl))
+           (build (lambda args (map cons (map car nl) args)))
+           (r (apply map (cons build (map cdr nl)))))
       (cons form r))))
 
 (define (decode-old l)
   (let* ((t (make-ahash-table))
-	 (setter (cut ahash-set-2! t <>)))
+         (setter (cut ahash-set-2! t <>)))
     (for-each setter l)
     (let* ((r (ahash-table->list t))
-	   (m (map rearrange-old r)))
+           (m (map rearrange-old r)))
       (list->ahash-table m))))
 
 (define (retrieve-learned)
   (if (url-exists? "$TEXMACS_HOME_PATH/system/interactive.scm")
       (let* ((l (load-object "$TEXMACS_HOME_PATH/system/interactive.scm"))
-	     (old? (and (pair? l) (pair? (car l)) (list-2? (caar l))))
-	     (decode (if old? decode-old list->ahash-table)))
-	(set! interactive-arg-table (decode l)))))
+             (old? (and (pair? l) (pair? (car l)) (list-2? (caar l))))
+             (decode (if old? decode-old list->ahash-table)))
+        (set! interactive-arg-table (decode l)))))
 
 (on-entry (retrieve-learned))
 (on-exit (save-learned))

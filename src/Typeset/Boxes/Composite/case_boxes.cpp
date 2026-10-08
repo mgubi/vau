@@ -12,6 +12,9 @@
 
 #include "Boxes/composite.hpp"
 #include "Boxes/construct.hpp"
+#include "analyze.hpp"
+
+path the_editor_path ();
 
 /******************************************************************************
 * Case boxes
@@ -33,6 +36,7 @@ public:
   
   bool satisfies (tree t, tree cond);
   void switch_to (int i, rectangles& rs);
+  void broadcast (tree t, rectangles& rs);
   tree message (tree t, SI x, SI y, rectangles& rs);
   void loci (SI x, SI y, SI delta, list<string>& ids, rectangles& rs);
   void collect_page_numbers (hashmap<string,tree>& h, tree page);
@@ -97,9 +101,34 @@ case_box_rep::switch_to (int i, rectangles& rs) {
 
 bool
 case_box_rep::satisfies (tree t, tree cond) {
-  if (t == cond) return true;
+  if (is_atomic (cond) && occurs (",", cond->label)) {
+    array<string> a= tokenize (cond->label, ",");
+    for (int i=0; i<N(a); i++)
+      if (satisfies (t, a[i])) return true;
+    return false;
+  }
+  if (t == cond || cond == "any") return true;
   if (cond == "mouse-over") return entered;
+  if (cond == "focus") {
+    path cp= is_nil (ip)? ip: (ip->item < 0? ip->next: ip);
+    cp= reverse (cp);
+    bool r= (cp < path_up (the_editor_path ()));
+    return r;
+  }
   return false;
+}
+
+void
+case_box_rep::broadcast (tree t, rectangles& rs) {
+  for (int i=0; i < min (N(conds), N(bs)); i++)
+    if (satisfies (t, conds[i])) {
+      switch_to (i, rs);
+      bs[current]->broadcast (t, rs);
+      return;
+    }
+  if (N(conds) < N(bs))
+    switch_to (N(bs) - 1, rs);
+  bs[current]->broadcast (t, rs);
 }
 
 tree
@@ -111,7 +140,8 @@ case_box_rep::message (tree t, SI x, SI y, rectangles& rs) {
       switch_to (i, rs);
       return bs[current]->message (t, x, y, rs);
     }
-  switch_to (N(bs) - 1, rs);
+  if (N(conds) < N(bs))
+    switch_to (N(bs) - 1, rs);
   return bs[current]->message (t, x, y, rs);
 }
 

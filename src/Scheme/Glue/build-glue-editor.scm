@@ -186,7 +186,7 @@
   (key-press-spell spell_keypress (bool string))
   (key-press-complete complete_keypress (bool string))
   (mouse-any mouse_any (void string int int int double array_double))
-  (get-mouse-position get_mouse_position (array_int))
+  (get-mouse-position get_mouse_position (array_SI))
   (set-mouse-pointer set_pointer (void string string))
   (set-predef-mouse-pointer set_pointer (void string))
   
@@ -257,6 +257,9 @@
   (get-alt-selection get_alt_selection (array_path string))
   (cancel-alt-selection cancel_alt_selection (void string))
   (cancel-alt-selections cancel_alt_selections (void))
+  (set-user-cursor set_user_cursor (void string path string string))
+  (cancel-user-cursor cancel_user_cursor (void string))
+  (cancel-user-cursors cancel_user_cursors (void))
 
   ;; undo and redo
   (clear-undo-history clear_undo_history (void))
@@ -306,6 +309,7 @@
 
   ;; miscellaneous routines
   (keyboard-focus-on keyboard_focus_on (void string))
+  (broadcast-message broadcast_message (void string))
   (view-set-property set_property (void scheme_tree scheme_tree))
   (view-get-property get_property (scheme_tree scheme_tree))
   (get-window-width get_window_width (int))
@@ -316,6 +320,9 @@
   (get-canvas-y get_canvas_y (int))
   (get-scroll-x get_scroll_x (int))
   (get-scroll-y get_scroll_y (int))
+  (set-scroll scroll_to (void int int))
+  (get-cursor-x get_cursor_x (int))
+  (get-cursor-y get_cursor_y (int))
   (clear-buffer clear_buffer (void))
   (tex-buffer tex_buffer (void))
   (clear-local-info clear_local_info (void))
@@ -335,7 +342,7 @@
   (print-pages-to-file print_to_file (void url string string))
   (print print_buffer (void))
   (print-pages print_buffer (void string string))
-  (print-snippet print_snippet (array_int url content bool))
+  (print-snippet print_snippet (array_SI url content bool))
   (graphics-file-to-clipboard graphics_file_to_clipboard (bool url))
   (export-postscript export_ps (void url))
   (export-pages-postscript export_ps (void url string string))
@@ -346,6 +353,7 @@
   (verbatim-expand exec_verbatim (tree content))
   (latex-expand exec_latex (tree content))
   (html-expand exec_html (tree content))
+  (markdown-expand exec_markdown (tree content))
   (animate-checkout checkout_animation (tree content))
   (animate-commit commit_animation (tree content))
   (idle-time idle_time (int))
@@ -355,6 +363,7 @@
   (update-menus update_menus (void))
 
   (show-tree show_tree (void))
+  (show-box show_box (void))
   (show-env show_env (void))
   (show-path show_path (void))
   (show-cursor show_cursor (void))

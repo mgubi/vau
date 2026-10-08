@@ -169,7 +169,7 @@ fast_find (array<path> a, path p) {
   int n= N(a), step= n, i= n>>1;
   while (step>1) {
     step= (step+1)>>1;
-    if (var_path_inf_eq (p, a[i])) i= max (0, i-step);
+    if (var_path_inf_eq (p, a[i])) i= max (i-step, 0);
     else i= min (n-1, i+step);
   }
   if (!var_path_inf_eq (p, a[i])) i= i+1;
@@ -278,9 +278,9 @@ page_breaker_rep::init_flows (
     }
     int  id= flow_id (fl);
     int  nr= N (flow_tot [id]);
-    SI   bot_cor= max (0, l[i]->b->y1- fn->y1);
+    SI   bot_cor= max (l[i]->b->y1- fn->y1, 0);
     SI   bod_cor= l[i]->b->h ();
-    SI   top_cor= max (0, fn->y2- l[i]->b->y2);
+    SI   top_cor= max (fn->y2- l[i]->b->y2, 0);
     bool cont= (nr>0) && (path_up (flow[id][nr-1]) == p);
     flow     [id] << (p * i);
     flow_ht  [id] << (space (l[i]->b->h()) + l[i]->spc);
@@ -455,7 +455,7 @@ page_breaker_rep::generate_breaks (vbreak br, int id, path flb)
   array<vbreak> brk (0);
   if (correct_break (br)) {
     int  best_sid= -1;
-    path best_p (MAX_SI);
+    path best_p (MAX_INT);
     for (sid=0; sid<nr_flows; sid++)
       if (path_up (flow_fl[sid]) == flb) {
 	int pos= br[sid];
@@ -1168,7 +1168,7 @@ page_breaker_rep::make_two_column (int start, int end, path flb) {
   tc_start= start;
   tc_end  = end;
   tc_bmid = end;
-  tc_bpen = vpenalty (MAX_SI, MAX_SI);
+  tc_bpen = vpenalty (MAX_INT, MAX_INT);
   tc_bpg1 = pagelet ();
   tc_bpg2 = pagelet ();
 
@@ -1340,7 +1340,7 @@ page_breaker_rep::find_next_breaks () {
   SI tot  = brk_tot[cur_start]->def + height->def;
   cur_ref = find_length (brk_tot, cur_start, tot);
   best_end= brk_last;
-  best_pen= vpenalty (MAX_SI, MAX_SI);
+  best_pen= vpenalty (MAX_INT, MAX_INT);
   best_pg = pagelet ();
 
   // int credit= 10;
@@ -1393,7 +1393,7 @@ page_breaker_rep::assemble_skeleton (skeleton& sk) {
   best_pgs = array<pagelet>  (nrinit);
   for (i=0; i<nrinit; i++) {
     best_prev[i]= -1;
-    best_pens[i]= vpenalty (MAX_SI, MAX_SI);
+    best_pens[i]= vpenalty (MAX_INT, MAX_INT);
     best_pgs [i]= pagelet ();
   }
   if (quality>0) {

@@ -31,9 +31,10 @@
 
 (tm-define (url-newer? u1 u2)
   (if (or (url-rooted-tmfs? u1) (url-rooted-tmfs? u2))
-      (and-let* ((d1 (url-last-modified u1))
-                 (d2 (url-last-modified u2)))
-        (> d1 d2))
+      (let* ((d1 (url-last-modified u1))
+             (d2 (url-last-modified u2)))
+        (or (and d1 d2 (> d1 d2))
+            (and d1 (not d2))))
       (cpp-url-newer? u1 u2)))
 
 (tm-define (url-remove u)
@@ -71,17 +72,19 @@
     (and (pair? t) (== (car t) 'tuple) (null? (cdr t)))))
 
 (tm-define (buffer-set-default-style)
-  (init-style "generic")
-  (with lan (get-preference "language")
-    (if (!= lan "english") (set-document-language lan)))
-  (with psz (get-printer-paper-type)
-    (if (!= psz "a4") (init-page-type psz)))
-  (with type (get-preference "page medium")
-    (if (!= type "papyrus") (init-env "page-medium" type)))
-  (when (!= (get-preference "scripting language") "none")
-    (lazy-plugin-force)
-    (init-env "prog-scripts" (get-preference "scripting language")))
-  (buffer-pretend-saved (current-buffer)))
+  (with mod? (buffer-modified? (current-buffer))
+    (init-style "generic")
+    (with lan (get-preference "language")
+      (if (!= lan "english") (set-document-language lan)))
+    (with psz (get-printer-paper-type)
+      (if (!= psz "a4") (init-page-type psz)))
+    (with type (get-preference "page medium")
+      (if (!= type "papyrus") (init-env "page-medium" type)))
+    (when (!= (get-preference "scripting language") "none")
+      (lazy-plugin-force)
+      (init-env "prog-scripts" (get-preference "scripting language")))
+    (when (not mod?)
+      (buffer-pretend-saved (current-buffer)))))
 
 (tm-define (propose-name-buffer)
   (with name (url->unix (current-buffer))
@@ -112,7 +115,7 @@
        r)))
 
 (tm-define (buffer-copy buf u)
-  (:synopsis "Creates a copy of @buf in @u and return @u.")
+  (:synopsis "Creates a copy of @buf in @u and return @u")
   (with-buffer buf
     (let* ((styles (get-style-list))
            (init (get-all-inits))
@@ -154,8 +157,13 @@
 (define (has-faithful-format? name)
   (in? (url-suffix name) '("tm" "ts" "tp" "stm" "tmml" "scm" "")))
 
+(tm-define (version-notify-saved name)
+  (:synopsis "Hook for versioning tools, called after saving @name")
+  (noop))
+
 (define (save-buffer-post name opts)
   ;;(display* "save-buffer-post " name "\n")
+  (version-notify-saved name)
   (cond ((in? :update opts)
          (update-buffer name))
         ((in? :commit opts)
@@ -203,8 +211,9 @@
   (with vname `(verbatim ,(url->system name))
     (cond ((url-scratch? name)
            (choose-file
-             (lambda (x) (apply save-buffer-as-main (cons x opts)))
-             "Save TeXmacs file" "texmacs"))
+	    (lambda (x) (apply save-buffer-as-main
+		(cons x (if (x-gui?) opts (cons :overwrite opts)))))
+	      "Save TeXmacs file" "texmacs"))
           ((not (buffer-exists? name))
            (with msg `(concat "The buffer " ,vname " does not exist")
              (set-message msg "Save file")))
@@ -266,7 +275,9 @@
 
 (define (save-buffer-as-check-permissions new-name name opts)
   ;;(display* "save-buffer-as-check-permissions " new-name ", " name "\n")
-  (cond ((cannot-write? new-name "Save file")
+  (cond ((os-android?)
+         (save-buffer-as-check-other new-name name opts))
+        ((cannot-write? new-name "Save file")
          (noop))
         ((and (url-test? new-name "f") (nin? :overwrite opts))
          (user-confirm "File already exists. Really overwrite?" #f
@@ -283,6 +294,9 @@
 (tm-define (save-buffer-as new-name . args)
   (:argument new-name texmacs-file "Save as")
   (:default  new-name (propose-name-buffer))
+  (when (string? new-name)
+    (set! new-name (string-replace new-name ":" "-"))
+    (set! new-name (string-replace new-name ";" "-")))
   (with opts (if (x-gui?) args (cons :overwrite args))
     (apply save-buffer-as-main (cons new-name opts))))
 
@@ -309,7 +323,10 @@
 
 (tm-define (export-buffer-main name to fm opts)
   ;;(display* "export-buffer-main " name ", " to ", " fm "\n")
-  (if (string? to) (set! to (url-relative (buffer-get-master name) to)))
+  (when (string? to)
+    (set! to (string-replace to ":" "-"))
+    (set! to (string-replace to ";" "-"))
+    (set! to (url-relative (buffer-get-master name) to)))
   (if (url? name) (set! current-save-source name))
   (if (url? to) (set! current-save-target to))
   (export-buffer-check-permissions name to fm opts))
@@ -344,22 +361,31 @@
            (tmfs-autosave name "~"))))
 
 (define (autosave-propose name)
-  (and (autosave-eligible? name)
-       (with s (most-recent-suffix name)
-         (and (!= s "")
-              (url-glue name s)))))
+  (if (url-rooted-tmfs? name)
+      (and-with u (tmfs-autosave name "~")
+        (and (url-exists? u)
+             (url-newer? u name)
+             u))
+      (and (autosave-eligible? name)
+           (with s (most-recent-suffix name)
+             (and (!= s "")
+                  (url-glue name s))))))
 
 (define (autosave-rescue? name) 
   (and (autosave-eligible? name)
        (== (most-recent-suffix name) "#")))
 
 (define (autosave-remove name)
+  ;;(display* "autosave-remove " name "\n")
+  (when (and (url-rooted-tmfs? name) (tmfs-can-autosave? name))
+    (url-remove (tmfs-autosave name "~")))
   (when (url-exists? (url-glue name "~"))
     (url-remove (url-glue name "~")))
   (when (url-exists? (url-glue name "#"))
     (url-remove (url-glue name "#"))))
 
 (tm-define (autosave-buffer name)
+  ;;(display* "autosave-buffer " name "\n")
   (when (and (buffer-modified-since-autosave? name)
              (url-autosave name "~"))
     ;;(display* "Autosave " name "\n")
@@ -414,6 +440,10 @@
   (or (and (url-rooted-web? u)
            ;; FIXME: Use HTTP HEADERS to determine the real file format
            (!= (file-format u) "texmacs-file"))
+      ;; (url-directory? u)
+      ;; we want to open links to directories via the default OS handler,
+      ;; but we need a silent test which does not call concretize
+      (url-rooted-protocol? u "mailto")
       (file-of-format? u "image")
       (file-of-format? u "pdf")
       (file-of-format? u "postscript")
@@ -427,8 +457,24 @@
 (tm-define (load-external u)
   (when (not (url-rooted? u))
     (set! u (url-relative (current-buffer) u)))
-  (cond ((not (url-rooted-web? u))
+  (cond ((url-rooted-protocol? u "doi")
+         (with u* (url-append (root->url "https")
+                              (url-append (string->url "www.doi.org")
+                                          (url-unroot u)))
+           (load-external u*)))
+        ((defined? 'web-open-external)
+         ;; in the browser (TeXmacs Vue): a page of the web or a mail
+         ;; address in the browser, a file of the page in its viewer
+         (if (or (url-rooted-web? u) (url-rooted-protocol? u "mailto"))
+             (web-open-external (url->string u) #f "")
+             (web-open-external (url->system u) #t
+                                (url->string (url-tail u)))))
+        ((url-rooted-protocol? u "mailto")
+         (system (string-append (default-open) " " (url->string u))))
+        ((not (url-rooted-web? u))
          (system-1 (default-open) u))
+        ((os-mingw64?)
+         (eval-system (url->system u)))
         ((or (os-mingw?) (os-win32?))
          (system (string-append (default-open) " " (url->system u))))
         (else
@@ -529,7 +575,8 @@
 
 (tm-define (load-browse-buffer name)
   (:synopsis "Load a buffer or switch to it if already open")
-  (cond ((buffer-exists? name) (switch-to-buffer name))
+  (cond ((url-rooted-protocol? name "mailto") (load-external name))
+        ((buffer-exists? name) (switch-to-buffer name))
         ((buffer-external? name) (load-external name))
         ((url-rooted-web? (current-buffer)) (load-buffer name))
         (else (load-buffer name))))
@@ -640,6 +687,16 @@
 ;; Printing buffers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(tm-define (printer-file-suffix)
+  (if (and (supports-native-pdf?)
+	   (get-boolean-preference "native pdf"))
+      "pdf" "ps"))
+
+(tm-define (printer-file-format)
+  (if (and (supports-native-pdf?)
+	   (get-boolean-preference "native pdf"))
+      "pdf" "postscript"))
+
 (tm-define (interactive-page-setup)
   (:synopsis "Specify the page setup")
   (:interactive #t)
@@ -652,15 +709,20 @@
 (tm-define (interactive-print-buffer)
   (:synopsis "Print the current buffer")
   (:interactive #t)
-  (print-to-file "$TEXMACS_HOME_PATH/system/tmp/tmpprint.ps")
-  (interactive-print '() "$TEXMACS_HOME_PATH/system/tmp/tmpprint.ps"))
+  (with file (string-append "$TEXMACS_HOME_PATH/system/tmp/tmpprint."
+			    (printer-file-suffix))
+    (print-to-file file)
+    (interactive-print '() file)))
 
 (tm-define (print-buffer)
   (:synopsis "Print the current buffer")
   (:interactive (use-print-dialog?))
-  (if (use-print-dialog?)
-      (interactive-print-buffer)
-      (direct-print-buffer)))
+  (cond ((defined? 'web-open-pdf)
+         ;; in the browser: the PDF in a tab, whose viewer prints it
+         (preview-buffer))
+        ((use-print-dialog?)
+         (interactive-print-buffer))
+        (else (direct-print-buffer))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Important files to which the buffer is linked (e.g. bibliographies)

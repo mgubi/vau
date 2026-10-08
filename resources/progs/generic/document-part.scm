@@ -45,7 +45,7 @@
 
 (define (buffer-master?) (== (get-init "project-flag") "true"))
 (tm-define (buffer-toggle-master)
-  (:synopsis "Toggle using current buffer as master file of project.")
+  (:synopsis "Toggle using current buffer as master file of project")
   (:check-mark "v" buffer-master?)
   (init-env "project-flag"
             (if (== (get-init "project-flag") "true") "false" "true")))
@@ -313,3 +313,53 @@
 (tm-define (buffer-contains-includes?)
   (nnull? (buffer-get-includes)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The dynamic document part menu
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(tm-menu (document-parts-menu)
+  (let* ((all (buffer-parts-list #t))
+	 (active (buffer-parts-list #f))
+	 (make (lambda (id) (document-parts-menu-entry id (in? id active)))))
+    (for (id all)
+      ((check (eval (upcase-first id)) "v" (in? id active))
+       (if (== (buffer-get-part-mode) :one)
+           (buffer-show-part id)
+           (buffer-toggle-part id))))))
+
+(menu-bind preamble-menu
+  (if (buffer-has-preamble?)
+      ("Show preamble" (toggle-preamble-mode)))
+  (if (not (buffer-has-preamble?))
+      ("Create preamble" (toggle-preamble-mode)))
+  ("Show main document" (buffer-set-part-mode :all)))
+
+(menu-bind document-part-menu
+  (if (buffer-has-preamble?)
+      ("Show preamble" (toggle-preamble-mode)))
+  (if (not (buffer-has-preamble?))
+      ("Create preamble" (toggle-preamble-mode)))
+  ("Show one part" (buffer-set-part-mode :one))
+  ("Show several parts" (buffer-set-part-mode :several))
+  ("Show all parts" (buffer-set-part-mode :all))
+  (if (or (in? (buffer-get-part-mode) '(:one :several))
+	  (!= (get-init-tree "sectional-short-style") (tree 'macro "false")))
+      ---
+      (when (in? (buffer-get-part-mode) '(:one :several))
+	(link document-parts-menu))))
+
+(menu-bind document-part-menu
+  (:require (buffer-contains-includes?))
+  (link document-master-menu))
+
+(menu-bind project-manage-menu
+  (if (!= (url-suffix (current-buffer)) "tp")
+      ("Use as master" (buffer-toggle-master)))
+  (when (buffer-contains-includes?)
+    ("Expand inclusions" (buffer-expand-includes)))
+  ---
+  (when (not (project-attached?))
+    ("Attach master"
+     (choose-file project-attach* "Attach master file for project" "texmacs")))
+  (when (project-attached?)
+    ("Detach master" (project-detach))))

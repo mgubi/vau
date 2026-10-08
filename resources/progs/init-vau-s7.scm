@@ -13,8 +13,7 @@
 
 (display "In init-vau-s7.scm\n")
 
-;; S7 macros are not usual macros...
-(define define-macro define-expansion)
+;; We use s7's native (run-time) define-macro (see init-s7.scm)
 
 (define primitive-symbol? symbol?)
 (set! symbol? (lambda (s) (and (not (keyword? s)) (primitive-symbol? s))))
@@ -41,8 +40,11 @@
     
   (set! catch (lambda ( key cl hdl )
     (primitive-catch key cl
-      (lambda args
-        (apply hdl (car args) "[not-implemented]" (caadr args)  (list (cdadr args)))))))
+      (lambda (type . rest)
+        (let ((info (if (pair? rest) (car rest) '())))
+          (if (pair? info)
+              (hdl type "[not-implemented]" (car info) (cdr info))
+              (hdl type "[not-implemented]" "" info)))))))
   )
 
 
@@ -57,34 +59,20 @@
 
 (define developer-mode? #f)
 (define boot-start (texmacs-time))
-(define remote-client-list (list))
+
+;; the primitives of TeXmacs which Vau lacks are defined as stubs
+(load (url-concretize "$TEXMACS_PATH/progs/vau-glue-stubs.scm") (rootlet))
 
 (display "Booting Vau kernel functionality\n")
 (load (url-concretize "$TEXMACS_PATH/progs/kernel/boot/boot-s7.scm"))
 
-(inherit-modules (kernel boot compat-s7) (kernel boot abbrevs)
-                 (kernel boot debug) (kernel boot srfi)
-                 (kernel boot ahash-table) (kernel boot prologue))
-(inherit-modules (kernel library base) (kernel library list)
-                 (kernel library tree) (kernel library content)
-                 (kernel library patch))
-(inherit-modules (kernel regexp regexp-match) (kernel regexp regexp-select))
-(inherit-modules (kernel logic logic-rules) (kernel logic logic-query)
-                 (kernel logic logic-data))
-(inherit-modules (kernel texmacs tm-define)
-                 (kernel texmacs tm-preferences) (kernel texmacs tm-modes)
-                 (kernel texmacs tm-plugins) (kernel texmacs tm-secure)
-                 (kernel texmacs tm-convert) (kernel texmacs tm-dialogue)
-                 (kernel texmacs tm-language) (kernel texmacs tm-file-system)
-                 (kernel texmacs tm-states))
-;(inherit-modules (kernel gui gui-markup)
-;                 (kernel gui menu-define) (kernel gui menu-widget)
-;                 (kernel gui kbd-define) (kernel gui kbd-handlers)
-;                 (kernel gui menu-test)
-;                 (kernel old-gui old-gui-widget)
-;                 (kernel old-gui old-gui-factory)
-;                 (kernel old-gui old-gui-form)
-;                 (kernel old-gui old-gui-test))
+(inherit-modules (kernel boot compat-s7))
+
+;; The common initialization of the kernel
+(load (url-concretize "$TEXMACS_PATH/progs/init-kernel.scm"))
+;; the kernel is now loaded: make the user module newer than the kernel
+;; modules, so that lookups of kernel symbols skip it (see boot-s7.scm)
+(renumber-user-module!)
 ;;(display* "time: " (- (texmacs-time) boot-start) "\n")
 ;;(display* "memory: " (texmacs-memory) " bytes\n")
 
@@ -136,6 +124,7 @@
 (define (image->psdoc a) "")
 
 (tm-define (notify-set-attachment name key val) (noop))
+(tm-define (notify-debug-message channel) (noop))
 
 (display "****** End booting init-vau-s7.scm\n")
 

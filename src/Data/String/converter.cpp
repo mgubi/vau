@@ -108,6 +108,7 @@ converter_rep::load () {
     hashtree_from_dictionary (dic,"corktounicode", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"cork-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", BIT2BIT, UTF8, false);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-fallback", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-math", BIT2BIT, UTF8, false);
@@ -118,14 +119,16 @@ converter_rep::load () {
     hashtree_from_dictionary (dic,"corktounicode", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-cork-oneway", UTF8, BIT2BIT, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", UTF8, BIT2BIT, true);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-symbol-oneway", UTF8, BIT2BIT, true);
     ht = dic;
   }
-  if (from=="Strict-Cork" && to=="UTF-8" ) {
+  else if (from=="Strict-Cork" && to=="UTF-8" ) {
     hashtree<char,string> dic;
     hashtree_from_dictionary (dic,"corktounicode", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"cork-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", BIT2BIT, UTF8, false);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-math", BIT2BIT, UTF8, false);
     ht = dic;
@@ -137,11 +140,19 @@ converter_rep::load () {
     hashtree_from_dictionary (dic, "HTMLsymbol" , CHAR_ENTITY, ENTITY_NAME, true);
     ht = dic;
   }
+  else if (from=="HTML" && to=="UTF-8") {
+    hashtree<char,string> dic;
+    hashtree_from_dictionary (dic, "HTMLlat1"   , ENTITY_NAME, CHAR_ENTITY, false);
+    hashtree_from_dictionary (dic, "HTMLspecial", ENTITY_NAME, CHAR_ENTITY, false);
+    hashtree_from_dictionary (dic, "HTMLsymbol" , ENTITY_NAME, CHAR_ENTITY, false);
+    ht = dic;
+  }
   else if (from=="T2A" && to=="UTF-8" ) {
     hashtree<char,string> dic;
     hashtree_from_dictionary (dic,"corktounicode", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"cork-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", BIT2BIT, UTF8, false);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-fallback", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-math", BIT2BIT, UTF8, false);
@@ -153,6 +164,7 @@ converter_rep::load () {
     hashtree_from_dictionary (dic,"corktounicode", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-cork-oneway", UTF8, BIT2BIT, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", UTF8, BIT2BIT, true);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-symbol-oneway", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"t2atounicode", UTF8, BIT2BIT, true);
     ht = dic;
@@ -191,6 +203,7 @@ converter_rep::load () {
     hashtree_from_dictionary (dic,"corktounicode", BIT2BIT, UTF8, false);
       //hashtree_from_dictionary (dic,"cork-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", BIT2BIT, UTF8, false);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-oneway", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-fallback", BIT2BIT, UTF8, false);
     hashtree_from_dictionary (dic,"symbol-unicode-math", BIT2BIT, UTF8, false);
@@ -202,6 +215,7 @@ converter_rep::load () {
     hashtree_from_dictionary (dic,"corktounicode", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-cork-oneway", UTF8, BIT2BIT, false);
     hashtree_from_dictionary (dic,"tmuniversaltounicode", UTF8, BIT2BIT, true);
+    hashtree_from_dictionary (dic,"tmuniversaltounicode-extra", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"unicode-symbol-oneway", UTF8, BIT2BIT, true);
     hashtree_from_dictionary (dic,"cork-to-real-ascii", UTF8, BIT2BIT, true);
     ht = dic;
@@ -318,7 +332,25 @@ utf8_to_cork (string input) {
     unsigned int code= decode_from_utf8 (input, i);
     string s= input (start, i);
     string r= apply (conv, s);
-    if (r == s && code >= 256)
+    if (r == s && (code >= 256 || (code >= 128 && N(s) > 1)))
+      r= "<#" * as_hexadecimal (code) * ">";
+    output << r;
+  }
+  return output;
+}
+
+string
+var_utf8_to_cork (string input) {
+  converter conv= load_converter ("UTF-8", "Cork");
+  int start, i, n= N(input);
+  string output;
+  for (i=0; i<n; ) {
+    start= i;
+    unsigned int code= decode_from_utf8 (input, i);
+    string s= input (start, i);
+    string r= apply (conv, s);
+    if ((r == s && (code >= 256 || (code >= 128 && N(s) > 1))) ||
+        (code >= 0x2018 && code <= 0x201D))
       r= "<#" * as_hexadecimal (code) * ">";
     output << r;
   }
@@ -335,7 +367,7 @@ sourcecode_to_cork (string input) {
     unsigned int code= decode_from_utf8 (input, i);
     string s= input (start, i);
     string r= apply (conv, s);
-    if (r == s && code >= 256)
+    if (r == s && (code >= 256 || (code >= 128 && N(s) > 1)))
       r= "<#" * as_hexadecimal (code) * ">";
     output << r;
   }
@@ -352,6 +384,7 @@ cork_to_utf8 (string input) {
       r << apply (conv, input (start, i));
       start= i= i+2;
       while (i<n && input[i] != '>') i++;
+      if (i >= n || i == start) { start -= 2; i= start + 1; continue; }
       r << encode_as_utf8 (from_hexadecimal (input (start, i)));
       start= i+1;
     }
@@ -369,6 +402,7 @@ strict_cork_to_utf8 (string input) {
       r << apply (conv, input (start, i));
       start= i= i+2;
       while (i<n && input[i] != '>') i++;
+      if (i >= n || i == start) { start -= 2; i= start + 1; continue; }
       r << encode_as_utf8 (from_hexadecimal (input (start, i)));
       start= i+1;
     }
@@ -386,6 +420,7 @@ cork_to_sourcecode (string input) {
       r << apply (conv, input (start, i));
       start= i= i+2;
       while (i<n && input[i] != '>') i++;
+      if (i >= n || i == start) { start -= 2; i= start + 1; continue; }
       r << encode_as_utf8 (from_hexadecimal (input (start, i)));
       start= i+1;
     }
@@ -444,8 +479,11 @@ code_point_to_cyrillic_subset_in_t2a (string input) {
       while (i < n && input[i] != '>') i++;
     }
     i++;
-    string s= apply (conv, input (start, i));
-    if (N(s) == 5 && s[0] == '<' && s[1] == '#' && s[4] == '>')
+    string c= input (start, i);
+    string s= apply (conv, c);
+    // a code point which the converter left alone is not in T2A, and
+    // must not be taken for the T2A byte of the same number
+    if (s != c && N(s) == 5 && s[0] == '<' && s[1] == '#' && s[4] == '>')
       r << string ((char) from_hexadecimal (s (2, 4)));
     else r << s;
   }
@@ -462,6 +500,7 @@ t2a_to_utf8 (string input) {
       r << apply (conv, input (start, i));
       start= i= i+2;
       while (i<n && input[i] != '>') i++;
+      if (i >= n || i == start) { start -= 2; i= start + 1; continue; }
       r << encode_as_utf8 (from_hexadecimal (input (start, i)));
       start= i+1;
     }
@@ -474,6 +513,13 @@ utf8_to_html (string input) {
   converter conv = load_converter ("UTF-8", "HTML");
   string s = apply (conv, input);
   return utf8_to_hex_entities(s);
+}
+
+string
+html_to_utf8 (string input) {
+  converter conv = load_converter ("HTML", "UTF-8");
+  string s = apply (conv, input);
+  return hex_entities_to_utf8 (s);
 }
 
 string
@@ -656,10 +702,14 @@ hashtree_from_dictionary (
           key_string = convert_escapes (key_string, true);
         else if (key_escape == CHAR_ENTITY)
           key_string = convert_char_entities (key_string);
+        else if (key_escape == ENTITY_NAME)
+          key_string = "&" * key_string * ";";
         if (val_escape == BIT2BIT)
           val_string = convert_escapes (val_string, false);
         else if (val_escape == UTF8)
           val_string = convert_escapes (val_string, true);
+        else if (val_escape == CHAR_ENTITY)
+          val_string = convert_char_entities (val_string);
         else if (val_escape == ENTITY_NAME)
           val_string = "&" * val_string * ";";
         //cout << "key: " << key_string << " val: " << val_string << "\n";
@@ -842,7 +892,12 @@ decode_from_utf8 (string s, int& i) {
   int start= i-1;
   for (; trail > 0; trail--) {
     i++;
-    if (i >= N(s)) i= N(s)-1;
+    if (i >= N(s)) {
+      // truncated at the end of the string: as a sequence broken earlier
+      i= start+1;
+      c= s[i++];
+      return c;
+    }
     c = s[i];
     if ((0xC0 & c) == 0x80)
       code = (code << 6) | (c & 0x3F);
@@ -877,6 +932,28 @@ utf8_to_hex_entities (string s) {
   return result;
 }
 
+string
+hex_entities_to_utf8 (string s) {
+  string result;
+  int i, n= N(s);
+  for (i=0; i<n; )
+    if (test (s, i, "&#x")) {
+      int j= i+3;
+      while (j < n && j < i+9 && is_hex_digit (s[j])) j++;
+      if (j > i+3 && j < n && s[j] == ';') {
+        unsigned int code= from_hexadecimal (s (i+3, j));
+        if (code >= 0x80 && code <= 0x10FFFF &&
+            (code < 0xD800 || code > 0xDFFF)) {
+          result << encode_as_utf8 (code);
+          i= j + 1;
+        }
+        else result << s[i++];
+      }
+      else result << s[i++];
+    }
+    else result << s[i++];
+  return result;
+}
 
 string
 utf8_to_utf16be_string (string s) {

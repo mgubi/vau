@@ -15,7 +15,7 @@
   (:use (texmacs texmacs tm-tools)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Dynamic menus for formats
+;; Dynamic menus for formats, languages, and AI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (tm-menu (clipboard-preference-menu cvs fun)
@@ -28,6 +28,16 @@
   (clipboard-preference-menu converters-to-special clipboard-set-import))
 (tm-define (clipboard-export-preference-menu)
   (clipboard-preference-menu converters-from-special clipboard-set-export))
+
+(menu-bind ai-translate-menu
+  (for (lan supported-languages)
+    ((eval (upcase-first lan))
+     (ai-translate lan (get-preference "ai")))))
+
+(tm-menu (tools-equation-editor-menu)
+  ("Enable" (begin 
+              (toggle-preference "equation-editor")
+              (reinit-plugin-cache))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The Tools menu
@@ -67,16 +77,48 @@
       ("Count words" (show-word-count))
       ("Count lines" (show-line-count)))
   ---
+  (-> "AI engine"
+      ("Off" (reset-preference "ai"))
+      ---
+      (when (has-albert?)
+        ("Albert" (set-preference "ai" "albert")))
+      (when (has-chatgpt?)
+        ("Chat GPT" (set-preference "ai" "chatgpt")))
+      (when (has-claude?)
+        ("Claude" (set-preference "ai" "claude")))
+      (when (has-gemini?)
+        ("Gemini" (set-preference "ai" "gemini")))
+      (when (has-ollama?)
+        ("Ollama" (set-preference "ai" "ollama")))
+      (when (has-open-mistral-7b?)
+        ("Mistral" (set-preference "ai" "open-mistral-7b")))
+      (when (has-openrouter?)
+        ("OpenRouter" (set-preference "ai" "openrouter"))))
+  (when (and (cpp-has-preference? "ai")
+             (selection-active-any?))
+    ("Correct" (ai-correct (get-preference "ai")))
+    (-> "Translate"
+        (link ai-translate-menu))
+    ("Ask about the selection" (ai-ask-about-selection (get-preference "ai"))))
+  (when (and (cpp-has-preference? "ai")
+             (not (selection-active-any?)))
+    ("Ask about the document" (ai-ask-about-document (get-preference "ai"))))
+  (-> "External AI"
+      (when (selection-active-any?)
+        ("Copy" (ai-copy))
+        ("Cut" (ai-cut)))
+      ("Paste" (ai-paste)))
+  ---
   ("Create web site" (open-website-builder))
   ;;(-> "Web"
   ;;    ("Create web site" (tmweb-interactive-build))
   ;;    ("Update web site" (tmweb-interactive-update)))
   (-> "Fonts"
-      ("Look for more fonts"
-       (system-wait "Full search for more fonts on your system"
-                    "(can be long)")
-       (font-database-build-local))
-      ("Clear font cache" (clear-font-cache)))
+      ("Scan disk for fonts" (scan-disk-for-fonts))
+      ("Clear font cache" (clear-font-cache))
+      ---
+      ("Font inspector" (open-font-inspector)))
+  (-> "Equation editor" (link tools-equation-editor-menu))
   (-> "Miscellaneous"
       ("Clear undo history" (clear-undo-history))
       ("Save auxiliary data" (toggle-save-aux))
@@ -94,4 +136,16 @@
   ("Presentation tool" (toggle-preference "presentation tool"))
   ("Remote tool" (toggle-preference "remote tool"))
   ("Source macros tool" (toggle-preference "source tool"))
-  ("Versioning tool" (toggle-preference "versioning tool")))
+  (-> "Versioning tool"
+      ("Automatic" (set-versioning-tool "auto"))
+      ("Always" (set-versioning-tool "on"))
+      ("Never" (set-versioning-tool "off"))
+      ---
+      ;; NOTE: also here, since the Version menu is not shown by default
+      ;; for documents outside repositories
+      (when (and (not (url-rooted-web? (current-buffer)))
+                 (not (url-rooted-tmfs? (current-buffer)))
+                 (url-exists? (current-buffer))
+                 (not (versioning-directory (current-buffer))))
+        ("Create Git repository" (git-interactive-init (current-buffer))))
+      ("Clone Git repository" (git-interactive-clone))))

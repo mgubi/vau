@@ -113,11 +113,29 @@
                          (x (url-expand (url-complete w "fr"))))
                     x))))
 
-(define (docgrep what path . patterns)
+(define (docgrep-files path . patterns)
   (let* ((l1 (map (lambda (pat) (url-collect path pat)) patterns))
-         (l2 (map url->system l1))
-         (l3 (append-map (cut string-tokenize-by-char <> path-separator) l2)))
-    (build-doc-link-page what l3)))
+         (l2 (map url->system l1)))
+    (append-map (cut string-tokenize-by-char <> path-separator) l2)))
+
+(define (docgrep what path . patterns)
+  (build-doc-link-page what (apply docgrep-files (cons path patterns))))
+
+(define (docgrep-translated what path lan)
+  ;; search the pages in language lan, and the English pages
+  ;; which have not been translated into lan
+  (let* ((l (docgrep-files path (string-append "*." lan ".tm")
+                           (string-append "*." lan ".tmml")))
+         (t (list->ahash-set l))
+         (e (docgrep-files path "*.en.tm" "*.en.tmml"))
+         (translated? (lambda (f)
+                        (let* ((k (if (string-ends? f ".tmml") 8 6))
+                               (base (string-append (string-drop-right f k)
+                                                    "." lan)))
+                          (or (ahash-ref t (string-append base ".tm"))
+                              (ahash-ref t (string-append base ".tmml"))))))
+         (r (list-filter e (lambda (f) (not (translated? f))))))
+    (build-doc-link-page what (append l r))))
 
 (define (txtgrep what docs)
   (let* ((l1 (list-filter docs (cut url-rooted-protocol? <> "default")))
@@ -154,9 +172,9 @@
           ((== type "recent")
            (txtgrep what (recent-file-list 50)))
           ((== type "doc")
-           (docgrep what "$TEXMACS_DOC_PATH"
-            (string-append "*." lan ".tm")
-            (string-append "*." lan ".tmml")))
+           (if (== lan "en")
+               (docgrep what "$TEXMACS_DOC_PATH" "*.en.tm" "*.en.tmml")
+               (docgrep-translated what "$TEXMACS_DOC_PATH" lan)))
           (else
            (docgrep what "$TEXMACS_DOC_PATH" "*.en.tm")))))
 
@@ -165,23 +183,27 @@
     (replace "Help - Search results for \x10%1\x11" what)))
 
 (tm-define (docgrep-in-doc what)
-  (:argument what "Search words in the documentation")
+  (:synopsis* "Search words in the documentation")
+  (:argument what "Search")
   (with query (list->query (list (cons "type" "doc") (cons "what" what)))
     (load-document (string-append "tmfs://grep/" query))))
 
 (tm-define (docgrep-in-src what where)
-  (:argument what "Search words")
+  (:synopsis* "Search words")
+  (:argument what "Search")
   (:argument where "In")
   (:proposals where '("Scheme" "Styles" "C++" "All code"))
   (with query (list->query (list (cons "type" where) (cons "what" what)))
     (load-document (string-append "tmfs://grep/" query))))
 
 (tm-define (docgrep-in-texts what)
-  (:argument what "Search words in my documents")
+  (:synopsis* "Search words in my documents")
+  (:argument what "Search")
   (with query (list->query (list (cons "type" "texts") (cons "what" what)))
     (load-document (string-append "tmfs://grep/" query))))
 
 (tm-define (docgrep-in-recent what)
-  (:argument what "Search words in recent documents")
+  (:synopsis* "Search words in recent documents")
+  (:argument what "Search")
   (with query (list->query (list (cons "type" "recent") (cons "what" what)))
     (load-document (string-append "tmfs://grep/" query))))

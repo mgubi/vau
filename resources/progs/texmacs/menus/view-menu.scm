@@ -25,8 +25,17 @@
 (tm-define toolbar-search-active? #f)
 (tm-define toolbar-replace-active? #f)
 (tm-define toolbar-spell-active? #f)
+(tm-define toolbar-correct-active? #f)
 (tm-define toolbar-db-active? #f)
 (tm-define toolbar-animate-active? #f)
+
+(tm-define (extra-bottom-tools?)
+  (or toolbar-search-active?
+      toolbar-replace-active?
+      toolbar-spell-active?
+      toolbar-correct-active?
+      toolbar-db-active?
+      toolbar-animate-active?))
 
 (tm-widget (texmacs-bottom-toolbars)
   (if toolbar-search-active?
@@ -38,15 +47,21 @@
            (not toolbar-search-active?)
            (not toolbar-replace-active?))
       (link spell-toolbar))
+  (if (and toolbar-correct-active?
+           (not toolbar-search-active?)
+           (not toolbar-replace-active?))
+      (link correct-toolbar))
   (if (and toolbar-db-active?
            (not toolbar-search-active?)
            (not toolbar-replace-active?)
-           (not toolbar-spell-active?))
+           (not toolbar-spell-active?)
+	   (not toolbar-correct-active?))
       (link db-toolbar))
   (if (and toolbar-animate-active?
            (not toolbar-search-active?)
            (not toolbar-replace-active?)
            (not toolbar-spell-active?)
+	   (not toolbar-correct-active?)
            (not toolbar-db-active?))
       (link animate-toolbar)))
 
@@ -60,16 +75,22 @@
          (and toolbar-spell-active?
               (not toolbar-search-active?)
               (not toolbar-replace-active?)))
+        ((== which "correct")
+         (and toolbar-correct-active?
+              (not toolbar-search-active?)
+              (not toolbar-replace-active?)))
         ((== which "database")
          (and toolbar-db-active?
               (not toolbar-search-active?)
               (not toolbar-replace-active?)
-              (not toolbar-spell-active?)))
+              (not toolbar-spell-active?)
+	      (not toolbar-correct-active?)))
         ((== which "animate")
          (and toolbar-animate-active?
               (not toolbar-search-active?)
               (not toolbar-replace-active?)
               (not toolbar-spell-active?)
+              (not toolbar-correct-active?)
               (not toolbar-db-active?)))
         (else #f)))
 
@@ -77,6 +98,7 @@
   (set! toolbar-search-active? #f)
   (set! toolbar-replace-active? #f)
   (set! toolbar-spell-active? #f)
+  (set! toolbar-correct-active? #f)
   (set! toolbar-db-active? #f)
   (set! toolbar-animate-active? #f)
   (cond ((== which "search")
@@ -85,11 +107,13 @@
          (set! toolbar-replace-active? val))
         ((== which "spell")
          (set! toolbar-spell-active? val))
+        ((== which "correct")
+         (set! toolbar-correct-active? val))
         ((== which "database")
          (set! toolbar-db-active? val))
         ((== which "animate")
          (set! toolbar-animate-active? val)))
-  (show-bottom-tools 0 val))
+  (update-bottom-tools))
 
 (tm-define (toggle-bottom-bar which)
   (:check-mark "*" test-bottom-bar?)
@@ -109,11 +133,8 @@
   ("Full screen mode"  (toggle-full-screen-edit-mode))
   ("Presentation mode" (toggle-full-screen-mode))
   ("Show panorama" (toggle-panorama-mode))
+  ("Show all slides" (toggle-slideshow-mode))
   ("Remote control" (toggle-remote-control-mode))
-  (assuming (os-macos?)
-    ("Retina settings" (open-retina-settings)))
-  (assuming (not (os-macos?))
-    ("High resolution settings" (open-retina-settings)))
   ---
   ("Fit to screen" (fit-to-screen))
   ("Fit to screen width" (fit-to-screen-width))
@@ -138,8 +159,13 @@
         ("Focus dependent icons" (toggle-visible-icon-bar 2))
         ("User provided icons" (toggle-visible-icon-bar 3)))
   ("Status bar" (toggle-visible-footer))
+  (if (or (vue-gui?) (ns-gui?))
+      (when (visible-footer?)
+        ("Interactive status bar" (toggle-preference "interactive footer"))))
   (if (with-developer-tool?)
-      ("Side tools" (toggle-visible-side-tools 0)))
+      ("Left side tools" (toggle-visible-side-tools 1))
+      ("Right side tools" (toggle-visible-side-tools 0))
+      ("GUI through markup" (toggle-markup-gui)))
   ---
   ("Search toolbar" (toggle-bottom-bar "search"))
   ("Replace toolbar" (toggle-bottom-bar "replace"))

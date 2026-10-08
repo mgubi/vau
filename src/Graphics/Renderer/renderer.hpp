@@ -20,8 +20,6 @@
 #include "spacial.hpp"
 
 #define PIXEL          256
-#define PLUS_INFINITY  ((SI) 0x3fffffff)
-#define MINUS_INFINITY ((SI) 0xc0000000)
 #define PICTURE_ZOOM   1.0
 
 /******************************************************************************
@@ -42,6 +40,7 @@ public:
   SI  ox, oy;               // origin
   SI  cx1, cy1, cx2, cy2;   // visible region (clipping)
   bool is_screen;           // flag for renderers on screen
+  double pixel_ratio;       // device pixel ratio
   double zoomf;             // zoom factor
   int shrinkf;              // shrinking factor
   int pixel;                // size of a pixel on the screen
@@ -53,7 +52,7 @@ public:
   int cur_page;             // current page number
 
 public:
-  renderer_rep (bool screen_flag);
+  renderer_rep (bool screen_flag, double pixel_ratio= 1);
   virtual ~renderer_rep ();
   virtual bool is_started ();
   virtual void* get_handle ();
@@ -62,7 +61,7 @@ public:
   /* coordinate system */
   void set_origin (SI x, SI y);
   void move_origin (SI dx, SI dy);
-  virtual void set_zoom_factor (double zoom);
+  virtual void set_zoom_factor (double zoom, bool safe= true);
   void reset_zoom_factor ();
   void set_shrinking_factor (int sf);
   virtual void set_transformation (frame fr);
@@ -77,7 +76,7 @@ public:
 
   /* reencoding and rounding */
   virtual void decode (SI& x, SI& y);
-  virtual void encode (int& x, int& y);
+  virtual void encode (SI& x, SI& y);
   virtual void decode (SI x, SI y, double& rx, double& ry);
   virtual void encode (double x, double y, SI& rx, SI& ry);
   void round (SI& x, SI& y);
@@ -98,6 +97,7 @@ public:
   virtual void set_background (brush b) = 0;
 
   /* drawing */
+  virtual void clear_device (SI x1, SI y1, SI x2, SI y2) = 0; // device background
   virtual void draw (int char_code, font_glyphs fn, SI x, SI y) = 0;
   virtual void line (SI x1, SI y1, SI x2, SI y2) = 0;
   virtual void lines (array<SI> x, array<SI> y) = 0;
@@ -109,6 +109,9 @@ public:
   virtual void arc (SI x1, SI y1, SI x2, SI y2, int alpha, int delta) = 0;
   virtual void fill_arc (SI x1, SI y1, SI x2, SI y2, int alpha, int delta) = 0;
   virtual void polygon (array<SI> x, array<SI> y, bool convex=true) = 0;
+  virtual void rounded_rectangle (SI x1, SI y1, SI x2, SI y2,
+                                  SI r_tl, SI r_tr, SI r_br, SI r_bl,
+                                  bool filled);
   virtual void draw_triangle (SI x1, SI y1, SI x2, SI y2, SI x3, SI y3);
   virtual void draw_spacial (spacial obj);
   virtual void draw_rectangles (rectangles rs);
@@ -130,7 +133,7 @@ public:
 
   /* special routines for printers */
   virtual bool is_printer ();
-  virtual void get_extents (int& w, int& h);
+  virtual void get_extents (SI& w, SI& h);
   virtual void set_page_nr (int nr);
   virtual void next_page ();
   virtual void anchor (string label, SI x1, SI y1, SI x2, SI y2);
@@ -153,12 +156,21 @@ void abs_outer_round (SI& x1, SI& y1, SI& x2, SI& y2);
 extern bool reverse_colors;
 void reverse (int& r, int& g, int& b);
 
+#if QT_VERSION >= 0x060000
+const bool   retina_manual= false;
+const bool   retina_iman  = false;
+const int    retina_factor= 1;
+const int    retina_zoom  = 1;
+const int    retina_icons = 1;
+const double retina_scale = 1.0;
+#else
 extern bool   retina_manual;
 extern bool   retina_iman;
 extern int    retina_factor;
 extern int    retina_zoom;
 extern int    retina_icons;
 extern double retina_scale;
+#endif
 int    get_retina_factor ();   // MacOS style
 int    get_retina_zoom ();     // GNU/Linux and Windows style
 int    get_retina_icons ();

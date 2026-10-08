@@ -132,9 +132,11 @@ class concater_rep {
   void typeset_dynamic_case (tree t, path ip);
   void typeset_range (tree t, path ip);
   void typeset_locus (tree t, path ip);
+  void typeset_relay (tree t, path ip);
   void typeset_set_binding (tree t, path ip);
   void typeset_write (tree t, path ip);
   void typeset_toc_notify (tree t, path ip);
+  void typeset_cache_ref (tree t, path ip);
   void typeset_specific (tree t, path ip);
   void typeset_flag (tree t, path ip);
   void typeset_hyphenate_as (tree t, path ip);

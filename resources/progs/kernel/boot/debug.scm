@@ -44,6 +44,43 @@
   "Write all objects in @l to the error port."
   (for-each write-err l))
 
+(define-public (format-err key . args)
+  (let* ((header (format #f "[~S]:" key))
+         (msg (call-with-output-string
+                (lambda (p)
+                  (cond
+                   ((and (>= (length args) 3) (not (defined? 'display-error)))
+                    ;; S7 has no display-error: the message of the error
+                    ;; (subr message args [rest]), formatted with its args
+                    (let ((subr (car args)) (message (cadr args))
+                          (margs (caddr args)))
+                      (when (string? subr) (display subr p) (display ": " p))
+                      (display
+                       (catch #t
+                         (lambda ()
+                           (if (and (string? message) (list? margs))
+                               (apply format #f message margs)
+                               message))
+                         (lambda err message))
+                       p)
+                      (newline p)))
+                   ((>= (length args) 3)
+                    (display-error #f
+                                   p
+                                   (car args)
+                                   (cadr args)
+                                   (caddr args)
+                                   (if (= (length args) 4)
+                                     (cadddr args)
+                                     '())))
+                   (else
+                      (display "uncaught throw " p)
+                      (display ": " p)
+                      (display args p)
+                      (newline p)))
+                  ))))
+    (format #f "~A ~A" header msg)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Various tools
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -71,8 +108,24 @@
 ;; TeXmacs errors and assertions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define old-format?
+  (and (not (s7-scheme?))
+       (catch 'wrong-number-of-args
+              (lambda () (car))
+              (lambda (type caller message opts extra)
+                (let next ((l (string->list message)))
+                  (cond ((null? l) #f)
+                        ((char=? #\% (car l)) #t)
+                        (else (next (cdr l)))))))))
+
 (define (scm-error* type caller message . opt)
-  (apply error type caller message opt))
+  (cond ((s7-scheme?)
+         (apply error type caller message opt))
+        (else
+         (if old-format?
+             (begin (set! message (string-replace message "~S" "%S"))
+                    (set! message (string-replace message "~A" "%s"))))
+         (apply scm-error type caller message opt))))
 
 (define-public (texmacs-error where message . args)
   (scm-error* 'texmacs-error where message args #f))
@@ -154,41 +207,128 @@
 	 (make-expected (make-command expected-cmd))
 	 (tests
 	  (let rec ((n 1) (l body))	; process body items
-	    (define (check-test)
-	      (let ((t (first l)))
-		(if (null? (cdr t))
-		    (error "empty test in group " group-id))
-		(let ((test-desc (second t)))
-		  (check-arg-type string? test-desc group-id)
-		  (check-arg-number (lambda (x) (equal? 4 x)) (length t)
-				    (string-append group-id "/" test-desc)))))
-	    (define (make-test e?)
-	      (check-test)
-	      (let* ((t (first l))
-		     (test-desc (second t))
-		     (result-in (third t))
-		     (expected-in (fourth t))
-		     (result (make-result result-in))
-		     (expected (make-expected expected-in)))
-		;; Display messages and run test.
-		`((display ,(string-append "  -- " test-desc "\n"))
-		  (,(if e? 'regression-test-equal 'regression-test-nequal)
-		   ,group-id ,test-desc
-		   ,result-in ,result ,expected-in ,expected)
-		  ,@(rec (1+ n) (cdr l))))) ; rest of the body
-	    (cond ((null? l) `(,(1- n))) ; evaluate to number of tests
-		  ;; Improper list or unexpect atom. Nevermind.
-		  ((not (pair? l)) l)
-		  ((not (pair? (car l)))
-		   (cons (car l) (rec n (cdr l))))
-		  ;; Test case.
-		  ((equal? 'test (caar l)) (make-test #t))
-		  ((equal? 'test-fails (caar l)) (make-test #f))
-		  ;; Non-test form, preserve.
-		  (else (cons (car l) (rec n (cdr l))))))))
+	    ;; let-bound helpers and not internal definitions: works with Guile
+	    ;; and avoids an s7 11 problem with definitions in macro bodies
+	    (let* ((check-test
+		    (lambda ()
+		      (let ((t (first l)))
+			(if (null? (cdr t))
+			    (error "empty test in group " group-id))
+			(let ((test-desc (second t)))
+			  (check-arg-type string? test-desc group-id)
+			  (check-arg-number (lambda (x) (equal? 4 x)) (length t)
+					    (string-append group-id "/" test-desc))))))
+		   (make-test
+		    (lambda (e?)
+		      (check-test)
+		      (let* ((t (first l))
+			     (test-desc (second t))
+			     (result-in (third t))
+			     (expected-in (fourth t))
+			     (result (make-result result-in))
+			     (expected (make-expected expected-in)))
+			;; Display messages and run test.
+			`((display ,(string-append "  -- " test-desc "\n"))
+			  (,(if e? 'regression-test-equal 'regression-test-nequal)
+			   ,group-id ,test-desc
+			   ,result-in ,result ,expected-in ,expected)
+			  ,@(rec (1+ n) (cdr l))))))) ; rest of the body
+	      (cond ((null? l) `(,(1- n))) ; evaluate to number of tests
+		    ;; Improper list or unexpect atom. Nevermind.
+		    ((not (pair? l)) l)
+		    ((not (pair? (car l)))
+		     (cons (car l) (rec n (cdr l))))
+		    ;; Test case.
+		    ((equal? 'test (caar l)) (make-test #t))
+		    ((equal? 'test-fails (caar l)) (make-test #f))
+		    ;; Non-test form, preserve.
+		    (else (cons (car l) (rec n (cdr l)))))))))
     `(begin
        (display ,(string-append "Test group: " group-desc " [" group-id "]\n"))
        ,@tests)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Integration testing (side-effecting tests with setup/teardown)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Run a single integration test with setup/teardown.
+;; Teardown runs even if the test body signals an error.
+;; Returns #t on pass, #f on fail (never throws).
+(define-public (integration-test-run group test-desc setup-thunk teardown-thunk
+                                     result-thunk expected)
+  (let ((ok? (catch #t
+               (lambda ()
+                 (setup-thunk)
+                 (let ((result (result-thunk)))
+                   (teardown-thunk)
+                   (if (equal? result expected)
+                       #t
+                       (begin
+                         (display* "    FAIL  Expected: "
+                                   (object->string expected) "\n")
+                         (display* "    FAIL  Got:      "
+                                   (object->string result) "\n")
+                         #f))))
+               (lambda args
+                 (catch #t (lambda () (teardown-thunk)) (lambda _ #f))
+                 (display* "    FAIL  Error: "
+                           (object->string args) "\n")
+                 #f))))
+    (display* (if ok? "    PASS" "    FAIL") "  "
+              "[" group "] " test-desc "\n")
+    ok?))
+
+;; (integration-test-group "description" "id"
+;;   setup-expr teardown-expr
+;;   (test "name" result-expr expected)
+;;   ...)
+;;
+;; Like regression-test-group but for side-effecting code:
+;;   - setup-expr runs before each test
+;;   - teardown-expr runs after each test (even on failure)
+;;   - all tests run regardless of earlier failures
+;;   - returns the number of tests run
+;;   - adds the number of failed tests to integration-failure-total, which
+;;     the test runner of check-master.scm reads
+;;
+;; Use (begin ...) for multiple setup/teardown expressions.
+(define-public integration-failure-total 0)
+
+(define-public-macro (integration-test-group group-desc group-id
+                                             setup-expr teardown-expr . body)
+  (let ((tests
+         (let rec ((n 1) (l body))
+           (cond
+             ((null? l) '())
+             ((not (pair? l)) (list l))
+             ((not (pair? (car l)))
+              (cons (car l) (rec n (cdr l))))
+             ((equal? 'test (caar l))
+              (let* ((t (car l))
+                     (test-desc (cadr t))
+                     (result-expr (caddr t))
+                     (expected (cadddr t)))
+                `((set! integration-results
+                    (cons (integration-test-run
+                           ,group-id ,test-desc
+                           (lambda () ,setup-expr)
+                           (lambda () ,teardown-expr)
+                           (lambda () ,result-expr)
+                           ,expected)
+                      integration-results))
+                  ,@(rec (1+ n) (cdr l)))))
+             (else (cons (car l) (rec n (cdr l))))))))
+    `(let ((integration-results '()))
+       (display ,(string-append "Test group: " group-desc
+                                " [" group-id "]\n"))
+       ,@tests
+       (let* ((total  (length integration-results))
+              (passed (length (filter identity integration-results)))
+              (failed (- total passed)))
+         (display* "  " (number->string passed) "/" (number->string total)
+                   " passed\n")
+         (set! integration-failure-total (+ integration-failure-total failed))
+         total))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Test suite library
@@ -244,10 +384,11 @@
 
 (define-public-macro (trace-variables . vars)
   ;; Use trace-display to show the name and value of some variables.
-  (define (trace-one-variable v)
-    `(trace-display (string-append ,(symbol->string v) ": "
-				   (object->string ,v))))
-  `(begin ,@(map trace-one-variable vars)))
+  (let ((trace-one-variable
+         (lambda (v)
+           `(trace-display (string-append ,(symbol->string v) ": "
+                                          (object->string ,v))))))
+    `(begin ,@(map trace-one-variable vars))))
 				     
 
 ;;   Trace levels

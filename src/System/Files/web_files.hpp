@@ -3,6 +3,7 @@
 * MODULE     : web_files.hpp
 * DESCRIPTION: file handling via the web
 * COPYRIGHT  : (C) 1999  Joris van der Hoeven
+*                  2026  Gregoire Lecerf
 *******************************************************************************
 * This software falls under the GNU general public license version 3 or later.
 * It comes WITHOUT ANY WARRANTY WHATSOEVER. For details, see the file LICENSE
@@ -12,6 +13,8 @@
 #ifndef WEB_FILES_H
 #define WEB_FILES_H
 #include "url.hpp"
+#include "array.hpp"
+#include "scheme.hpp"
 
 void web_cache_invalidate (url u);
 
@@ -20,5 +23,155 @@ url get_from_server (url u);
 url get_from_ramdisc (url u);
 
 bool save_to_server (url u, string s);
+
+// Secrets in HTTP headers
+bool http_secret_header (string name);
+array<string> http_mask_headers (array<string> headers_attr);
+tree http_mask_request (tree t);
+string shell_quote (string s);
+string curl_command (string args, array<string> headers_attr);
+
+// HTTP requests
+#if defined(QTTEXMACS) && AC_QT_MAJOR_VERSION >= 6
+
+tree qt_http_from_json (string s);
+int qt_http_post (string& ret, string url, array<string> headers_attr,
+		  string data);
+int qt_http_post (string& ret, string url, array<string> headers_attr,
+		  tree data);
+int qt_http_post (string& ret, string url, array<string> headers_attr,
+		  array<string> attr);
+bool qt_async_http_post (string url, array<string> headers_attr,
+			 string data, object callback);
+bool qt_async_http_post (string url, array<string> headers_attr,
+			 tree data, object callback);
+bool qt_async_http_post (string url, array<string> headers_attr,
+			 array<string> attr, object callback);
+
+bool qt_async_http_post (string url, array<string> headers_attr, tree data,
+			 int& status, string& outbuf, string& errbuf,
+			 bool& kill);
+
+inline tree
+http_from_json (string s) {
+  return qt_http_from_json (s); }
+
+int qt_http_get (string& ret, string url, array<string> headers_attr);
+
+inline int
+http_get (string& ret, string url, array<string> headers_attr) {
+  return qt_http_get (ret, url, headers_attr); }
+
+inline int
+http_post (string& ret, string url,
+	   array<string> headers_attr, string data) {
+  return qt_http_post (ret, url, headers_attr, data); }
+
+inline int
+http_post_json (string& ret, string url,
+		array<string> headers_attr, tree data) {
+  return qt_http_post (ret, url, headers_attr, data); }
+
+inline int
+http_post_query (string& ret, string url, array<string> headers_attr,
+		 array<string> attr) {
+  return qt_http_post (ret, url, headers_attr, attr); }
+
+inline bool
+async_http_post (string url, array<string> headers_attr,
+		 string data, object callback) {
+  return qt_async_http_post (url, headers_attr, data, callback); }
+
+inline bool
+async_http_post_json (string url, array<string> headers_attr,
+		      tree data, object callback) {
+  return qt_async_http_post (url, headers_attr, data, callback); }
+
+inline bool
+async_http_post_query (string url, array<string> headers_attr,
+		       array<string> attr, object callback) {
+  return qt_async_http_post (url, headers_attr, attr, callback); }
+
+inline bool
+async_http_post_json (string url, array<string> headers_attr, tree data,
+		      int& status, string& outbuf, string& errbuf,
+		      bool& kill) {
+  return qt_async_http_post (url, headers_attr, data,
+			     status, outbuf, errbuf, kill);
+}
+
+#else
+
+#include "convert.hpp"
+
+inline tree
+http_from_json (string s) {
+  const int mode= JSON_NULL | JSON_BOOLEAN | JSON_NUMBER;
+  return json_to_tree (s, mode); }
+
+int http_get (string& ret, string url, array<string> headers_attr);
+int http_post (string& ret, string url, array<string> headers_attr,
+	       string data);
+int http_post_json (string& ret, string url, array<string> headers_attr,
+		    tree data);
+int http_post_query (string& ret, string url, array<string> headers_attr,
+		     array<string> attr);
+bool async_http_post (string url, array<string> headers_attr,
+		      string data, object callback);
+bool async_http_post_json (string url, array<string> headers_attr,
+			   tree data, object callback);
+bool async_http_post_query (string url, array<string> headers_attr,
+			    array<string> attr, object callback);
+bool async_http_post_json (string url, array<string> headers_attr, tree data,
+			   int& status, string& outbuf, string& errbuf,
+			   bool& kill);
+
+#endif
+
+#ifdef __EMSCRIPTEN__
+// the requests made by the browser whose answer goes to outbuf: stopped
+void web_async_cancel (string* outbuf);
+#endif
+
+// a GET request (the models of an AI engine): its answer
+inline string
+http_get (string url, array<string> headers_attr) {
+  string ret;
+  http_get (ret, url, headers_attr);
+  return ret;
+}
+
+// the proxy of a request to u (libcurl, curl): "" when curl decides (the
+// variables of the environment), "direct" for none, else the proxy; and the
+// option of a curl command line which says it
+string http_proxy (string u);
+string curl_proxy_option (string u);
+
+// the requests made with libcurl (web_files.cpp): driven at each turn of the
+// main loop, and those whose answer goes to outbuf stopped and forgotten (no
+// operation without libcurl)
+void http_async_pending ();
+void http_async_cancel (string* outbuf);
+
+inline string
+http_post (string url, array<string> headers_attr, string data) {
+  string ret; 
+  http_post (ret, url, headers_attr, data);
+  return ret;
+}
+
+inline string
+http_post_json (string url, array<string> headers_attr, tree data) {
+  string ret; 
+  http_post_json (ret, url, headers_attr, data);
+  return ret;
+}
+
+inline string
+http_post_query (string url, array<string> headers_attr, array<string> attr) {
+  string ret; 
+  http_post_query (ret, url, headers_attr, attr);
+  return ret;
+}
 
 #endif // defined WEB_FILES_H

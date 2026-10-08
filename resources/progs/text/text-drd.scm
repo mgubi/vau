@@ -71,9 +71,12 @@
   table-of-contents bibliography the-index the-glossary
   list-of-figures list-of-tables)
 
+(define-group automatic-section*-tag
+  table-of-contents* bibliography* the-index* the-glossary*)
+
 (define-group long-principal-section-tag
   part part* chapter chapter* appendix appendix*
-  (special-section-tag) (automatic-section-tag))
+  (special-section-tag) (automatic-section-tag) (automatic-section*-tag))
 
 (define-group short-principal-section-tag
   section section* (long-principal-section-tag))
@@ -81,7 +84,7 @@
 ;; Lists
 
 (define-group list-tag
-  (itemize-tag) (enumerate-tag) (description-tag))
+  (itemize-tag) (enumerate-tag) (description-tag) (new-list-tag))
 
 (define-group itemize-tag
   itemize itemize-minus itemize-dot itemize-arrow)
@@ -93,6 +96,17 @@
 (define-group description-tag
   description description-compact description-aligned
   description-dash description-long description-paragraphs)
+
+;; List tags that are created dynamically (fragile)
+
+(define-group new-list-tag)
+
+(tm-define (tm-register-new-list-tag x)
+  (:secure #t)
+  (when (string? (tree->stree x))
+    (with t (tree->symbol x)
+      (when (not (group-find t 'list-tag)) 
+	(eval `(define-group new-list-tag ,t))))))
 
 ;; Document titles
 
@@ -151,10 +165,13 @@
   padded-center padded-left-aligned padded-right-aligned)
 
 (define-group frame-tag
-  padded overlined underlined bothlined framed ornamented)
+  padded overlined underlined bothlined
+  leftlined rightlined verticallined
+  framed ornamented)
 
 (define-group frame-titled-tag
   padded-titled overlined-titled underlined-titled bothlined-titled
+  leftlined-titled rightlined-titled verticallined-titled
   framed-titled ornamented-titled)
 
 ;; Textual markup tags
@@ -213,8 +230,8 @@
   (inline-code-tag) (block-code-tag))
 
 (define-group inline-code-tag
-  verbatim scm cpp mmx r fortran octave
-  python julia java javascript json scala scilab shell)
+  verbatim scm cpp dot-lang mmx r fortran octave-lang
+  python julia java javascript-lang json-lang scala scilab shell)
 
 (define-group block-code-tag
   verbatim-code scm-code cpp-code dot-code mmx-code r-code fortran-code
@@ -239,7 +256,9 @@
 ;; balloons
 
 (define-group balloon-tag
-  mouse-over-balloon mouse-over-balloon* focus-balloon help-balloon)
+  hover-balloon hover-balloon*
+  popup-balloon popup-balloon*
+  focus-balloon help-balloon)
 
 ;; detached notes
 

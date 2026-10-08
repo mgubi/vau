@@ -48,8 +48,12 @@
 
 (define (htmlout-p-simplify? x)
   ;; FIXME: font should not really be in the list here
-  (and (func? x 'p 1) (pair? (cadr x))
-       (in? (caadr x) '(div p li dt dd center blockquote ul ol dl))))
+  (or (and (func? x 'p 1) (pair? (cadr x))
+           (in? (caadr x) '(div p li dt dd center blockquote ul ol dl)))
+      ;; the term and the definition of an item of a description list
+      (and (func? x 'p) (nnull? (cdr x))
+           (list-and (map (lambda (y) (and (pair? y) (in? (car y) '(dt dd))))
+                          (cdr x))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Outputting main flow
@@ -82,8 +86,13 @@
         (output-text " " (symbol->string (car x)) "=")
         (output-verbatim "\"" (cadr x) "\""))))
 
+(define (htmlout-attr<=? a1 a2)
+  (string<=? (symbol->string (car a1)) (symbol->string (car a2))))
+
 (define (htmlout-open-tags s l)
-  (with ll (ahash-table->list (list->ahash-table l))
+  ;; the attributes, the last value of a repeated one, sorted by name: the
+  ;; order of a hash table would depend on the interpreter
+  (with ll (sort (ahash-table->list (list->ahash-table l)) htmlout-attr<=?)
     (htmlout-text "<" (symbol->string s))
     (for-each htmlout-tag ll)
     (htmlout-text ">")
@@ -123,7 +132,7 @@
 	((or (func? x '!concat) (func? x '*TOP*))
 	 (for-each htmlout (cdr x)))
 	((htmlout-p-simplify? x)
-	 (htmlout (cadr x)))
+	 (for-each htmlout (cdr x)))
   	((func? x '*PI*)
 	 (output-lf-verbatim "<?" (symbol->string (cadr x)) " " (caddr x) "?>")
 	 (output-lf))

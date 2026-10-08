@@ -483,8 +483,9 @@ upgrade_apply_expand_value (tree t, hashset<string> H) {
     tree r (t, n);
     if (is_func (t, APPLY))
       if ((n >= 1) && is_atomic (t[0]) && H->contains (t[0]->label)) {
-        if (n == 1) r= tree (VALUE, n);
-        else r= tree (EXPAND, n);
+        // in LaTeX imports, user macros such as \tm are not variables
+        if (n > 1) r= tree (EXPAND, n);
+        else if (!upgrade_tex_flag) r= tree (VALUE, n);
       }
     for (i=0; i<n; i++)
       r[i]= upgrade_apply_expand_value (t[i], H);
@@ -1607,7 +1608,12 @@ upgrade_mod_symbols (tree t) {
     if (is_atomic (r)) return r;
     if (is_with (r, "mode", "math") && is_atomic (r[2])) return r;
   }
+
   if (is_var_with (t, "math font series", "bold") && is_bold (t[2]))
+    return upgrade_mod_symbol ("b-", t[2]->label);
+  else if (is_var_with (t, "math font family", "bf") && is_alpha (t[2]))
+    return upgrade_mod_symbol ("b-up-", t[2]->label);
+  else if (is_var_with (t, "math font family", "bf") && is_bold (t[2]))
     return upgrade_mod_symbol ("b-", t[2]->label);
   else if (is_var_with (t, "math font", "cal") && is_upper (t[2]))
     return upgrade_mod_symbol ("cal-", t[2]->label);
@@ -1617,12 +1623,20 @@ upgrade_mod_symbols (tree t) {
     return upgrade_mod_symbol ("bbb-", t[2]->label);
   else if (is_var_with (t, "math font", "Bbb*") && is_alpha (t[2]))
     return upgrade_mod_symbol ("bbb-", t[2]->label);
-  else if (is_var_with (t, "math font series", "bold") &&
-           is_var_with (t[2], "math font", "cal") && is_upper (t[2][2]))
-    return upgrade_mod_symbol ("b-cal-", t[2][2]->label);
+
   else if (is_var_with (t, "math font", "cal") &&
            is_var_with (t[2], "math font series", "bold") && is_upper (t[2][2]))
     return upgrade_mod_symbol ("b-cal-", t[2][2]->label);
+  else if (is_var_with (t, "math font", "cal") &&
+           is_var_with (t[2], "math font family", "bf") && is_upper (t[2][2]))
+    return upgrade_mod_symbol ("b-cal-", t[2][2]->label);
+  else if (is_var_with (t, "math font series", "bold") &&
+           is_var_with (t[2], "math font", "cal") && is_upper (t[2][2]))
+    return upgrade_mod_symbol ("b-cal-", t[2][2]->label);
+  else if (is_var_with (t, "math font family", "bf") &&
+           is_var_with (t[2], "math font", "cal"))
+    return upgrade_mod_symbol ("b-cal-", t[2][2]->label);
+
   //else if ((is_func (t, VALUE, 1) || is_func (t, EXPAND, 1) ||
   //         is_func (t, APPLY, 1)) && (is_atomic (t[0]))) {
   //  string s= t[0]->label;
@@ -1632,6 +1646,7 @@ upgrade_mod_symbols (tree t) {
   //    return upgrade_mod_symbol ("frak-", s(1,2));
   //  return t;
   //}
+
   else {
     int i, n= N(t);
     tree r (t, n);
@@ -3562,7 +3577,7 @@ upgrade_cyrillic_encoding (tree t, bool cyrillic) {
 }
 
 array<tree>
-get_childs_by_name (tree t, string s) {
+get_children_by_name (tree t, string s) {
   array<tree> r = array<tree>();
   if (!is_atomic (t))
     for (int i = 0 ; i < N(t) ; i++) {
@@ -3575,11 +3590,11 @@ static tree
 upgrade_cyrillic (tree t) {
   bool cyrillic = false;
   array<tree> initial, collection, associate;
-  initial = get_childs_by_name (t, "initial");
+  initial = get_children_by_name (t, "initial");
   for (int i = 0 ; i < N(initial) ; i++){
-    collection = get_childs_by_name (initial[i], "collection");
+    collection = get_children_by_name (initial[i], "collection");
     for (int j = 0 ; j < N(collection) ; j++){
-      associate = get_childs_by_name (collection[j], "associate");
+      associate = get_children_by_name (collection[j], "associate");
       for (int k = 0 ; k < N(associate) ; k++) {
         if (is_func(associate[k], ASSOCIATE, 2) && associate[k][0] == "font")
           cyrillic = (associate[k][1] == "cyrillic");
@@ -4006,9 +4021,12 @@ bool
 is_equation_env (tree t) {
   if (is_atomic (t) || N(t) != 1) return false;
   static hashset<tree_label> H;
+  // make_tree_label, not as_tree_label: the set is made once, maybe before
+  // the styles which define these tags have been loaded (a new home, with
+  // no style caches), and as_tree_label does not know the labels yet
   if (N(H) == 0)
     for (int i=0; equation_tags[i][0] != '\0'; i++)
-      H->insert (as_tree_label (equation_tags[i]));
+      H->insert (make_tree_label (equation_tags[i]));
   return H->contains (L(t));
 }
 
@@ -4393,6 +4411,10 @@ upgrade (tree t, string version) {
   }
   if (version_inf_eq (version, "1.99.13"))
     t= preserve_lengths (t);
+  if (version_inf_eq (version, "2.1.2")) {
+    t= rename_primitive (t, "mouse-over-balloon", "hover-balloon");
+    t= rename_primitive (t, "mouse-over-balloon*", "hover-balloon*");
+  }
 
   if (is_non_style_document (t))
     t= automatic_correct (t, version);

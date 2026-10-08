@@ -19,8 +19,6 @@
 
 #ifdef OS_MINGW
 // we redefine some symbols to avoid name clashes with Windows headers (included by Guile)
-#define PATTERN WIN_PATTERN
-#define STRING WIN_STRING
 #define GROUP WIN_GROUP
 #ifdef IN
 #define MY_IN IN
@@ -51,10 +49,6 @@
 #endif
 
 #ifdef OS_MINGW
-// put things back
-#undef STRING
-#undef ERROR
-#undef PATTERN
 #undef GROUP
 #undef IN
 #undef OUT
@@ -199,6 +193,15 @@ typedef SCM (*FN)(...);
 typedef SCM (*FN)();
 #endif
 
+template<typename T> inline FN
+tmscm_as_fn (T func) {
+  union {
+    T from;
+    FN to;
+  } cast = { func };
+  return cast.to;
+}
+
 #if defined(GUILE_A) || defined(GUILE_B)
 int scm_to_bool (SCM obj);
 int scm_to_int (SCM obj);
@@ -261,6 +264,7 @@ tmscm symbol_to_tmscm (string s);
 
 inline bool tmscm_to_bool (tmscm obj) { return scm_to_bool (obj); }
 inline int tmscm_to_int (tmscm obj) { return scm_to_int (obj); }
+inline int tmscm_to_uint (tmscm obj) { return scm_to_uint (obj); }
 inline double tmscm_to_double (tmscm obj) { return scm_to_double (obj); }
 string tmscm_to_string (tmscm obj);
 string tmscm_to_symbol (tmscm obj);
@@ -279,7 +283,7 @@ tmscm call_scheme (tmscm fun, array<tmscm> a);
 
 
 #define tmscm_install_procedure(name, func, args, p0, p1) \
-  scm_new_procedure (name, ( FN )( func ), args, p0, p1)
+  scm_new_procedure (name, tmscm_as_fn (func), args, p0, p1)
 
 #define TMSCM_ASSERT(_cond, _arg, _pos, _subr) \
  SCM_ASSERT(_cond, _arg, _pos, _subr)

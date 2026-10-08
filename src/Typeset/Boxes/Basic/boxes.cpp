@@ -29,12 +29,18 @@ box box::operator [] (path p) {
   if (is_nil (p)) return *this; else return rep->subbox(p->item)[p->next]; }
 double box_rep::left_slope () { return 0.0; }
 double box_rep::right_slope () { return 0.0; }
-SI box_rep::left_correction () { return (SI) (-min (0, y1) * left_slope ()); }
-SI box_rep::right_correction () { return (SI) (max (0, y2) * right_slope ()); }
+SI box_rep::left_correction () { return (SI) (-min (y1, 0) * left_slope ()); }
+SI box_rep::right_correction () { return (SI) (max (y2, 0) * right_slope ()); }
 SI box_rep::lsub_correction () { return 0; }
 SI box_rep::lsup_correction () { return 0; }
 SI box_rep::rsub_correction () { return 0; }
 SI box_rep::rsup_correction () { return 0; }
+SI box_rep::lsub_correction_at (SI h) { (void) h; return lsub_correction (); }
+SI box_rep::lsup_correction_at (SI h) { (void) h; return lsup_correction (); }
+SI box_rep::rsub_correction_at (SI h) { (void) h; return rsub_correction (); }
+SI box_rep::rsup_correction_at (SI h) { (void) h; return rsup_correction (); }
+bool box_rep::extended_shape () { return true; }
+bool box_rep::top_accent (SI& x) { (void) x; return false; }
 SI box_rep::sub_lo_base (int level) { (void) level; return y1; }
 SI box_rep::sub_hi_lim  (int level) { (void) level; return y1 + ((y2-y1)/3); }
 SI box_rep::sup_lo_lim  (int level) { (void) level; return (y1 + y2) >> 1; }
@@ -807,9 +813,14 @@ box_rep::anim_invalid () {
 * Miscellaneous routines
 ******************************************************************************/
 
+void
+box_rep::broadcast (tree t, rectangles& rs) {
+  (void) t; (void) rs;
+}
+
 tree
 box_rep::message (tree t, SI x, SI y, rectangles& rs) {
-  (void) x; (void) y; (void) delta; (void) t; (void) rs;
+  (void) x; (void) y; (void) t; (void) rs;
   return "";
 }
 
@@ -824,6 +835,10 @@ void
 box_rep::display_links (renderer ren) {
   if (!is_nil (ip) && ip->item >= 0 && x2 > x1 && y2 > y1) {
     path p= reverse (ip);
+    // a link is registered by every typesetter which typeset its locus --
+    // when printing, the editor's and the printer's -- so the same one may
+    // be found twice: it is drawn once
+    list<string> done;
     while (N(p) > 1) {
       // FIXME: we might want to sort out overlapping and adjacent links
       if (has_subtree (the_et, p)) {
@@ -837,7 +852,10 @@ box_rep::display_links (renderer ren) {
                 is_compound (lns[j][3], "url", 1) &&
                 is_atomic (lns[j][3][0])) {
               string dest= lns[j][3][0]->label;
-              ren->href (dest, x1, y1, x2, y2);
+              if (!contains (done, dest)) {
+                ren->href (dest, x1, y1, x2, y2);
+                done= list<string> (dest, done);
+              }
             }
         }
       }

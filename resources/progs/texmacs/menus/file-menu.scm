@@ -147,17 +147,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (menu-bind new-file-menu
-  (if (window-per-buffer?)
-      ("New window" (new-document)))
-  (if (not (window-per-buffer?))
-      ("New document" (new-document))
-      ("New window" (new-document*)))
+  (if (support-functionality? "tab")
+    ("New tab" (new-document*)))
+  (if (support-functionality? "tab")
+    ("New document in this tab" (new-document)))
+  (if (support-functionality? "multiwindow")
+    ("New window"
+     (begin
+       (gui-set-next-window-as-popup)
+       (new-document*))))
+  (if (and (not (support-functionality? "tab")) (window-per-buffer?))
+    ("New window" (new-document)))
+  (if (and (not (support-functionality? "tab"))
+       (not (window-per-buffer?)))
+    ("New document" (new-document))
+    (if (not (support-functionality? "tab"))
+      ("New window" (new-document*))))
   ;;("Clone window" (clone-window))
   )
 
 (menu-bind load-menu
   ("Load" (open-document))
   ("Revert" (revert-buffer))
+  ;; the browser build: the files kept in the page (web-files is defined
+  ;; by the Vue plugin there)
+  (if (defined? 'web-files)
+      ("Files in this browser..." (web-files)))
   (if (not (window-per-buffer?))
       ("Load in new window" (open-document*)))
   ---
@@ -191,16 +206,22 @@
       ("Print buffer" (print-buffer))
       ("Print page selection" (interactive print-pages)))
   ("Print buffer to file"
-   (choose-file print-to-file "Print all to file" "postscript"))
+   (choose-file print-to-file "Print all to file"
+		(printer-file-format) "Print:"))
   ("Print page selection to file"
    (interactive choose-file-and-print-page-selection)))
 
 (menu-bind print-menu
   ("Preview" (preview-buffer))
+  (if (defined? 'web-open-pdf)
+      ;; in the browser: the PDF in a tab, whose viewer prints it (as
+      ;; Preview, but named for what it is for; print-buffer is interactive)
+      ("Print" (preview-buffer)))
   (if (use-print-dialog?)
       (if (has-printing-cmd?) ("Print" (print-buffer)))
       ("Print to file"
-       (choose-file print-to-file "Print all to file" "postscript")))
+       (choose-file print-to-file "Print all to file"
+		    (printer-file-format) "Print:")))
   (if (not (use-print-dialog?))
       (-> "Print" (link print-menu-sub)))
   (if (use-menus?)
@@ -210,10 +231,15 @@
 
 (menu-bind print-menu-inline
   ("Preview" (preview-buffer))
+  (if (defined? 'web-open-pdf)
+      ;; in the browser: the PDF in a tab, whose viewer prints it (as
+      ;; Preview, but named for what it is for; print-buffer is interactive)
+      ("Print" (preview-buffer)))
   (if (use-print-dialog?)
       (if (has-printing-cmd?) ("Print" (print-buffer)))
       ("Print to file"
-       (choose-file print-to-file "Print all to file" "postscript")))
+       (choose-file print-to-file "Print all to file"
+		    (printer-file-format) "Print:")))
   (if (not (use-print-dialog?))
       ---
       (link print-menu-sub)
@@ -235,6 +261,30 @@
 ;; The File menu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (wrapped-import-pdf-embeded-with-tm tem-pdf)
+  ;; the linked files (images, included documents...) come out of the PDF
+  ;; next to its document, which is therefore what their paths are made
+  ;; relative to: with PDFHummus that is <pdf-name>-attachments next to the
+  ;; PDF, with MuPDF a directory of their own (see mupdf_attachments.cpp)
+  (let* ((tem-dir (url-temp-dir))
+         (tem-tm (url-append tem-dir "tem.tm"))
+         (tem-tm2 (url-append tem-dir "extracted.tm"))
+         (main-tm (and (extract-attachments tem-pdf)
+                       (url-relative tem-tm
+                                     (pdf-get-attached-main-tm tem-pdf)))))
+    (if (and main-tm (not (url-none? main-tm)))
+        (begin
+          (string-save
+            (serialize-texmacs
+              (pdf-replace-linked-path (tree-import main-tm "texmacs") main-tm))
+            tem-tm2)
+          (load-buffer tem-tm2))
+        (begin
+          (notify-now "Can not extract attachments from PDF")
+          (texmacs-error "pdf" "Can not extract attachments from PDF")))))
+
+
+
 (menu-bind file-menu
   ("New" (new-document))
   ("Load" (open-document))
@@ -251,11 +301,16 @@
   (link print-menu)
   ---
   (-> "Import"
-      (link import-import-menu))
+      (link import-import-menu)
+      ---
+      ("Pdf with embedded document" (choose-file wrapped-import-pdf-embeded-with-tm "Import pdf file" "pdf")))
   (-> "Export"
       (link export-export-menu)
       ---
       ("Pdf" (choose-file wrapped-print-to-file "Save pdf file" "pdf"))
+      ("Pdf with embedded document" (choose-file wrapped-print-to-pdf-embeded-with-tm "Save pdf file" "pdf"))
+      (when (pdf-encryption?)
+        ("Pdf with password" (choose-file choose-pdf-with-password "Save pdf file" "pdf")))
       ("Postscript"
        (choose-file wrapped-print-to-file "Save postscript file" "postscript"))
       (when (selection-active-any?)

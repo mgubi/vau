@@ -18,7 +18,7 @@ set (CMAKE_MODULE_PATH ${Vau_SOURCE_DIR}/devel)
 
 set (VERSION_MAJOR "2")
 set (VERSION_MINOR "1")
-set (VERSION_BUILD "2")
+set (VERSION_BUILD "5")
 set (TEXMACS_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD})
 
 set (TEXMACS_SOURCES ${Vau_SOURCE_DIR})
@@ -73,39 +73,52 @@ check_include_file (pty.h HAVE_PTY_H)
 check_include_file (util.h HAVE_UTIL_H)
 check_function_exists (gettimeofday HAVE_GETTIMEOFDAY)
 
-check_type_size ("void*" SIZE_OF_VOIDP)
+check_type_size ("void*" SIZEOF_VOID_P)
+check_type_size ("int" SIZEOF_INT)
+check_type_size ("long" SIZEOF_LONG)
+check_type_size ("long long" SIZEOF_LONG_LONG)
+check_type_size ("short" SIZEOF_SHORT)
 
-set (CONFIG_WORD_LENGTH "4")
-set (CONFIG_WORD_LENGTH_INC "3")
-set (CONFIG_WORD_MASK "0xfffffffc")
-set (CONFIG_MAX_FAST "260 // WORD_LENGTH more than power of 2")
-
-set (CONFIG_HOST_OS "linux-gnu") # TODO: should not be hard-coded
-set (CONFIG_HOST_VENDOR "pc") # TODO: should not be hard-coded
+set (CONFIG_HOST_OS "${CMAKE_SYSTEM_NAME}")
+set (CONFIG_HOST_VENDOR "pc")
 set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
 
-if(EMSCRIPTEN)
+if (EMSCRIPTEN)
   message (STATUS "Final adjustments for WASM host")
   set (CONFIG_OS "WASM")
+  set (OS_WASM 1)
   set (CONFIG_OS_SUFFIX "wasm")
   set (CONFIG_HOST_OS "wasm-emscripten")
-  set (CONFIG_HOST_VENDOR "pc")
-  set (CONFIG_HOST_CPU ${CMAKE_SYSTEM_PROCESSOR})
-  set (SIZE_OF_VOIDP 8) ## 32 bit
+  set (Vau_WORD_SIZE 8) # 32 bit pointers, but we want 8 bytes alignment
   set (HAVE_TIME_T TRUE)
-endif(EMSCRIPTEN)
-
-if (SIZE_OF_VOIDP)
-  message (STATUS "Check if we are on a 64-bits computer")
-  if (${SIZE_OF_VOIDP} EQUAL 8)
-    set (CONFIG_WORD_LENGTH "8")
-    set (CONFIG_WORD_LENGTH_INC "7")
-    set (CONFIG_WORD_MASK "0xfffffffffffffff8")
-    set (CONFIG_MAX_FAST "264 // WORD_LENGTH more than power of 2")
-  endif (${SIZE_OF_VOIDP} EQUAL 8)
+elseif (APPLE)
+  set (CONFIG_OS "MACOS")
+  set (OS_MACOS 1)
 else ()
-  set (SIZE_OF_VOIDP 4)
-endif () 
+  set (CONFIG_OS "GNU_LINUX")
+  set (OS_GNU_LINUX 1)
+endif ()
+
+if (NOT SIZEOF_VOID_P)
+  set (SIZEOF_VOID_P 4)
+endif ()
+set (ALIGNOF_VOID_P ${SIZEOF_VOID_P})
+if (NOT Vau_WORD_SIZE)
+  set (Vau_WORD_SIZE ${SIZEOF_VOID_P})
+endif ()
+
+message (STATUS "Check if we are on a 64-bits computer")
+if (${Vau_WORD_SIZE} EQUAL 8)
+  set (WORD_LENGTH "8")
+  set (WORD_LENGTH_INC "7")
+  set (WORD_MASK "0xfffffffffffffff8")
+  set (MAX_FAST "264") # WORD_LENGTH more than power of 2
+else ()
+  set (WORD_LENGTH "4")
+  set (WORD_LENGTH_INC "3")
+  set (WORD_MASK "0xfffffffc")
+  set (MAX_FAST "260") # WORD_LENGTH more than power of 2
+endif ()
 
 
 ### --------------------------------------------------------------------
@@ -122,6 +135,7 @@ else (EMSCRIPTEN)
   find_package (JPEG)
   #pkg_check_modules (Guile REQUIRED guile-1.8 gmp IMPORTED_TARGET)
   find_package (Freetype REQUIRED)
+  find_package (SDL2 REQUIRED)
   find_package (Iconv REQUIRED)
   #include(CMakePrintHelpers)
   #cmake_print_variables(MUPDF_INCLUDE_DIR MUPDF_THIRD_LIBRARY_RELEASE MUPDF_LIBRARY_RELEASE)
@@ -134,10 +148,11 @@ find_package (MuPDF REQUIRED)
 ### --------------------------------------------------------------------
 
 set (DEBUG_ASSERT 1)
+set (USE_S7 1)
+set (USE_MUPDF 1)
 set (PDF_RENDERER 1)
-#set (SIZEOF_VOID_P 8)
 set (STDC_HEADERS 1)
-set (CONFIG_STD_SETENV "#define STD_SETENV")
+set (STD_SETENV 1)
 
 set (tm_orig ${Vau_SOURCE_DIR})
 set (CONFIG_USER $ENV{USER})
@@ -222,6 +237,7 @@ set (Vau_Include_Dirs
 ### --------------------------------------------------------------------
 
 set (Vau_Base_SRCS
+  "${Vau_SOURCE_DIR}/src/Data/Convert/AI/json.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/generic.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/indexation.cpp"
 #  "${Vau_SOURCE_DIR}/src/Data/Convert/Generic/input.cpp"
@@ -275,6 +291,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Data/String/wencoding.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Tree/tree_analyze.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Tree/tree_brackets.cpp"
+  "${Vau_SOURCE_DIR}/src/Data/Tree/tree_cache.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Tree/tree_correct.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Tree/tree_cursor.cpp"
   "${Vau_SOURCE_DIR}/src/Data/Tree/tree_math_stats.cpp"
@@ -297,6 +314,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/charmap.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/compound_font.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/find_font.cpp"
+  "${Vau_SOURCE_DIR}/src/Graphics/Fonts/feature_font.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/font.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/font_database.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/font_guess.cpp"
@@ -307,6 +325,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/font_translate.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/font_wide.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/math_font.cpp"
+  "${Vau_SOURCE_DIR}/src/Graphics/Fonts/math_font_profiles.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/poor_bbb.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/poor_bold.cpp"
   "${Vau_SOURCE_DIR}/src/Graphics/Fonts/poor_distorted.cpp"
@@ -384,6 +403,7 @@ set (Vau_Base_SRCS
 #  "${Vau_SOURCE_DIR}/src/System/Files/make_file.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/tm_ostream.cpp"
   "${Vau_SOURCE_DIR}/src/System/Files/web_files.cpp"
+  "${Vau_SOURCE_DIR}/src/System/Language/cpp_language.cpp"
   "${Vau_SOURCE_DIR}/src/System/Language/dictionary.cpp"
   "${Vau_SOURCE_DIR}/src/System/Language/fortran_language.cpp"
   "${Vau_SOURCE_DIR}/src/System/Language/hyphenate.cpp"
@@ -406,6 +426,7 @@ set (Vau_Base_SRCS
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Animate/animate_boxes.cpp"
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/basic_boxes.cpp"
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/boxes.cpp"
+  "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/font_debug_boxes.cpp"
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/rubber_boxes.cpp"
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/stretch_boxes.cpp"
   "${Vau_SOURCE_DIR}/src/Typeset/Boxes/Basic/text_boxes.cpp"
@@ -497,16 +518,21 @@ file (GLOB_RECURSE Vau_Std_Plugins_SRCS
   "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Pdf/*.c"
   "${Vau_SOURCE_DIR}/src/Plugins/MuPDF/*.cpp"
+  "${Vau_SOURCE_DIR}/src/Plugins/MuPDF/*.c"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ghostscript/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Imlib2/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Ispell/*.cpp"
   "${Vau_SOURCE_DIR}/src/Plugins/Metafont/*.cpp"
+  "${Vau_SOURCE_DIR}/src/Plugins/Unix/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/LaTeX_Preview/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Mplayer/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Openssl/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Sqlite3/*.cpp"
 #  "${Vau_SOURCE_DIR}/src/Plugins/Updater/*.cpp"
 )
+
+# the handling of PDF attachments depends on the buffer management of TeXmacs
+list (FILTER Vau_Std_Plugins_SRCS EXCLUDE REGEX "attachment")
 
 set (Vau_All_SRCS ${Vau_Base_SRCS} ${Vau_Std_Plugins_SRCS})
 
@@ -567,6 +593,7 @@ else (EMSCRIPTEN)
   target_link_libraries (Vau PRIVATE Iconv::Iconv)
   target_link_libraries (Vau PRIVATE PNG::PNG)
   target_link_libraries (Vau PRIVATE ZLIB::ZLIB)
+  target_link_libraries (Vau PRIVATE SDL2::SDL2)
   target_link_libraries (Vau PRIVATE
         "-framework ApplicationServices"
         "-framework CoreFoundation"

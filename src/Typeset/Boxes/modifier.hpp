@@ -25,6 +25,7 @@ public:
   box       subbox (int i);
   void      display (renderer ren);  
   operator  tree ();
+  void      broadcast (tree t, rectangles& rs);
   tree      message (tree t, SI x, SI y, rectangles& rs);
   void      loci (SI x, SI y, SI delta, list<string>& ids, rectangles& rs);
   void      collect_page_numbers (hashmap<string,tree>& h, tree page);
@@ -51,6 +52,12 @@ public:
   SI        lsup_correction ();
   SI        rsub_correction ();
   SI        rsup_correction ();
+  SI        lsub_correction_at (SI h);
+  SI        lsup_correction_at (SI h);
+  SI        rsub_correction_at (SI h);
+  SI        rsup_correction_at (SI h);
+  bool      extended_shape ();
+  bool      top_accent (SI& x);
   SI        sub_lo_base (int level);
   SI        sub_hi_lim  (int level);
   SI        sup_lo_lim  (int level);

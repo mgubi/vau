@@ -44,7 +44,6 @@ struct texmacs_input_rep: concrete_struct {
   void html_flush (bool force= false);
   void ps_flush (bool force= false);
   void math_flush (bool force= false);
-  void ispell_flush (bool force= false);
   void channel_flush (bool force= false);
   void command_flush (bool force= false);
   void xformat_flush (bool force= false);
@@ -52,6 +51,8 @@ struct texmacs_input_rep: concrete_struct {
                    string w_unit, string h_unit,
                    double width, double height);
   void file_flush (bool force= false);
+  void cmdline_flush (bool force= false);
+  void request_flush (bool force= false);
 };
 
 class texmacs_input {
@@ -59,5 +60,7 @@ class texmacs_input {
   texmacs_input (string type);
 };
 CONCRETE_CODE(texmacs_input);
+
+void document_append (tree& doc, tree u);
 
 #endif // defined INPUT_H

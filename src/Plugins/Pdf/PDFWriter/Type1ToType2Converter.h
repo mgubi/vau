@@ -35,6 +35,7 @@ class Type1Input;
 
 struct ConversionNode
 {
+	ConversionNode() : mMarkerType(0) {}
 	unsigned short mMarkerType;
 	LongList mOperands;
 };
@@ -51,9 +52,12 @@ struct Stem
 	long mExtent;
 };
 
-class StemLess : public std::binary_function<const Stem,const Stem,bool>
-{
-public:
+#if __cplusplus >= 201703L
+class StemLess {
+#else
+class StemLess : public std::binary_function<const Stem,const Stem,bool> {
+#endif
+	public:
 	bool operator( ) (const Stem& inLeft, 
 						const Stem& inRight ) const
 	{

@@ -13,8 +13,11 @@
 #include "convert.hpp"
 #include "converter.hpp"
 #include "Freetype/tt_tools.hpp"
+#include "Freetype/tt_file.hpp"
 #include "translator.hpp"
 #include "iterator.hpp"
+#include "analyze.hpp" // contains
+#include "colors.hpp"
 
 bool virtually_defined (string c, string name);
 font smart_font_bis (string f, string v, string s, string sh, int sz,
@@ -41,6 +44,10 @@ RESOURCE(smart_map);
 #define REWRITE_UPRIGHT         9
 #define REWRITE_ITALIC         10
 #define REWRITE_IGNORE         11
+#define REWRITE_MATH_ITALIC    12
+#define REWRITE_CORK           13
+
+static string substitute_math_italic (string s);
 
 struct smart_map_rep: rep<smart_map> {
   int chv[256];
@@ -195,7 +202,9 @@ is_rubber (string c) {
   return (starts (c, "<large-") ||
           starts (c, "<left-") ||
           starts (c, "<right-") ||
-          starts (c, "<mid-")) && ends (c, ">");
+          starts (c, "<mid-") ||
+          starts (c, "<wide-") ||
+          starts (c, "<rubber-")) && ends (c, ">");
 }
 
 static hashmap<string,string> special_table ("");
@@ -486,7 +495,7 @@ get_unicode_range (string c) {
 bool
 in_unicode_range (string c, string range) {
   string uc= strict_cork_to_utf8 (c);
-  if (N(uc) == 0) return "";
+  if (N(uc) == 0) return false;
   int pos= 0;
   int code= decode_from_utf8 (uc, pos);
   string got= get_unicode_range (code);
@@ -649,6 +658,124 @@ stix_fix (string family, string series, string shape) {
   return family;
 }
 
+// Profiled OpenType math fonts: in math shapes a text family is replaced
+// by its math companion when that font is installed, in text shapes a math
+// family by its text companion. Sans serif and typewriter, in text as in
+// math, are served by the companions the profile declares, since a math
+// font has no sans or typewriter face of its own and a text master often
+// has none either (Latin Modern Roman, TeX Gyre Pagella).
+// A math font TeXmacs knows by name may be installed and yet be absent
+// from the font database, which only holds what the shipped database
+// records and what a scan of the disk found: the math fonts of a TeX
+// distribution are the usual case. Selecting such a family would find no
+// font at all and fall back on the nearest text face by feature distance,
+// so add the file to the database of the home directory, once.
+// The text companion may be just as absent, as New Computer Modern Sans is
+// from a TeX distribution; a profile then names one of its files, and the
+// directory of that file, which holds the other faces, is added.
+static void
+register_profiled_font (string math_family) {
+  static hashset<string> done;
+  if (done->contains (math_family)) return;
+  done->insert (math_family);
+  if (N (font_database_styles (math_family)) == 0) {
+    string file= math_font_profile_attr (math_family, "file");
+    url u= (file == ""? url_none (): tt_font_find (file));
+    if (!is_none (u)) {
+      cout << "TeXmacs] registering " << math_family
+           << ", the math font of " << as_string (u) << "\n";
+      font_database_extend_local (u);
+    }
+  }
+  string text = math_font_profile_attr (math_family, "text");
+  string tfile= math_font_profile_attr (math_family, "text-file");
+  if (text != "" && tfile != "" && N (font_database_styles (text)) == 0) {
+    url u= tt_font_find (tfile);
+    if (!is_none (u)) {
+      cout << "TeXmacs] registering " << text << ", the text fonts of "
+           << as_string (head (u)) << "\n";
+      font_database_extend_local (head (u));
+    }
+  }
+}
+
+// The profile of a math family, also when it is named by its master: in
+// prog mode the shape is mathupright, and kepler_fix has then turned Kepler
+// into Kepler Math, the master of the profile KpMath
+static string
+profile_family (string math_family) {
+  if (N (math_font_profile (math_family)) > 0) return math_family;
+  static hashmap<string,string> cache ("?");
+  if (cache->contains (math_family)) return cache [math_family];
+  string r= "";
+  array<string> a= math_font_profile_families ();
+  for (int i= 0; i < N(a) && r == ""; i++)
+    if (font_database_master (a[i]) == math_family) r= a[i];
+  cache (math_family)= r;
+  return r;
+}
+
+// The companion a profile declares for a sans serif or typewriter variant;
+// as in variant_features, the parts of a variant count separately, so that
+// the variant rm-tt of prog mode (session inputs) is a typewriter one
+static string
+profile_variant_fix (string math_family, string variant, string item) {
+  array<string> v= tokenize (variant, "-");
+  string key= (contains (string ("tt"), v)? string ("mono"):
+               (contains (string ("ss"), v)? string ("sans"): string ("")));
+  if (key == "") return item;
+  string prof= profile_family (math_family);
+  if (prof == "") return item;
+  // the companion may be a list of alternatives, the first installed wins
+  array<string> comps= trimmed_tokenize (math_font_profile_attr (prof, key), ",");
+  for (int i= 0; i < N(comps); i++)
+    if (comps[i] != "" && N (font_database_styles (comps[i])) > 0)
+      return comps[i];
+  return item;
+}
+
+string
+profile_fix (string family, string variant, string series, string shape) {
+  (void) series;
+  array<string> a= trimmed_tokenize (family, ","), r;
+  for (int i= 0; i < N(a); i++) {
+    string item= a[i];
+    if (!occurs ("=", item)) {
+      // the name may be that of a math font, in text as well as in math:
+      // the companion a profile declares is the math font itself when the
+      // family has no text face of its own, as Concrete Math and Euler
+      // Math have none
+      register_profiled_font (item);
+      string m= math_family_for_text (item);
+      bool has_math=
+        m != "" && tt_font_exists (math_font_profile_attr (m, "file"));
+      if (has_math) register_profiled_font (m);
+      if (starts (shape, "math")) {
+        if (has_math) item= m;
+        item= profile_variant_fix (item, variant, item);
+        // the font selection is driven by masters, and a profile names a
+        // family when the two differ ("KpMath" belongs to "Kepler Math")
+        string mst= font_database_master (item);
+        if (mst != "") item= mst;
+      }
+      else {
+        string t= text_family_for_math (item);
+        if (t != "" && t != item) {
+          item= profile_variant_fix (item, variant, t);
+        }
+        else if (has_math) item= profile_variant_fix (m, variant, item);
+        // a text font without mathematics may have a profile with its
+        // companions only, as the Palatino of macOS
+        else item= profile_variant_fix (item, variant, item);
+        string mst= font_database_master (item);
+        if (mst != "") item= mst;
+      }
+    }
+    r << item;
+  }
+  return recompose (r, ",");
+}
+
 string
 math_fix (string family, string series, string shape) {
   if (starts (shape, "math")) {
@@ -698,9 +825,13 @@ struct smart_font_rep: font_rep {
   int    dpi;
   int    math_kind;
   int    italic_nr;
+  bool   ot_math;    // the main font is an OpenType math font without
+                     // hand-tuned customizations: letters and Greek come
+                     // from its own math alphabets
 
   array<font> fn;
   smart_map   sm;
+  array<int>  origins; // debug switch "fonts": where each subfont comes from
 
   smart_font_rep (string name, font base_fn, font err_fn,
                   string family, string variant,
@@ -714,9 +845,18 @@ struct smart_font_rep: font_rep {
   int    resolve (string c, string fam, int attempt);
   bool   is_italic_prime (string c);
   int    resolve_rubber (string c, string fam, int attempt);
+  int    resolve_shipped_math (string c);
   int    resolve (string c);
   void   initialize_font (int nr);
   int    adjusted_dpi (string fam, string var, string ser, string sh, int att);
+
+  font make_rubber_font (font base);
+  int  rubber_subfont (string s);
+  bool get_rubber_variant (string s, SI height, string& r);
+  bool is_extended_shape (string s);
+  bool get_wide_variant (string s, SI width, string& r);
+  bool get_top_accent (string s, SI& x);
+  bool get_feature_variant (string s, string feature, int alt, string& r);
 
   bool   supports (string c);
   void   get_extents (string s, metric& ex);
@@ -724,6 +864,9 @@ struct smart_font_rep: font_rep {
   void   get_xpositions (string s, SI* xpos, SI xk);
   void   draw_fixed (renderer ren, string s, SI x, SI y);
   void   draw_fixed (renderer ren, string s, SI x, SI y, SI xk);
+  int    debug_origin (int nr);
+  void   debug_draw (renderer ren, int nr, string r, SI x, SI y, SI xk);
+  tree   debug_info (string s, int pos);
   font   magnify (double zoomx, double zoomy);
   void   advance_glyph (string s, int& pos, bool ligf);
   glyph  get_glyph (string s);
@@ -736,6 +879,10 @@ struct smart_font_rep: font_rep {
   SI     get_lsup_correction  (string s);
   SI     get_rsub_correction  (string s);
   SI     get_rsup_correction  (string s);
+  SI     get_lsub_correction_at (string s, SI h);
+  SI     get_lsup_correction_at (string s, SI h);
+  SI     get_rsub_correction_at (string s, SI h);
+  SI     get_rsup_correction_at (string s, SI h);
   SI     get_wide_correction  (string s, int mode);
 };
 
@@ -747,6 +894,8 @@ smart_font_rep::smart_font_rep (
     series (series2), shape (shape2), rshape (shape2),
     sz (sz2), hdpi (hdpi2), dpi (vdpi2),
     math_kind (0), italic_nr (-1),
+    ot_math (!is_nil (base_fn) && base_fn->math_type == MATH_TYPE_OPENTYPE &&
+             math_font_profile_attr (main_family (family2), "letters") != "text"),
     fn (2), sm (get_smart_map (tuple (family2, variant2, series2, shape2)))
 {
   fn[SUBFONT_MAIN ]= adjust_subfont (base_fn);
@@ -772,6 +921,12 @@ smart_font_rep::smart_font_rep (
       rshape= "right";
       if (math_kind == 2)
         this->copy_math_pars (base_fn);
+      else if (ot_math && math_kind == 1) {
+        // letters from the math italic alphabet of the math font itself
+        italic_nr= sm->add_font (tuple ("ot-italic"), REWRITE_MATH_ITALIC);
+        initialize_font (italic_nr);
+        this->copy_math_pars (fn[italic_nr]);
+      }
       else {
         italic_nr= sm->add_font (tuple ("fast-italic"), REWRITE_NONE);
         initialize_font (italic_nr);
@@ -887,6 +1042,10 @@ rewrite (string s, int kind) {
     return substitute_italic (s);
   case REWRITE_IGNORE:
     return "";
+  case REWRITE_MATH_ITALIC:
+    return substitute_math_italic (s);
+  case REWRITE_CORK:
+    return utf8_to_cork (strict_cork_to_utf8 (s));
   default:
     return s;
   }
@@ -949,9 +1108,20 @@ is_italic_font (string master) {
   return contains (string ("italic"), master_features (master));
 }
 
+// The math font which comes with TeXmacs and has the most symbols. Taking
+// a symbol from it rather than from the fonts found on the system keeps a
+// document the same everywhere, as an emulation does.
+#define SHIPPED_MATH_FONT "STIXTwoMath-Regular"
+
+static bool
+has_math_table (font f) {
+  return f->math_type == MATH_TYPE_OPENTYPE ||
+         f->math_type == MATH_TYPE_TEX_GYRE;
+}
+
 int
 smart_font_rep::resolve (string c, string fam, int attempt) {
-  //cout << "Resolve " << c << " in " << fam << ", attempt " << attempt << "\n";
+  cout << "Resolve " << c << " in " << fam << ", attempt " << attempt << "\n";
   array<string> a= trimmed_tokenize (fam, "=");
   if (N(a) >= 2) {
     array<string> given= logical_font (family, variant, series, rshape);
@@ -969,8 +1139,8 @@ smart_font_rep::resolve (string c, string fam, int attempt) {
         else if (wanted == substitute_math_letter (c, 2)) ok= true;
         else if (wanted == c) ok= true;
         else if (in_collection (c, wanted)) ok= true;
-        else if (N(wanted) > 0 && wanted[0] == '!' &&
-                 !in_collection (c, wanted)) ok= true;
+        else if (N(wanted) > 1 && wanted[0] == '!' &&
+                 !in_collection (c, wanted (1, N(wanted)))) ok= true;
         else {
           array<string> w= tokenize (v[j], ":");
           if (N(w) == 1) w << w[0];
@@ -1087,8 +1257,16 @@ smart_font_rep::resolve (string c, string fam, int attempt) {
           tree key= tuple ("emulate", emu_names[i]);
           int nr= sm->add_font (key, REWRITE_NONE);
           initialize_font (nr);
-          if (fn[nr]->supports (c))
+          if (fn[nr]->supports (c)) {
+            // an emulation which a PDF can only hold as a bitmap gives way
+            // to the glyph of the math font shipped with TeXmacs
+            if (has_math_table (fn[SUBFONT_MAIN]) &&
+                !virtual_font_draws_vectors (fn[nr], c)) {
+              int alt= resolve_shipped_math (c);
+              if (alt >= 0) return alt;
+            }
             return sm->add_char (key, c);
+          }
         }
     }
   }
@@ -1098,7 +1276,7 @@ smart_font_rep::resolve (string c, string fam, int attempt) {
     int a= attempt - 1;
     string v;
     if (range == "") v= variant;
-    else if (v == "rm") v= range;
+    else if (variant == "rm") v= range;
     else v= variant * "-" * range;
     font cfn= closest_font (fam, v, series, rshape, sz, dpi, a);
     //cout << "Trying " << c << " in " << cfn->res_name << "\n";
@@ -1111,6 +1289,17 @@ smart_font_rep::resolve (string c, string fam, int attempt) {
   }
 
   return -1;
+}
+
+int
+smart_font_rep::resolve_shipped_math (string c) {
+  if (!tt_font_exists (SHIPPED_MATH_FONT)) return -1;
+  tree key= tuple ("shipped-math");
+  int nr= sm->add_font (key, REWRITE_NONE);
+  initialize_font (nr);
+  if (fn[nr]->res_name == fn[SUBFONT_MAIN]->res_name ||
+      !fn[nr]->supports (c)) return -1;
+  return sm->add_char (key, c);
 }
 
 bool
@@ -1144,8 +1333,8 @@ smart_font_rep::resolve_rubber (string c, string fam, int attempt) {
     return sm->add_char (key, c);
   }
   if (has_poor_rubber) {
-    if (goal == "<sqrt>") goal= "|"; // FIXME: better goal?
-    if (goal == "<||>" || goal == "<interleave>") goal= "|";
+    if (goal == "<sqrt>") goal= "<mid>"; // FIXME: better goal?
+    if (goal == "<||>" || goal == "<interleave>") goal= "<mid>";
     if (goal == "<langle>" || goal == "<rangle>" ||
         goal == "<llangle>" || goal == "<rrangle>") goal= "/";
     if (goal == "<lfloor>" || goal == "<lceil>" ||
@@ -1158,6 +1347,9 @@ smart_font_rep::resolve_rubber (string c, string fam, int attempt) {
       goal= "]";
   }
   int bnr= resolve (goal, main_family (fam), attempt);
+  // long arrows whose long form the font lacks stretch the plain arrow
+  if (bnr < 0 && starts (ss, "long") && N(ss) > 4)
+    bnr= resolve ("<" * ss (4, N(ss)) * ">", main_family (fam), attempt);
   if (bnr >= 0 && bnr < N(fn) && !is_nil (fn[bnr])) {
     tree key= tuple ("rubber", as_string (bnr));
     int nr= sm->add_font (key, REWRITE_NONE);
@@ -1168,6 +1360,104 @@ smart_font_rep::resolve_rubber (string c, string fam, int attempt) {
       return sm->add_char (key, c);
   }
   return -1;
+}
+
+// The subfont which will render the numbered sizes <name-N> of a rubber or
+// wide character <name>: unnumbered names may resolve elsewhere, so the
+// size queries below ask the font of the numbered names
+int
+smart_font_rep::rubber_subfont (string s) {
+  if (N(s) < 2 || s[N(s)-1] != '>') return -1;
+  string probe= s (0, N(s)-1) * "-0>";
+  int i=0, nr;
+  string rr= probe;
+  advance (probe, i, rr, nr);
+  if (nr < 0 || nr >= N(fn) || is_nil (fn[nr])) return -1;
+  return nr;
+}
+
+bool
+smart_font_rep::get_rubber_variant (string s, SI height, string& r) {
+  int nr= rubber_subfont (s);
+  if (nr < 0) return false;
+  return fn[nr]->get_rubber_variant (s, height, r);
+}
+
+bool
+smart_font_rep::get_wide_variant (string s, SI width, string& r) {
+  int nr= rubber_subfont (s);
+  if (nr < 0) return false;
+  return fn[nr]->get_wide_variant (s, width, r);
+}
+
+bool
+smart_font_rep::get_top_accent (string s, SI& x) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return false;
+  string r= s;
+  advance (s, i, r, nr);
+  if (nr < 0 || nr >= N(fn) || is_nil (fn[nr])) return false;
+  return fn[nr]->get_top_accent (r, x);
+}
+
+bool
+smart_font_rep::get_feature_variant (string s, string feature, int alt,
+                                     string& r) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return false;
+  string rr= s;
+  advance (s, i, rr, nr);
+  if (nr < 0 || nr >= N(fn) || is_nil (fn[nr])) return false;
+  return fn[nr]->get_feature_variant (rr, feature, alt, r);
+}
+
+bool
+smart_font_rep::is_extended_shape (string s) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return false;
+  string r= s;
+  advance (s, i, r, nr);
+  if (nr < 0 || nr >= N(fn) || is_nil (fn[nr])) return false;
+  return fn[nr]->is_extended_shape (r);
+}
+
+font
+smart_font_rep::make_rubber_font (font base) {
+  if (occurs ("mathlarge=", res_name) || occurs ("mathrubber=", res_name))
+    return this;
+  else if (fn[SUBFONT_MAIN]->ot_math)
+    return fn[SUBFONT_MAIN]->make_rubber_font (base);
+  return font_rep::make_rubber_font (base);
+}
+
+// Letters in math mode for OpenType math fonts: the mathematical italic
+// alphabet of the font itself (plane 1, with the hole of the Planck
+// constant at U+210E), so that its italic corrections and cut-in kerns
+// apply to the letters
+static hashmap<string,string> math_italic_letters ("");
+
+static string
+substitute_math_italic (string s) {
+  hashmap<string,string>& h (math_italic_letters);
+  if (N (h) == 0) {
+    for (int i= 0; i < 26; i++) {
+      int lo= (i == 7)? 0x210e: 0x1d44e + i;
+      h (string ((char) ('a' + i)))=
+        "<#" * upcase_all (as_hexadecimal (lo)) * ">";
+      h (string ((char) ('A' + i)))=
+        "<#" * upcase_all (as_hexadecimal (0x1d434 + i)) * ">";
+    }
+  }
+  string r;
+  int i= 0, n= N(s);
+  while (i < n) {
+    int start= i;
+    tm_char_forwards (s, i);
+    string ss= s (start, i);
+    if (h->contains (ss)) r << h[ss];
+    else r << ss;
+  }
+  return r;
 }
 
 static bool
@@ -1190,6 +1480,27 @@ smart_font_rep::resolve (string c) {
   //     << "; " << fn[SUBFONT_MAIN]->res_name << "; " << math_kind << "\n";
   array<string> a= trimmed_tokenize (family, ",");
 
+  if (starts (c, "<#") && ends (c, ">")) {
+    // a code point with a Cork equivalent in the upper half of the Cork
+    // encoding (e.g. <#E9>, the byte for e acute) is drawn with the font
+    // and glyph of the typed character; not below 128, where Unicode fonts
+    // read the bytes as ASCII (the Cork quotes ` and ' are curly in TeX
+    // fonts, grave and straight in Unicode fonts)
+    string cc= rewrite (c, REWRITE_CORK);
+    if (N(cc) == 1 && ((unsigned char) cc[0]) >= 128 &&
+        strict_cork_to_utf8 (cc) == strict_cork_to_utf8 (c)) {
+      int cnr= sm->chv[(int) (unsigned char) cc[0]];
+      if (cnr == -1) cnr= resolve (cc);
+      if (cnr >= 0 && cnr != SUBFONT_ERROR &&
+          sm->fn_rewr[cnr] == REWRITE_NONE) {
+        tree key= tuple ("cork", as_string (cnr));
+        int nr= sm->add_font (key, REWRITE_CORK);
+        initialize_font (nr);
+        return sm->add_char (key, c);
+      }
+    }
+  }
+
   if (math_kind != 0) {
     string upc= substitute_upright (c);
     if (upc != "" && fn[SUBFONT_MAIN]->supports (upc)) {
@@ -1205,7 +1516,8 @@ smart_font_rep::resolve (string c) {
       initialize_font (nr);
       return sm->add_char (key, c);
     }
-    if (is_greek (c) && use_italic_greek (a) && shape != "mathupright") {
+    if (is_greek (c) && (use_italic_greek (a) || ot_math) &&
+        shape != "mathupright") {
       string gc= substitute_italic_greek (c);
       if (gc != "" && fn[SUBFONT_MAIN]->supports (gc)) {
         tree key= tuple ("italic-greek");
@@ -1252,6 +1564,13 @@ smart_font_rep::resolve (string c) {
   for (int attempt= 1; attempt <= FONT_ATTEMPTS; attempt++) {
     if (attempt > 1 && substitute_math_letter (c, math_kind) != "") break;
     for (int i= 0; i < N(a); i++) {
+      // OpenType math fonts stretch their own accents, braces and arrows:
+      // try them before the emulated ones
+      if (ot_math && is_rubber (c) &&
+          (starts (c, "<wide-") || starts (c, "<rubber-"))) {
+        int nr= resolve_rubber (c, a[i], attempt);
+        if (nr >= 0) return nr;
+      }
       int nr= resolve (c, a[i], attempt);
       if (nr >= 0) {
         //initialize_font (nr);
@@ -1311,6 +1630,11 @@ smart_font_rep::initialize_font (int nr) {
     fn[nr]= adjust_subfont (get_math_font (a[1], a[2], a[3], a[4]));
   else if (a[0] == "cyrillic")
     fn[nr]= adjust_subfont (get_cyrillic_font (a[1], a[2], a[3], a[4]));
+  else if (a[0] == "cork") {
+    int cnr= as_int (a[1]);
+    initialize_font (cnr);
+    fn[nr]= fn[cnr];
+  }
   else if (a[0] == "greek")
     fn[nr]= adjust_subfont (get_greek_font (a[1], a[2], a[3], a[4]));
   else if (a[0] == "subfont")
@@ -1337,6 +1661,8 @@ smart_font_rep::initialize_font (int nr) {
   else if (a[0] == "bold-italic-math")
     fn[nr]= smart_font_bis (family, variant, "bold", "italic", sz, hdpi, dpi);
   else if (a[0] == "italic-greek")
+    fn[nr]= fn[SUBFONT_MAIN];
+  else if (a[0] == "ot-italic")
     fn[nr]= fn[SUBFONT_MAIN];
   else if (a[0] == "upright-greek")
     fn[nr]= fn[SUBFONT_MAIN];
@@ -1391,6 +1717,8 @@ smart_font_rep::initialize_font (int nr) {
   }
   else if (a[0] == "ignore")
     fn[nr]= fn[SUBFONT_MAIN];
+  else if (a[0] == "shipped-math")
+    fn[nr]= adjust_subfont (unicode_font (SHIPPED_MATH_FONT, sz, dpi));
   else {
     int  ndpi= adjusted_dpi (a[0], a[1], a[2], a[3], as_int (a[4]));
     font cfn = closest_font (a[0], a[1], a[2], a[3], sz, ndpi, as_int (a[4]));
@@ -1541,13 +1869,15 @@ smart_font_rep::get_xpositions (string s, SI* xpos, SI xk) {
 void
 smart_font_rep::draw_fixed (renderer ren, string s, SI x, SI y) {
   int i=0, n= N(s);
+  bool dbg= DEBUG_FONTS;
   while (i < n) {
     int nr;
     string r= s;
     metric ey;
     advance (s, i, r, nr);
     if (nr >= 0) {
-      fn[nr]->draw_fixed (ren, r, x, y);
+      if (dbg) debug_draw (ren, nr, r, x, y, 0);
+      else fn[nr]->draw_fixed (ren, r, x, y);
       if (i < n) {
 	fn[nr]->get_extents (r, ey);
 	x += ey->x2;
@@ -1559,19 +1889,175 @@ smart_font_rep::draw_fixed (renderer ren, string s, SI x, SI y) {
 void
 smart_font_rep::draw_fixed (renderer ren, string s, SI x, SI y, SI xk) {
   int i=0, n= N(s);
+  bool dbg= DEBUG_FONTS;
   while (i < n) {
     int nr;
     string r= s;
     metric ey;
     advance (s, i, r, nr);
     if (nr >= 0) {
-      fn[nr]->draw_fixed (ren, r, x, y, xk);
+      if (dbg) debug_draw (ren, nr, r, x, y, xk);
+      else fn[nr]->draw_fixed (ren, r, x, y, xk);
       if (i < n) {
 	fn[nr]->get_extents (r, ey, xk);
 	x += ey->x2;
       }
     }
   }
+}
+
+/******************************************************************************
+* Font debugging (debug switch "fonts")
+*
+* Nothing here is reached while the switch is off: drawing tests the switch
+* once per string, and the origin of a subfont is worked out, from the
+* specification the resolver recorded for it, only when it is first drawn
+* in debug mode. Metrics, routing and the font caches are untouched, so
+* turning the switch on or off needs a repaint, not a new typesetting.
+******************************************************************************/
+
+enum { ORIGIN_FONT, ORIGIN_RULE, ORIGIN_FALLBACK, ORIGIN_EMULATED,
+       ORIGIN_ERROR };
+
+static string
+origin_name (int o) {
+  switch (o) {
+  case ORIGIN_RULE: return "rule";
+  case ORIGIN_FALLBACK: return "fallback";
+  case ORIGIN_EMULATED: return "emulated";
+  case ORIGIN_ERROR: return "error";
+  default: return "font";
+  }
+}
+
+int
+smart_font_rep::debug_origin (int nr) {
+  if (nr < N(origins) && origins[nr] >= 0) return origins[nr];
+  while (N(origins) <= nr) origins << -1;
+  tree spec= sm->fn_spec[nr];
+  string kind= (is_tuple (spec) && N(spec) > 0 && is_atomic (spec[0]))?
+               spec[0]->label: string ("");
+  string rn= (nr < N(fn) && !is_nil (fn[nr]))? fn[nr]->res_name: string ("");
+  int o= ORIGIN_FONT;
+  if (kind == "error") o= ORIGIN_ERROR;
+  else if (kind == "virtual" || kind == "emulate" || kind == "emu-bracket" ||
+           starts (kind, "poor-") || occurs ("#virtual-", rn))
+    o= ORIGIN_EMULATED;
+  else if (kind == "other" || kind == "shipped-math") o= ORIGIN_FALLBACK;
+  else if (kind == "subfont") o= ORIGIN_RULE;
+  else if (N(spec) == 5 && is_atomic (spec[4]))
+    o= (spec[4]->label == "1")? ORIGIN_RULE: ORIGIN_FALLBACK;
+  origins[nr]= o;
+  return o;
+}
+
+static void
+draw_in_origin_colour (renderer ren, font f, string r, SI x, SI y, SI xk,
+                       int o) {
+  if (o == ORIGIN_FONT || o == ORIGIN_ERROR) {
+    // the requested font is drawn as it is, and the error font is red
+    f->draw_fixed (ren, r, x, y, xk);
+    return;
+  }
+  color c= (o == ORIGIN_RULE)? rgb_color (0, 90, 200):
+           (o == ORIGIN_FALLBACK)? rgb_color (225, 110, 0):
+           rgb_color (0, 150, 60);
+  pencil old= ren->get_pencil ();
+  ren->set_pencil (pencil (c, old->get_width ()));
+  f->draw_fixed (ren, r, x, y, xk);
+  ren->set_pencil (old);
+}
+
+void
+smart_font_rep::debug_draw (renderer ren, int nr, string r,
+                            SI x, SI y, SI xk) {
+  font f= fn[nr];
+  int  o= debug_origin (nr);
+  if (o == ORIGIN_FONT && occurs ("#enhance-", f->res_name)) {
+    // a font extended by constructions of a virtual font: the characters
+    // it lacks are emulated, glyph by glyph
+    int i= 0;
+    while (i < N(r)) {
+      int j= i;
+      tm_char_forwards (r, j);
+      string c= r (i, j);
+      int oc= virtual_font_constructs (f, c)? ORIGIN_EMULATED: ORIGIN_FONT;
+      draw_in_origin_colour (ren, f, c, x, y, xk, oc);
+      metric ey;
+      f->get_extents (c, ey, xk);
+      x += ey->x2;
+      i= j;
+    }
+    return;
+  }
+  draw_in_origin_colour (ren, f, r, x, y, xk, o);
+}
+
+// What the smart font does with the character at pos in s, read from its
+// routing tables without resolving anything: a character not yet routed is
+// reported as such, and inspecting leaves no trace in the caches
+tree
+smart_font_rep::debug_info (string s, int pos) {
+  if (pos < 0 || pos >= N(s)) return tuple ();
+  int end= pos;
+  if (s[pos] == '<') tm_char_forwards (s, end); else end= pos + 1;
+  string c= s (pos, end);
+  int nr= -1;
+  if (N(c) == 1) {
+    int ch= (int) (unsigned char) c[0];
+    nr= sm->chv[ch];
+    if (math_kind != 0 && math_kind != 2 && is_alpha (ch) &&
+        (pos == 0 || !is_alpha (s[pos-1])) &&
+        (end == N(s) || !is_alpha (s[end])))
+      nr= italic_nr;
+  }
+  else nr= sm->cht[c];
+  tree r (TUPLE);
+  r << tuple ("char", c) << tuple ("font", res_name)
+    << tuple ("family", family) << tuple ("variant", variant)
+    << tuple ("series", series) << tuple ("shape", shape);
+  if (nr < 0) {
+    r << tuple ("origin", "unresolved");
+    return r;
+  }
+  r << tuple ("subfont", as_string (nr));
+  if (nr < N(sm->fn_spec)) r << tuple ("spec", sm->fn_spec[nr]);
+  if (nr < N(fn) && !is_nil (fn[nr])) {
+    font f= fn[nr];
+    int  o= debug_origin (nr);
+    if (o == ORIGIN_FONT && occurs ("#enhance-", f->res_name) &&
+        virtual_font_constructs (f, c))
+      o= ORIGIN_EMULATED;
+    r << tuple ("origin", origin_name (o));
+    r << tuple ("subfont-name", f->res_name);
+    string mt= (f->math_type == MATH_TYPE_OPENTYPE)? string ("OpenType"):
+               (f->math_type == MATH_TYPE_TEX_GYRE)? string ("TeX Gyre, hand tuned"):
+               (f->math_type == MATH_TYPE_STIX)? string ("STIX, hand tuned"):
+               string ("traditional");
+    r << tuple ("math-type", mt);
+    r << tuple ("opentype-math", f->ot_math? string ("yes"): string ("no"));
+    string rc= c;
+    if (sm->fn_rewr[nr] != REWRITE_NONE) {
+      rc= rewrite (c, sm->fn_rewr[nr]);
+      r << tuple ("rewritten", rc);
+    }
+    if (o == ORIGIN_EMULATED && occurs ("#", f->res_name))
+      r << tuple ("pdf", virtual_font_draws_vectors (f, rc)?
+                         string ("vector"): string ("bitmap"));
+  }
+  else r << tuple ("origin", "not loaded");
+  return r;
+}
+
+tree
+smart_font_debug_info (font fn, string s, int pos) {
+  smart_font_rep* sf= dynamic_cast<smart_font_rep*> (fn.rep);
+  if (sf == NULL) {
+    tree r (TUPLE);
+    r << tuple ("font", fn->res_name) << tuple ("origin", "not a smart font");
+    return r;
+  }
+  return sf->debug_info (s, pos);
 }
 
 font
@@ -1701,6 +2187,46 @@ smart_font_rep::get_rsup_correction (string s) {
 }
 
 SI
+smart_font_rep::get_lsub_correction_at (string s, SI h) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return fn[0]->get_lsub_correction_at (s, h);
+  string r= s;
+  advance (s, i, r, nr);
+  nr= max (nr, 0);
+  return fn[nr]->get_lsub_correction_at (r, h);
+}
+
+SI
+smart_font_rep::get_lsup_correction_at (string s, SI h) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return fn[0]->get_lsup_correction_at (s, h);
+  string r= s;
+  advance (s, i, r, nr);
+  nr= max (nr, 0);
+  return fn[nr]->get_lsup_correction_at (r, h);
+}
+
+SI
+smart_font_rep::get_rsub_correction_at (string s, SI h) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return fn[0]->get_rsub_correction_at (s, h);
+  string r= s;
+  while (i<n) advance (s, i, r, nr);
+  nr= max (nr, 0);
+  return fn[nr]->get_rsub_correction_at (r, h);
+}
+
+SI
+smart_font_rep::get_rsup_correction_at (string s, SI h) {
+  int i=0, n= N(s), nr;
+  if (n == 0) return fn[0]->get_rsup_correction_at (s, h);
+  string r= s;
+  while (i<n) advance (s, i, r, nr);
+  nr= max (nr, 0);
+  return fn[nr]->get_rsup_correction_at (r, h);
+}
+
+SI
 smart_font_rep::get_wide_correction (string s, int mode) {
   int i=0, n= N(s), nr;
   if (n == 0) return fn[0]->get_wide_correction (s, mode);
@@ -1756,6 +2282,7 @@ smart_font_bis (string family, string variant, string series, string shape,
   family= kepler_fix (family, series, shape);
   //family= stix_fix (family, series, shape);
   family= math_fix (family, series, shape);
+  family= profile_fix (family, variant, series, shape);
   string sh= shape;
   if (shape == "mathitalic" || shape == "mathshape") sh= "right";
   string mfam= main_family (family);
@@ -1797,6 +2324,11 @@ smart_font (string family, string variant, string series, string shape,
     if (variant == "ms") tvar= "ss";
     if (variant == "mt") tvar= "tt";
   }
+  // a math series other than the default overrides the text series, so
+  // that math-font-series reaches the math font: a family with a real bold
+  // math face (New Computer Modern Math, KpMath, XITS Math) then uses it
+  // and the others are emulated as usual
+  if (series != "medium") tser= series;
   if (shape == "right") tsh= "mathupright";
   return smart_font (tfam, tvar, tser, tsh, sz, dpi);
 }

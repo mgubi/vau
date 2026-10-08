@@ -151,8 +151,7 @@ typedef std::vector<EncodingsInfo*> EncodingsInfoVector;
 
 
 
-
-class StringLess : public std::binary_function<const char*,const char*,bool>
+class StringLess
 {
 public:
 	bool operator( ) (const char* left, 

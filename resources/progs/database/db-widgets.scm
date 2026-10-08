@@ -13,7 +13,8 @@
 
 (texmacs-module (database db-widgets)
   (:use (database db-convert)
-        (database db-tmfs)))
+        (database db-tmfs)
+        (utils library cursor)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Preferences
@@ -24,10 +25,18 @@
 
 (tm-widget (db-preferences-widget)
   (padded
-      (aligned
-        (meti (hlist // (text "Automatically import bibliographies when opening files") >>)
-          (toggle (set-boolean-preference "auto bib import" answer)
-                  (get-boolean-preference "auto bib import"))))))
+    (aligned
+      (meti (hlist // (text "Automatically import bibliographies when opening files") >>)
+        (toggle (set-boolean-preference "auto bib import" answer)
+                (get-boolean-preference "auto bib import"))))))
+
+(tm-tool* (db-preferences-tool win)
+  (:name "TeXmacs database preferences")
+  (padded
+    (aligned
+      (meti (hlist // (text "Import bibliographies when opening files"))
+        (toggle (set-boolean-preference "auto bib import" answer)
+                (get-boolean-preference "auto bib import"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pretty printing with cache
@@ -88,7 +97,35 @@
           (ahash-set! db-result-cache id r)
           r))))
 
+;; The search shown in the search window: the answers of Zotero, which
+;; come later in a web browser, show it again (see bibtex/zotero.scm)
+(define db-search-shown #f)
+
+(define (db-search-show db kind query)
+  (with doc `(document ,@(db-search-results db kind query))
+    (buffer-set-body "tmfs://aux/db-search-results" doc)))
+
+(tm-define (db-search-refresh)
+  (:synopsis "Show the search of the search window again, and its sources")
+  (when db-search-shown (apply db-search-show db-search-shown))
+  (refresh-now "db-search-sources"))
+
+(define (db-search-again db kind query)
+  (lambda ()
+    (when (== db-search-shown (list db kind query))
+      (db-search-show db kind query))
+    (refresh-now "db-search-sources")))
+
 (define (db-search-results db kind query)
+  (set! db-search-shown (list db kind query))
+  (if (== db :bib-file)
+      ;; without the database tool: the BibTeX file of the document, and
+      ;; Zotero (see bibtex/zotero-db.scm)
+      (zotero-with-retry (db-search-again db kind query)
+                         (lambda () (zotero-file-search-results query)))
+      (db-search-results-in db kind query)))
+
+(define (db-search-results-in db kind query)
   (with-database db
     (with-limit 20
       ;; TODO: filter on user permissions
@@ -97,10 +134,26 @@
 		      (cons "type" types)))
 	     (ids (db-search-cached q))
 	     (l (map db-get-result-cached ids))
-	     (r (db-pretty-cached l kind :pretty)))
-	(cond ((null? r) (list "No matching items"))
-	      ((>= (length r) 20) (rcons r "More items follow"))
-	      (else r))))))
+	     (r (db-pretty-cached l kind :pretty))
+             ;; the references of Zotero, after those of the database, when
+             ;; the preference asks for them; each one says its source
+             ;; (with a line while they are awaited)
+             (zs (if (and (== kind "bib") (zotero-in-database-search?))
+                     (zotero-with-retry
+                      (db-search-again db kind query)
+                      (lambda ()
+                        (with l (zotero-search-entries query (map get-name r))
+                          (cons l (zotero-searching-results)))))
+                     (cons '() '())))
+             (zl (car zs))
+             (z (if (null? zl) '() (db-pretty zl kind :pretty)))
+             (r* (if (== kind "bib") (zotero-mark-results r l #f) r))
+             (z* (zotero-mark-results z zl #t))
+             (s* (cdr zs)))
+	(cond ((and (null? r) (null? z) (nnull? s*)) s*)
+              ((and (null? r) (null? z)) (list "No matching items"))
+	      ((>= (length r) 20) (append (rcons r* "More items follow") z* s*))
+	      (else (append r* z* s*)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Search the database
@@ -121,8 +174,7 @@
           (delayed
             (:pause 200)
             (when (== db-search-keypress-serial serial)
-              (with doc `(document ,@(db-search-results db kind new-query))
-                (buffer-set-body "tmfs://aux/db-search-results" doc))
+              (db-search-show db kind new-query)
               ;;(refresh-now "db-search-results")
               ))))
       new-query)))
@@ -136,15 +188,47 @@
   (padded
     (let* ((dummy (set! db-quit-search quit))
 	   (query ""))
+      (assuming (== kind "bib")
+        ;; the sources of the references (see bibtex/zotero-db.scm)
+        ;; NOTE: a promise, so that the line is made again when refreshed
+        (refreshable "db-search-sources"
+          (promise (list 'text (zotero-search-sources-text db))))
+        ===)
       (hlist
 	(text "Search:") // //
 	(input (set! query (db-search-keypress db kind answer query))
 	       "search-database" (list "") "650px"))
       === ===
       (refreshable "db-search-results"
-	(resize "750px" "500px"
+	(resize '("400px" "750px" "9999px") '("200px" "500px" "9999px")
 	  (texmacs-input `(document ,@(db-search-results db kind query))
 			 `(style (tuple ,(db-get-style kind)))
+			 (db-search-results-buffer)))))))
+
+(tm-tool* (db-search-tool win name db kind quit)
+  (:name name)
+  (padded
+    (let* ((quit* (lambda (x)
+                    (quit x)
+                    (buffer-focus (window->buffer win))
+                    (tool-close :any 'db-search-tool noop win)))
+           (dummy (set! db-quit-search quit*))
+	   (query ""))
+      (assuming (== kind "bib")
+        ;; the sources of the references (see bibtex/zotero-db.scm)
+        ;; NOTE: a promise, so that the line is made again when refreshed
+        (refreshable "db-search-sources"
+          (promise (list 'text (zotero-search-sources-text db))))
+        ===)
+      (hlist
+	(text "Search:") // //
+	(input (set! query (db-search-keypress db kind answer query))
+	       "search-database" (list "") "300px"))
+      === ===
+      (refreshable "db-search-results"
+	(resize '("300px" "400px" "9999px") '("200px" "600px" "9999px")
+	  (texmacs-input `(document ,@(db-search-results db kind query))
+			 `(style (tuple ,(db-get-style kind) "side-tools"))
 			 (db-search-results-buffer)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -159,14 +243,16 @@
 (define (get-user-info* attr)
   (if adding-user? "" (get-user-info attr)))
 
-(define (refresh-identities flag?)
+(define (refresh-identities win flag?)
   (refresh-now "identities-list")
   (refresh-now "identity-info")
   (refresh-now "identity-buttons")
   (when (and (in-database?) flag?)
-    (revert-buffer-revert)))
+    (revert-buffer-revert))
+  (when win
+    (with-window win (update-menus))))
 
-(define (set-identity vars vals)
+(define (set-identity win vars vals)
   (if adding-user?
       (with t (make-ahash-table)
         (for-each (cut ahash-set! t <> <>) vars vals)
@@ -178,9 +264,9 @@
               (for-each set-user-info vars vals)
               (set! adding-user? #f)))))
       (for-each set-user-info vars vals))
-  (refresh-identities #t))
+  (refresh-identities win #t))
 
-(tm-widget (delete-user-widget quit)
+(tm-widget ((delete-user-widget win) quit)
   (padded
     (centered (text "Really delete user identity?"))
     (centered (bold (text "All data attached to this identity will be lost")))
@@ -191,70 +277,105 @@
         ("Cancel" (quit)) // // //
         ("Ok"
          (remove-user)
-         (refresh-identities #t)
+         (refresh-identities win #t)
          (quit))
         >>))))
+
+(tm-widget (db-identities-list win)
+  ;;(bold (text "User"))
+  ;;======
+  (refreshable "identities-list"
+    (choice (begin
+              (set! adding-user? #f)
+              (set-default-user (pseudo->user answer))
+              (refresh-identities win #t))
+            (sort (map user->pseudo (get-users-list)) string<=?)
+            (get-default-pseudo*))))
+
+(tm-widget (db-identity-info win)
+  (refreshable "identity-info"
+    (glue #f #f 350 0)
+    (form "id-info"
+      (aligned
+        (item (text "Pseudo:")
+          (form-input "pseudo" "string"
+                      (list (get-user-info* "pseudo")) "300px"))
+        (item (text "Full name:")
+          (form-input "name" "string"
+                      (list (get-user-info* "name")) "300px"))
+        (item (text "Email:")
+          (form-input "email" "string"
+                      (list (get-user-info* "email")) "300px"))
+        (item (text "GnuPG key:")
+          (hlist (when (and (== (get-preference
+                                 "experimental encryption") "on")
+                            (supports-gpg?))
+                   (with key (get-user-info "gpg-key-fingerprint")
+                     (text (if (== key "") ""
+                               (string-take-right key 8))))
+                   >> ((icon "tm_add.xpm") (open-gpg-key-manager))))))
+      (assuming win
+        ===
+        (division "plain"
+          (hlist
+            >> ("Save" (set-identity win (form-fields) (form-values))))))
+      (assuming (not win)
+        (glue #f #t 0 0)
+        (hlist
+          (explicit-buttons
+            >> ("Save" (set-identity win (form-fields) (form-values)))))))))
 
 (tm-widget (db-identities-widget)
   (padded
     ======
     (hlist
       (resize "150px" "250px"
-        (vlist
-          ;;(bold (text "User"))
-          ;;======
-          (refreshable "identities-list"
-            (choice (begin
-                      (set! adding-user? #f)
-                      (set-default-user (pseudo->user answer))
-                      (refresh-identities #t))
-                    (sort (map user->pseudo (get-users-list)) string<=?)
-                    (get-default-pseudo*)))))
+        (vlist (dynamic (db-identities-list #f))))
       // // //
       (resize "375px" "250px"
-        (vlist
-          ;;(bold (text "Information"))
-          ;;======
-          (refreshable "identity-info"
-            (form "id-info"
-              (aligned
-                (item (text "Pseudo:")
-                  (form-input "pseudo" "string"
-                              (list (get-user-info* "pseudo")) "300px"))
-                (item (text "Full name:")
-                  (form-input "name" "string"
-                              (list (get-user-info* "name")) "300px"))
-                (item (text "Email:")
-                  (form-input "email" "string"
-                              (list (get-user-info* "email")) "300px"))
-		(item (text "GnuPG key:")
-		  (hlist (when (and (== (get-preference
-					 "experimental encryption") "on")
-				    (supports-gpg?))
-			   (with key (get-user-info "gpg-key-fingerprint")
-			     (text (if (== key "") ""
-				       (string-take-right key 8))))
-			   >> ((icon "tm_add.xpm") (open-gpg-key-manager))))))
-              (glue #f #t 0 0)
-              (hlist
-                (explicit-buttons
-                  >>
-                  ("Set" (set-identity (form-fields) (form-values))))))))))
+        (vlist (dynamic (db-identity-info #f)))))
     ===
     (refreshable "identity-buttons"
       (hlist
         ((icon "tm_add_2.xpm")
          (set! adding-user? #t)
-         (refresh-identities #f))
+         (refresh-identities #f #f))
         (if (or adding-user? (> (length (get-users-list)) 1))
             ((icon "tm_close_tool.xpm")
              (if adding-user?
                  (begin
                    (set! adding-user? #f)
-                   (refresh-identities #f))
-                 (dialogue-window delete-user-widget noop
+                   (refresh-identities #f #f))
+                 (dialogue-window (delete-user-widget #f) noop
                                   "Delete user identity"))))
         >>))))
+
+(tm-tool* (db-identities-tool win)
+  (:name "Identity editor")
+  (padded
+    (vlist (dynamic (db-identity-info win))))
+  ======
+  (division "title"
+    (text "Registered identities"))
+  (centered
+    (resize "200px" "150px"
+      (vlist
+        (dynamic (db-identities-list win))
+        ===
+        (refreshable "identity-buttons"
+          (hlist
+            ((icon "tm_add_2.xpm")
+             (set! adding-user? #t)
+             (refresh-identities win #f))
+            (if (or adding-user? (> (length (get-users-list)) 1))
+                ((icon "tm_close_tool.xpm")
+                 (if adding-user?
+                     (begin
+                       (set! adding-user? #f)
+                       (refresh-identities win #f))
+                     (dialogue-window (delete-user-widget win) noop
+                                      "Delete user identity"))))
+            >>))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exported routines
@@ -263,19 +384,25 @@
 (tm-define (open-identities)
   (:interactive #t)
   (set! adding-user? #f)
-  (top-window db-identities-widget "Specify user identity"))
+  (if (side-tools?)
+      (tool-select :right (list 'db-identities-tool))
+      (top-window db-identities-widget "Specify user identity")))
 
 (tm-define (open-db-chooser db kind name call-back)
   (:interactive #t)
   (db-reset)
   (set! db-search-cache (make-ahash-table))
   (set! db-result-cache (make-ahash-table))
-  (dialogue-window (db-search-widget db kind)
-		   (lambda args
-		     (set! db-quit-search ignore)
-		     (apply call-back args))
-		   name (db-search-results-buffer)))
+  (let* ((quit (lambda args
+                 (set! db-quit-search ignore)
+                 (apply call-back args)))
+         (aux (db-search-results-buffer)))
+    (if (side-tools?)
+        (tool-select :right (list 'db-search-tool name db kind quit))
+        (dialogue-window (db-search-widget db kind) quit name aux))))
 
 (tm-define (open-db-preferences)
   (:interactive #t)
-  (top-window db-preferences-widget "TeXmacs database preferences"))
+  (if (side-tools?)
+      (tool-select :right (list 'db-preferences-tool))
+      (top-window db-preferences-widget "TeXmacs database preferences")))

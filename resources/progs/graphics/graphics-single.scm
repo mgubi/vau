@@ -50,8 +50,11 @@
 	      (graphics-assign current-path o)))))
 
 ;; Basic operations (create)
+(define (valid-sketch?)
+  (and (pair? (sketch-get)) (eq? 1 (length (sketch-get)))))
+
 (define (sketch-get1)
-  (if (not (and (pair? (sketch-get)) (eq? 1 (length (sketch-get)))))
+  (if (not (valid-sketch?))
       (graphics-error "(sketch-get1)"))
   (sketch-get))
 
@@ -462,9 +465,11 @@
   (:state graphics-state)
   (set-texmacs-pointer 'graphics-cross)
   (edit-clean-up)
-  (object-set! `(with "point style" "disk"
-		      "point-size" ,(graphics-get-property "line-width")
-		  (point ,x ,y)) 'new))
+  (let* ((lw (graphics-get-property "gr-line-width"))
+         (sz (if (== lw "default") "1ln" lw)))
+    (object-set! `(with "point-style" "disk"
+                        "point-size" ,sz
+                    (point ,x ,y)) 'new)))
 
 (tm-define (edit_start-drag mode x y t* p*)
   (:require (== mode 'hand-edit))
@@ -486,21 +491,24 @@
 (tm-define (edit_drag mode x y t* p*)
   (:require (== mode 'hand-edit))
   (:state graphics-state)
-  (let* ((t (number->string t*))
-         (p (number->string p*))
-         (obj (car (sketch-get1)))
-         (cal (stree-radical obj))
-         (rad (cAr cal)))
-    (set-cdr! (cdr cal) (cons `(point ,x ,y) (cdddr cal)))
-    (set-cdr! rad (append (cdr rad) (list `(tuple ,x ,y ,t ,p))))
-    (object-set! obj))
-  (graphics-decorations-update))
+  (when (and (valid-sketch?)
+	     (pair? (stree-radical (car (sketch-get)))))
+    (let* ((t (number->string t*))
+	   (p (number->string p*))
+	   (obj (car (sketch-get1)))
+	   (cal (stree-radical obj))
+	   (rad (cAr cal)))
+      (set-cdr! (cdr cal) (cons `(point ,x ,y) (cdddr cal)))
+      (set-cdr! rad (append (cdr rad) (list `(tuple ,x ,y ,t ,p))))
+      (object-set! obj))
+    (graphics-decorations-update)))
 
 (tm-define (edit_end-drag mode x y t p)
   (:require (== mode 'hand-edit))
   (:state graphics-state)
-  (object_commit)
-  (graphics-decorations-reset))
+  (when (and (valid-sketch?) (not (tree? (car (sketch-get)))))
+    (object_commit)
+    (graphics-decorations-reset)))
 
 (tm-define (graphics-complete? obj)
   (:require (tm-func? obj 'calligraphy))

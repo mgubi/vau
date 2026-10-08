@@ -1857,10 +1857,10 @@ tmg_mouse_any (tmscm arg1, tmscm arg2, tmscm arg3, tmscm arg4, tmscm arg5, tmscm
 tmscm
 tmg_get_mouse_position () {
   // TMSCM_DEFER_INTS;
-  array_int out= get_current_editor()->get_mouse_position ();
+  array_SI out= get_current_editor()->get_mouse_position ();
   // TMSCM_ALLOW_INTS;
 
-  return array_int_to_tmscm (out);
+  return array_SI_to_tmscm (out);
 }
 
 tmscm
@@ -2576,6 +2576,47 @@ tmg_cancel_alt_selections () {
 }
 
 tmscm
+tmg_set_user_cursor (tmscm arg1, tmscm arg2, tmscm arg3, tmscm arg4) {
+  TMSCM_ASSERT_STRING (arg1, TMSCM_ARG1, "set-user-cursor");
+  TMSCM_ASSERT_PATH (arg2, TMSCM_ARG2, "set-user-cursor");
+  TMSCM_ASSERT_STRING (arg3, TMSCM_ARG3, "set-user-cursor");
+  TMSCM_ASSERT_STRING (arg4, TMSCM_ARG4, "set-user-cursor");
+
+  string in1= tmscm_to_string (arg1);
+  path in2= tmscm_to_path (arg2);
+  string in3= tmscm_to_string (arg3);
+  string in4= tmscm_to_string (arg4);
+
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->set_user_cursor (in1, in2, in3, in4);
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
+tmg_cancel_user_cursor (tmscm arg1) {
+  TMSCM_ASSERT_STRING (arg1, TMSCM_ARG1, "cancel-user-cursor");
+
+  string in1= tmscm_to_string (arg1);
+
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->cancel_user_cursor (in1);
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
+tmg_cancel_user_cursors () {
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->cancel_user_cursors ();
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
 tmg_clear_undo_history () {
   // TMSCM_DEFER_INTS;
   get_current_editor()->clear_undo_history ();
@@ -2999,6 +3040,19 @@ tmg_keyboard_focus_on (tmscm arg1) {
 }
 
 tmscm
+tmg_broadcast_message (tmscm arg1) {
+  TMSCM_ASSERT_STRING (arg1, TMSCM_ARG1, "broadcast-message");
+
+  string in1= tmscm_to_string (arg1);
+
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->broadcast_message (in1);
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
 tmg_view_set_property (tmscm arg1, tmscm arg2) {
   TMSCM_ASSERT_SCHEME_TREE (arg1, TMSCM_ARG1, "view-set-property");
   TMSCM_ASSERT_SCHEME_TREE (arg2, TMSCM_ARG2, "view-set-property");
@@ -3093,6 +3147,39 @@ tmscm
 tmg_get_scroll_y () {
   // TMSCM_DEFER_INTS;
   int out= get_current_editor()->get_scroll_y ();
+  // TMSCM_ALLOW_INTS;
+
+  return int_to_tmscm (out);
+}
+
+tmscm
+tmg_set_scroll (tmscm arg1, tmscm arg2) {
+  TMSCM_ASSERT_INT (arg1, TMSCM_ARG1, "set-scroll");
+  TMSCM_ASSERT_INT (arg2, TMSCM_ARG2, "set-scroll");
+
+  int in1= tmscm_to_int (arg1);
+  int in2= tmscm_to_int (arg2);
+
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->scroll_to (in1, in2);
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
+tmg_get_cursor_x () {
+  // TMSCM_DEFER_INTS;
+  int out= get_current_editor()->get_cursor_x ();
+  // TMSCM_ALLOW_INTS;
+
+  return int_to_tmscm (out);
+}
+
+tmscm
+tmg_get_cursor_y () {
+  // TMSCM_DEFER_INTS;
+  int out= get_current_editor()->get_cursor_y ();
   // TMSCM_ALLOW_INTS;
 
   return int_to_tmscm (out);
@@ -3324,10 +3411,10 @@ tmg_print_snippet (tmscm arg1, tmscm arg2, tmscm arg3) {
   bool in3= tmscm_to_bool (arg3);
 
   // TMSCM_DEFER_INTS;
-  array_int out= get_current_editor()->print_snippet (in1, in2, in3);
+  array_SI out= get_current_editor()->print_snippet (in1, in2, in3);
   // TMSCM_ALLOW_INTS;
 
-  return array_int_to_tmscm (out);
+  return array_SI_to_tmscm (out);
 }
 
 tmscm
@@ -3465,6 +3552,19 @@ tmg_html_expand (tmscm arg1) {
 }
 
 tmscm
+tmg_markdown_expand (tmscm arg1) {
+  TMSCM_ASSERT_CONTENT (arg1, TMSCM_ARG1, "markdown-expand");
+
+  content in1= tmscm_to_content (arg1);
+
+  // TMSCM_DEFER_INTS;
+  tree out= get_current_editor()->exec_markdown (in1);
+  // TMSCM_ALLOW_INTS;
+
+  return tree_to_tmscm (out);
+}
+
+tmscm
 tmg_animate_checkout (tmscm arg1) {
   TMSCM_ASSERT_CONTENT (arg1, TMSCM_ARG1, "animate-checkout");
 
@@ -3539,6 +3639,15 @@ tmscm
 tmg_show_tree () {
   // TMSCM_DEFER_INTS;
   get_current_editor()->show_tree ();
+  // TMSCM_ALLOW_INTS;
+
+  return TMSCM_UNSPECIFIED;
+}
+
+tmscm
+tmg_show_box () {
+  // TMSCM_DEFER_INTS;
+  get_current_editor()->show_box ();
   // TMSCM_ALLOW_INTS;
 
   return TMSCM_UNSPECIFIED;
@@ -3825,6 +3934,9 @@ initialize_glue_editor () {
   tmscm_install_procedure ("get-alt-selection",  tmg_get_alt_selection, 1, 0, 0);
   tmscm_install_procedure ("cancel-alt-selection",  tmg_cancel_alt_selection, 1, 0, 0);
   tmscm_install_procedure ("cancel-alt-selections",  tmg_cancel_alt_selections, 0, 0, 0);
+  tmscm_install_procedure ("set-user-cursor",  tmg_set_user_cursor, 4, 0, 0);
+  tmscm_install_procedure ("cancel-user-cursor",  tmg_cancel_user_cursor, 1, 0, 0);
+  tmscm_install_procedure ("cancel-user-cursors",  tmg_cancel_user_cursors, 0, 0, 0);
   tmscm_install_procedure ("clear-undo-history",  tmg_clear_undo_history, 0, 0, 0);
   tmscm_install_procedure ("commit-changes",  tmg_commit_changes, 0, 0, 0);
   tmscm_install_procedure ("start-slave",  tmg_start_slave, 1, 0, 0);
@@ -3864,6 +3976,7 @@ initialize_glue_editor () {
   tmscm_install_procedure ("session-complete-command",  tmg_session_complete_command, 1, 0, 0);
   tmscm_install_procedure ("custom-complete",  tmg_custom_complete, 1, 0, 0);
   tmscm_install_procedure ("keyboard-focus-on",  tmg_keyboard_focus_on, 1, 0, 0);
+  tmscm_install_procedure ("broadcast-message",  tmg_broadcast_message, 1, 0, 0);
   tmscm_install_procedure ("view-set-property",  tmg_view_set_property, 2, 0, 0);
   tmscm_install_procedure ("view-get-property",  tmg_view_get_property, 1, 0, 0);
   tmscm_install_procedure ("get-window-width",  tmg_get_window_width, 0, 0, 0);
@@ -3874,6 +3987,9 @@ initialize_glue_editor () {
   tmscm_install_procedure ("get-canvas-y",  tmg_get_canvas_y, 0, 0, 0);
   tmscm_install_procedure ("get-scroll-x",  tmg_get_scroll_x, 0, 0, 0);
   tmscm_install_procedure ("get-scroll-y",  tmg_get_scroll_y, 0, 0, 0);
+  tmscm_install_procedure ("set-scroll",  tmg_set_scroll, 2, 0, 0);
+  tmscm_install_procedure ("get-cursor-x",  tmg_get_cursor_x, 0, 0, 0);
+  tmscm_install_procedure ("get-cursor-y",  tmg_get_cursor_y, 0, 0, 0);
   tmscm_install_procedure ("clear-buffer",  tmg_clear_buffer, 0, 0, 0);
   tmscm_install_procedure ("tex-buffer",  tmg_tex_buffer, 0, 0, 0);
   tmscm_install_procedure ("clear-local-info",  tmg_clear_local_info, 0, 0, 0);
@@ -3904,6 +4020,7 @@ initialize_glue_editor () {
   tmscm_install_procedure ("verbatim-expand",  tmg_verbatim_expand, 1, 0, 0);
   tmscm_install_procedure ("latex-expand",  tmg_latex_expand, 1, 0, 0);
   tmscm_install_procedure ("html-expand",  tmg_html_expand, 1, 0, 0);
+  tmscm_install_procedure ("markdown-expand",  tmg_markdown_expand, 1, 0, 0);
   tmscm_install_procedure ("animate-checkout",  tmg_animate_checkout, 1, 0, 0);
   tmscm_install_procedure ("animate-commit",  tmg_animate_commit, 1, 0, 0);
   tmscm_install_procedure ("idle-time",  tmg_idle_time, 0, 0, 0);
@@ -3912,6 +4029,7 @@ initialize_glue_editor () {
   tmscm_install_procedure ("menu-after-action",  tmg_menu_after_action, 0, 0, 0);
   tmscm_install_procedure ("update-menus",  tmg_update_menus, 0, 0, 0);
   tmscm_install_procedure ("show-tree",  tmg_show_tree, 0, 0, 0);
+  tmscm_install_procedure ("show-box",  tmg_show_box, 0, 0, 0);
   tmscm_install_procedure ("show-env",  tmg_show_env, 0, 0, 0);
   tmscm_install_procedure ("show-path",  tmg_show_path, 0, 0, 0);
   tmscm_install_procedure ("show-cursor",  tmg_show_cursor, 0, 0, 0);

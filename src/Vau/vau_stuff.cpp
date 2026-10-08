@@ -21,6 +21,7 @@
 #include "widget.hpp"
 #include "file.hpp"
 #include "vau_editor.hpp"
+#include "scheme.hpp"
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -395,7 +396,7 @@ void clear_imgbox_cache(tree t) {
 
 bool use_which        = false; // used in url.cpp
 bool use_locate       = false; // used in tt_file.cpp
-bool texmacs_started = true;
+bool texmacs_started = false; // set in TeXmacs_main once Scheme is up
 //hashmap<string,tree> style_tree_cache;
 int script_status = 1;  // from sys_util.c
 
@@ -412,3 +413,62 @@ xpm_load (url file_name){
 
 
 
+
+/******************************************************************************
+* Stubs for functionality living in the editor and GUI layers of TeXmacs
+******************************************************************************/
+
+bool
+use_mupdf_pdf () {
+#ifdef __EMSCRIPTEN__
+  return true; // the only way to a PDF in the browser (no Ghostscript)
+#elif defined(MUPDF_RENDERER)
+  if (get_env ("TEXMACS_PDF_MUPDF") == "1") return true;
+  return get_preference ("native pdf renderer", "default") == "mupdf";
+#else
+  return false;
+#endif
+}
+
+path
+the_editor_path () {
+  //FIXME: stub, Vau has no cursor yet
+  return path ();
+}
+
+void
+inform_about_dependencies () {
+  //FIXME: stub
+}
+
+void
+clearall_imgbox_cache () {
+  //FIXME: stub
+}
+
+void
+image_to_pdf (url image, url pdf, int w_pt, int h_pt, int dpi, bool raster) {
+  //FIXME: stub
+  (void) image; (void) pdf; (void) w_pt; (void) h_pt; (void) dpi; (void) raster;
+}
+
+void
+image_to_png (url image, url png, int w, int h) {
+  //FIXME: stub
+  (void) image; (void) png; (void) w; (void) h;
+}
+
+bool
+async_eval_system (string cmd, object call_back) {
+  //FIXME: stub
+  (void) cmd; (void) call_back;
+  return false;
+}
+
+bool
+async_eval_system (string cmd, int& status, string& outbuf,
+                   string& errbuf, bool& kill) {
+  //FIXME: stub
+  (void) cmd; (void) status; (void) outbuf; (void) errbuf; (void) kill;
+  return false;
+}
